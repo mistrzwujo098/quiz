@@ -843,6 +843,8 @@
                       className="input-modern w-full"
                     >
                       <option value="student">Uczeń</option>
+                      <option value="teacher">Nauczyciel</option>
+                      <option value="parent">Rodzic</option>
                     </select>
                   </div>
                   {formData.role === 'student' && (
@@ -857,6 +859,18 @@
                         <option value="matura podstawowa">Matura podstawowa</option>
                         <option value="matura rozszerzona">Matura rozszerzona</option>
                       </select>
+                    </div>
+                  )}
+                  {formData.role === 'parent' && (
+                    <div className="bg-purple-900/20 border border-purple-700 rounded-lg p-4 mb-4">
+                      <i className="fas fa-info-circle mr-2"></i>
+                      <span className="text-sm">Po rejestracji będziesz mógł połączyć konto z dzieckiem używając specjalnego kodu.</span>
+                    </div>
+                  )}
+                  {formData.role === 'teacher' && (
+                    <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-4">
+                      <i className="fas fa-info-circle mr-2"></i>
+                      <span className="text-sm">Jako nauczyciel będziesz mógł tworzyć egzaminy, importować zadania i zarządzać uczniami.</span>
                     </div>
                   )}
                   <button
@@ -5259,12 +5273,20 @@
         // Widok ucznia
         function StudentView({ user, onStartExam, onLogout }) {
           const [notifications, setNotifications] = useState([]);
+          const [activeTab, setActiveTab] = useState('dashboard');
+          const [showOnboarding, setShowOnboarding] = useState(false);
           
           useEffect(() => {
             // Pobierz powiadomienia dla ucznia
             const allNotifications = JSON.parse(localStorage.getItem('notifications') || '[]');
             const userNotifications = allNotifications.filter(n => n.userId === user.userId && !n.read);
             setNotifications(userNotifications);
+            
+            // Sprawdź czy użytkownik już widział onboarding
+            const hasSeenOnboarding = localStorage.getItem(`onboarding_${user.userId}`);
+            if (!hasSeenOnboarding) {
+              setShowOnboarding(true);
+            }
           }, [user.userId]);
           
           const markNotificationAsRead = (notificationId) => {
@@ -5298,6 +5320,11 @@
           
           const results = JSON.parse(localStorage.getItem('examResults') || '[]')
             .filter(r => r.studentId === user.userId);
+
+          const completeOnboarding = () => {
+            localStorage.setItem(`onboarding_${user.userId}`, 'true');
+            setShowOnboarding(false);
+          };
 
           return (
             <div className="container mx-auto p-6">
@@ -5346,191 +5373,490 @@
                   </div>
                 )}
 
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="card-modern md:col-span-2">
-                    <h2 className="text-xl font-semibold mb-4">
-                      <i className="fas fa-calendar-alt mr-2 text-purple-400"></i>
-                      Kalendarz wydarzeń
-                    </h2>
-                    <StudentMiniCalendar userId={user.userId} userGroups={userGroupIds} />
-                  </div>
-                  
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">Dostępne arkusze</h2>
-                    {exams.length === 0 ? (
-                      <p className="text-gray-400">Brak dostępnych arkuszy dla Twojej kategorii</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {exams.map(exam => (
-                          <div key={exam.id} className="p-4 bg-gray-800 rounded hover:bg-gray-700 transition">
-                            <h3 className="font-medium">{exam.title}</h3>
-                            <p className="text-sm text-gray-400">
-                              Zadań: {exam.questions.length} | Czas: {exam.timeLimit} min
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Od: {exam.createdBy}
-                              {exam.targetGroupId && exam.targetGroupId !== 'all' && (
-                                <span className="ml-2">
-                                  | Dla grupy: {allGroups.find(g => g.id === parseInt(exam.targetGroupId))?.name}
-                                </span>
-                              )}
-                            </p>
-                            <button
-                              onClick={() => onStartExam(exam)}
-                              className="mt-2 btn-primary text-sm"
-                            >
-                              <i className="fas fa-play mr-2"></i>Rozpocznij
-                            </button>
-                          </div>
-                        ))}
+                {/* Navigation Tabs */}
+                <div className="flex space-x-1 mb-6 border-b border-gray-700">
+                  <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className={`tab-modern ${activeTab === 'dashboard' ? 'active' : ''}`}
+                  >
+                    <i className="fas fa-home mr-2"></i>Dashboard
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('exams')}
+                    className={`tab-modern ${activeTab === 'exams' ? 'active' : ''}`}
+                  >
+                    <i className="fas fa-file-alt mr-2"></i>Arkusze
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('results')}
+                    className={`tab-modern ${activeTab === 'results' ? 'active' : ''}`}
+                  >
+                    <i className="fas fa-chart-line mr-2"></i>Wyniki
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('training')}
+                    className={`tab-modern ${activeTab === 'training' ? 'active' : ''}`}
+                  >
+                    <i className="fas fa-dumbbell mr-2"></i>Trening
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('achievements')}
+                    className={`tab-modern ${activeTab === 'achievements' ? 'active' : ''}`}
+                  >
+                    <i className="fas fa-trophy mr-2"></i>Osiągnięcia
+                  </button>
+                </div>
+
+                {/* Dashboard Tab */}
+                {activeTab === 'dashboard' && (
+                  <div className="space-y-6">
+                    {/* Feature Tiles */}
+                    <div className="grid md:grid-cols-4 gap-4">
+                      <div className="card-modern text-center hover:bg-purple-600/20 transition-all cursor-pointer"
+                           onClick={() => setActiveTab('exams')}>
+                        <div className="text-4xl mb-3">
+                          <i className="fas fa-file-alt text-purple-400"></i>
+                        </div>
+                        <h3 className="font-semibold mb-2">Arkusze egzaminacyjne</h3>
+                        <p className="text-sm text-gray-400">
+                          Dostępne: {exams.length}
+                        </p>
                       </div>
-                    )}
-                  </div>
-
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6 mt-6">
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">Twoje wyniki</h2>
-                    <StudentResults results={results} />
-                  </div>
-                </div>
-
-                <div className="mt-6 grid md:grid-cols-2 gap-6">
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">Twoje statystyki</h2>
-                    <StudentStatistics userId={user.userId} />
-                  </div>
-                  
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">Tryb treningowy</h2>
-                    <p className="text-gray-400 mb-4">
-                      Ćwicz rozwiązywanie zadań z bazy w trybie testowym lub egzaminacyjnym
-                    </p>
-                    <a
-                      href="test-practice.html"
-                      className="btn-primary inline-block text-center"
-                    >
-                      <i className="fas fa-graduation-cap mr-2"></i>
-                      Rozpocznij trening
-                    </a>
-                  </div>
-                </div>
-
-                {/* Nowe funkcje */}
-                <div className="mt-6 grid md:grid-cols-3 gap-6">
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">
-                      <i className="fas fa-brain mr-2 text-purple-400"></i>
-                      Szybka Powtórka
-                    </h2>
-                    <p className="text-gray-400 mb-4">
-                      Przejrzyj błędne odpowiedzi i trudne tematy
-                    </p>
-                    <button
-                      onClick={() => window.navigationIntegration?.openQuickReview()}
-                      className="btn-primary w-full"
-                    >
-                      <i className="fas fa-redo mr-2"></i>
-                      Rozpocznij powtórkę
-                    </button>
-                  </div>
-
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">
-                      <i className="fas fa-gamepad mr-2 text-green-400"></i>
-                      Gamifikacja
-                    </h2>
-                    <div id="gamification-mini-stats">
-                      <div dangerouslySetInnerHTML={{ 
-                        __html: window.navigationIntegration?.renderGamificationMiniStats() || '<p class="text-gray-400">Ładowanie...</p>'
-                      }} />
+                      
+                      <div className="card-modern text-center hover:bg-blue-600/20 transition-all cursor-pointer"
+                           onClick={() => setActiveTab('training')}>
+                        <div className="text-4xl mb-3">
+                          <i className="fas fa-dumbbell text-blue-400"></i>
+                        </div>
+                        <h3 className="font-semibold mb-2">Tryb treningowy</h3>
+                        <p className="text-sm text-gray-400">
+                          Ćwicz bez limitu czasu
+                        </p>
+                      </div>
+                      
+                      <div className="card-modern text-center hover:bg-green-600/20 transition-all cursor-pointer"
+                           onClick={() => window.safeModuleCall('quickReview', 'openQuickReview')}>
+                        <div className="text-4xl mb-3">
+                          <i className="fas fa-brain text-green-400"></i>
+                        </div>
+                        <h3 className="font-semibold mb-2">Szybka powtórka</h3>
+                        <p className="text-sm text-gray-400">
+                          Powtórz błędne odpowiedzi
+                        </p>
+                      </div>
+                      
+                      <div className="card-modern text-center hover:bg-yellow-600/20 transition-all cursor-pointer"
+                           onClick={() => setActiveTab('achievements')}>
+                        <div className="text-4xl mb-3">
+                          <i className="fas fa-trophy text-yellow-400"></i>
+                        </div>
+                        <h3 className="font-semibold mb-2">Osiągnięcia</h3>
+                        <p className="text-sm text-gray-400">
+                          Twój postęp
+                        </p>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        const modal = document.createElement('div');
-                        modal.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-50';
-                        modal.innerHTML = `
-                          <div class="glass-dark p-8 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-                            <div class="flex justify-between items-center mb-6">
-                              <h2 class="text-2xl font-bold">System Gamifikacji</h2>
-                              <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
-                                <i class="fas fa-times text-2xl"></i>
+                    
+                    {/* AI Features */}
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">
+                        <i className="fas fa-robot mr-2 text-purple-400"></i>
+                        Funkcje AI
+                      </h2>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all cursor-pointer"
+                             onClick={() => {
+                               // Pokaż loader
+                               const loader = document.createElement('div');
+                               loader.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                               loader.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uruchamianie AI Grader...';
+                               document.body.appendChild(loader);
+                               
+                               // Wywołaj funkcję
+                               const result = window.safeModuleCall('aiGrader', 'openAIGrader');
+                               
+                               // Usuń loader po 2 sekundach
+                               setTimeout(() => {
+                                 if (loader.parentNode) {
+                                   loader.remove();
+                                 }
+                                 
+                                 // Pokaż toast z rezultatem
+                                 const toast = document.createElement('div');
+                                 toast.className = result ? 
+                                   'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50' :
+                                   'fixed top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                                 toast.innerHTML = result ? 
+                                   '<i class="fas fa-check mr-2"></i>AI Grader uruchomiony!' :
+                                   '<i class="fas fa-exclamation-triangle mr-2"></i>Funkcja niedostępna';
+                                 document.body.appendChild(toast);
+                                 
+                                 setTimeout(() => {
+                                   if (toast.parentNode) {
+                                     toast.remove();
+                                   }
+                                 }, 3000);
+                               }, 2000);
+                             }}>
+                          <div className="flex items-center mb-2">
+                            <i className="fas fa-user-check text-blue-400 mr-2"></i>
+                            <h3 className="font-semibold">Ocenianie AI</h3>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            Automatyczne sprawdzanie odpowiedzi
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all cursor-pointer"
+                             onClick={() => window.safeModuleCall('recommendations', 'showRecommendations')}>
+                          <div className="flex items-center mb-2">
+                            <i className="fas fa-lightbulb text-yellow-400 mr-2"></i>
+                            <h3 className="font-semibold">Rekomendacje</h3>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            Spersonalizowane sugestie
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all cursor-pointer"
+                             onClick={() => window.safeModuleCall('stepGrading', 'openStepGrading')}>
+                          <div className="flex items-center mb-2">
+                            <i className="fas fa-list-ol text-green-400 mr-2"></i>
+                            <h3 className="font-semibold">Ocena krokowa</h3>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            Szczegółowa analiza rozwiązań
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Import Features */}
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">
+                        <i className="fas fa-file-import mr-2 text-orange-400"></i>
+                        Import i analiza
+                      </h2>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all cursor-pointer"
+                             onClick={() => window.safeModuleCall('ckeImportUI', 'openCKEImport')}>
+                          <div className="flex items-center mb-2">
+                            <i className="fas fa-file-import text-orange-400 mr-2"></i>
+                            <h3 className="font-semibold">Import CKE</h3>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            Importuj arkusze z Centralnej Komisji Egzaminacyjnej
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all cursor-pointer"
+                             onClick={() => window.safeModuleCall('advancedMath', 'openMathModule')}>
+                          <div className="flex items-center mb-2">
+                            <i className="fas fa-calculator text-blue-400 mr-2"></i>
+                            <h3 className="font-semibold">Zaawansowana matematyka</h3>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            Narzędzia matematyczne i analiza wzorów
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Quick Stats */}
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="card-modern text-center">
+                        <div className="text-2xl font-bold text-purple-400 mb-2">
+                          {results.length}
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          Rozwiązane arkusze
+                        </div>
+                      </div>
+                      
+                      <div className="card-modern text-center">
+                        <div className="text-2xl font-bold text-green-400 mb-2">
+                          {results.length > 0 ? 
+                            Math.round(results.reduce((acc, r) => acc + (r.correctAnswers / r.totalQuestions * 100), 0) / results.length) 
+                            : 0}%
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          Średni wynik
+                        </div>
+                      </div>
+                      
+                      <div className="card-modern text-center">
+                        <div className="text-2xl font-bold text-yellow-400 mb-2">
+                          {results.length > 0 ? 
+                            Math.max(...results.map(r => Math.round(r.correctAnswers / r.totalQuestions * 100))) 
+                            : 0}%
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          Najlepszy wynik
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Exams Tab */}
+                {activeTab === 'exams' && (
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div className="card-modern md:col-span-2">
+                      <h2 className="text-xl font-semibold mb-4">
+                        <i className="fas fa-calendar-alt mr-2 text-purple-400"></i>
+                        Kalendarz wydarzeń
+                      </h2>
+                      <StudentMiniCalendar userId={user.userId} userGroups={userGroupIds} />
+                    </div>
+                    
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">Dostępne arkusze</h2>
+                      {exams.length === 0 ? (
+                        <p className="text-gray-400">Brak dostępnych arkuszy dla Twojej kategorii</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {exams.map(exam => (
+                            <div key={exam.id} className="p-4 bg-gray-800 rounded hover:bg-gray-700 transition">
+                              <h3 className="font-medium">{exam.title}</h3>
+                              <p className="text-sm text-gray-400">
+                                Zadań: {exam.questions.length} | Czas: {exam.timeLimit} min
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Od: {exam.createdBy}
+                                {exam.targetGroupId && exam.targetGroupId !== 'all' && (
+                                  <span className="ml-2">
+                                    | Dla grupy: {allGroups.find(g => g.id === parseInt(exam.targetGroupId))?.name}
+                                  </span>
+                                )}
+                              </p>
+                              <button
+                                onClick={() => onStartExam(exam)}
+                                className="mt-2 btn-primary text-sm"
+                              >
+                                <i className="fas fa-play mr-2"></i>Rozpocznij
                               </button>
                             </div>
-                            <div>${window.navigationIntegration?.modules?.gamification?.renderFullDashboard() || ''}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Results Tab */}
+                {activeTab === 'results' && (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">Twoje wyniki</h2>
+                      <StudentResults results={results} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Training Tab */}
+                {activeTab === 'training' && (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">
+                        <i className="fas fa-dumbbell mr-2 text-blue-400"></i>
+                        Tryb treningowy
+                      </h2>
+                      <p className="text-gray-400 mb-4">
+                        Ćwicz rozwiązywanie zadań z bazy w trybie testowym lub egzaminacyjnym
+                      </p>
+                      <a
+                        href="test-practice.html"
+                        className="btn-primary inline-block text-center w-full"
+                      >
+                        <i className="fas fa-graduation-cap mr-2"></i>
+                        Rozpocznij trening
+                      </a>
+                    </div>
+                    
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">
+                        <i className="fas fa-brain mr-2 text-green-400"></i>
+                        Szybka Powtórka
+                      </h2>
+                      <p className="text-gray-400 mb-4">
+                        Przejrzyj błędne odpowiedzi i trudne tematy
+                      </p>
+                      <button
+                        onClick={() => window.navigationIntegration?.openQuickReview()}
+                        className="btn-primary w-full"
+                      >
+                        <i className="fas fa-redo mr-2"></i>
+                        Rozpocznij powtórkę
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Achievements Tab */}
+                {activeTab === 'achievements' && (
+                  <div className="space-y-6">
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">
+                        <i className="fas fa-trophy mr-2 text-yellow-400"></i>
+                        Twoje osiągnięcia
+                      </h2>
+                      <AchievementsPanel userId={user.userId} />
+                    </div>
+                    
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">
+                        <i className="fas fa-gamepad mr-2 text-purple-400"></i>
+                        System Gamifikacji
+                      </h2>
+                      <div id="gamification-mini-stats">
+                        <div dangerouslySetInnerHTML={{ 
+                          __html: window.navigationIntegration?.renderGamificationMiniStats() || '<p class="text-gray-400">Ładowanie...</p>'
+                        }} />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const modal = document.createElement('div');
+                          modal.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-50';
+                          modal.innerHTML = `
+                            <div class="glass-dark p-8 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+                              <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-2xl font-bold">System Gamifikacji</h2>
+                                <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+                                  <i class="fas fa-times text-2xl"></i>
+                                </button>
+                              </div>
+                              <div>${window.navigationIntegration?.modules?.gamification?.renderFullDashboard() || ''}</div>
+                            </div>
+                          `;
+                          document.body.appendChild(modal);
+                        }}
+                        className="btn-secondary w-full mt-4"
+                      >
+                        <i className="fas fa-chart-line mr-2"></i>
+                        Zobacz szczegóły
+                      </button>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="card-modern">
+                        <h2 className="text-xl font-semibold mb-4">
+                          <i className="fas fa-link mr-2 text-blue-400"></i>
+                          Połącz z rodzicem
+                        </h2>
+                        <p className="text-gray-400 mb-4">
+                          Udostępnij kod połączenia rodzicowi
+                        </p>
+                        <button
+                          onClick={() => {
+                            const code = `${user.userId}-${Date.now().toString(36).toUpperCase()}`;
+                            const linkData = {
+                              code,
+                              childId: user.userId,
+                              createdAt: new Date().toISOString(),
+                              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                            };
+                            
+                            let links = JSON.parse(localStorage.getItem('parentLinkCodes') || '[]');
+                            links.push(linkData);
+                            localStorage.setItem('parentLinkCodes', JSON.stringify(links));
+                            
+                            alert(`Twój kod połączenia:\n\n${code}\n\nKod ważny przez 7 dni`);
+                          }}
+                          className="btn-primary w-full"
+                        >
+                          <i className="fas fa-qrcode mr-2"></i>
+                          Generuj kod
+                        </button>
+                      </div>
+                      
+                      <div className="card-modern">
+                        <h2 className="text-xl font-semibold mb-4">
+                          <i className="fas fa-users mr-2 text-purple-400"></i>
+                          Rywalizacja
+                        </h2>
+                        <CompetitionPanel userId={user.userId} userCategory={user.category} />
+                      </div>
+                    </div>
+                    
+                    <div className="card-modern">
+                      <h2 className="text-xl font-semibold mb-4">
+                        <i className="fas fa-lightbulb mr-2 text-yellow-400"></i>
+                        Personalizowane rekomendacje
+                      </h2>
+                      <PersonalizedRecommendations userId={user.userId} />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Onboarding Modal */}
+                {showOnboarding && (
+                  <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                    <div className="glass-dark p-8 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
+                      <div className="text-center">
+                        <div className="text-6xl mb-4">
+                          <i className="fas fa-graduation-cap text-purple-400"></i>
+                        </div>
+                        <h2 className="text-3xl font-bold mb-4">Witaj w QuizMaster!</h2>
+                        <p className="text-lg text-gray-300 mb-6">
+                          Poznaj najważniejsze funkcje systemu egzaminacyjnego
+                        </p>
+                        
+                        <div className="grid md:grid-cols-2 gap-6 mb-6">
+                          <div className="bg-gray-800 p-6 rounded-xl">
+                            <i className="fas fa-file-alt text-4xl text-purple-400 mb-3"></i>
+                            <h3 className="font-semibold mb-2">Arkusze egzaminacyjne</h3>
+                            <p className="text-sm text-gray-400">
+                              Rozwiązuj arkusze przygotowane przez nauczycieli
+                            </p>
                           </div>
-                        `;
-                        document.body.appendChild(modal);
-                      }}
-                      className="btn-secondary w-full mt-2"
-                    >
-                      <i className="fas fa-chart-line mr-2"></i>
-                      Zobacz szczegóły
-                    </button>
-                  </div>
-
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">
-                      <i className="fas fa-link mr-2 text-blue-400"></i>
-                      Połącz z rodzicem
-                    </h2>
-                    <p className="text-gray-400 mb-4">
-                      Udostępnij kod połączenia rodzicowi
-                    </p>
-                    <button
-                      onClick={() => {
-                        const code = `${user.userId}-${Date.now().toString(36).toUpperCase()}`;
-                        const linkData = {
-                          code,
-                          childId: user.userId,
-                          createdAt: new Date().toISOString(),
-                          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-                        };
+                          
+                          <div className="bg-gray-800 p-6 rounded-xl">
+                            <i className="fas fa-dumbbell text-4xl text-blue-400 mb-3"></i>
+                            <h3 className="font-semibold mb-2">Tryb treningowy</h3>
+                            <p className="text-sm text-gray-400">
+                              Ćwicz zadania bez limitu czasu
+                            </p>
+                          </div>
+                          
+                          <div className="bg-gray-800 p-6 rounded-xl">
+                            <i className="fas fa-robot text-4xl text-green-400 mb-3"></i>
+                            <h3 className="font-semibold mb-2">Funkcje AI</h3>
+                            <p className="text-sm text-gray-400">
+                              Automatyczne ocenianie i rekomendacje
+                            </p>
+                          </div>
+                          
+                          <div className="bg-gray-800 p-6 rounded-xl">
+                            <i className="fas fa-trophy text-4xl text-yellow-400 mb-3"></i>
+                            <h3 className="font-semibold mb-2">Osiągnięcia</h3>
+                            <p className="text-sm text-gray-400">
+                              Zbieraj punkty i odblokuj nagrody
+                            </p>
+                          </div>
+                        </div>
                         
-                        let links = JSON.parse(localStorage.getItem('parentLinkCodes') || '[]');
-                        links.push(linkData);
-                        localStorage.setItem('parentLinkCodes', JSON.stringify(links));
+                        <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-6">
+                          <div className="flex items-center justify-center mb-2">
+                            <i className="fas fa-lightbulb text-blue-400 mr-2"></i>
+                            <span className="font-semibold">Wskazówka</span>
+                          </div>
+                          <p className="text-sm text-gray-300">
+                            Zacznij od zakładki "Dashboard" aby zobaczyć wszystkie dostępne funkcje,
+                            następnie przejdź do "Arkusze" aby rozpocząć rozwiązywanie zadań.
+                          </p>
+                        </div>
                         
-                        alert(`Twój kod połączenia:\n\n${code}\n\nKod ważny przez 7 dni`);
-                      }}
-                      className="btn-primary w-full"
-                    >
-                      <i className="fas fa-qrcode mr-2"></i>
-                      Generuj kod
-                    </button>
+                        <button
+                          onClick={completeOnboarding}
+                          className="btn-primary text-lg px-8 py-3"
+                        >
+                          <i className="fas fa-check mr-2"></i>
+                          Rozpocznij naukę!
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">
-                      <i className="fas fa-trophy mr-2 text-yellow-400"></i>
-                      Twoje osiągnięcia
-                    </h2>
-                    <AchievementsPanel userId={user.userId} />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">
-                      <i className="fas fa-lightbulb mr-2 text-yellow-400"></i>
-                      Personalizowane rekomendacje
-                    </h2>
-                    <PersonalizedRecommendations userId={user.userId} />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <div className="card-modern">
-                    <h2 className="text-xl font-semibold mb-4">
-                      <i className="fas fa-trophy mr-2 text-purple-400"></i>
-                      Rywalizacja
-                    </h2>
-                    <CompetitionPanel userId={user.userId} userCategory={user.category} />
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           );
@@ -7242,24 +7568,86 @@
                       </div>
                     ) : (
                       <>
-                        <div className="flex gap-2 mb-4">
-                          {parentPanel.linkedChildren.map(child => (
-                            <button
-                              key={child.userId}
-                              onClick={() => setSelectedChild(child.userId)}
-                              className={`px-4 py-2 rounded-lg transition-all ${
-                                selectedChild === child.userId 
-                                  ? 'bg-purple-600 text-white' 
-                                  : 'glass hover:bg-purple-600/20'
-                              }`}
-                            >
-                              {child.fullName || child.username}
-                            </button>
-                          ))}
+                        {/* Quick Actions */}
+                        <div className="grid md:grid-cols-4 gap-4 mb-6">
+                          <div className="card-modern text-center hover:bg-blue-600/20 transition-all cursor-pointer"
+                               onClick={() => setActiveTab('reports')}>
+                            <div className="text-4xl mb-3">
+                              <i className="fas fa-chart-line text-blue-400"></i>
+                            </div>
+                            <h3 className="font-semibold mb-2">Raporty</h3>
+                            <p className="text-sm text-gray-400">
+                              Szczegółowe analizy
+                            </p>
+                          </div>
+                          
+                          <div className="card-modern text-center hover:bg-green-600/20 transition-all cursor-pointer"
+                               onClick={() => window.navigationIntegration?.modules?.pdfExport?.generateParentReport(selectedChild)}>
+                            <div className="text-4xl mb-3">
+                              <i className="fas fa-file-pdf text-green-400"></i>
+                            </div>
+                            <h3 className="font-semibold mb-2">Raport PDF</h3>
+                            <p className="text-sm text-gray-400">
+                              Eksportuj podsumowanie
+                            </p>
+                          </div>
+                          
+                          <div className="card-modern text-center hover:bg-purple-600/20 transition-all cursor-pointer"
+                               onClick={() => setActiveTab('settings')}>
+                            <div className="text-4xl mb-3">
+                              <i className="fas fa-cog text-purple-400"></i>
+                            </div>
+                            <h3 className="font-semibold mb-2">Ustawienia</h3>
+                            <p className="text-sm text-gray-400">
+                              Konfiguracja konta
+                            </p>
+                          </div>
+                          
+                          <div className="card-modern text-center hover:bg-yellow-600/20 transition-all cursor-pointer"
+                               onClick={() => setActiveTab('add-child')}>
+                            <div className="text-4xl mb-3">
+                              <i className="fas fa-user-plus text-yellow-400"></i>
+                            </div>
+                            <h3 className="font-semibold mb-2">Dodaj dziecko</h3>
+                            <p className="text-sm text-gray-400">
+                              Połącz nowe konto
+                            </p>
+                          </div>
                         </div>
-                        <div dangerouslySetInnerHTML={{ 
-                          __html: parentPanel.renderChildDashboard(selectedChild) 
-                        }} />
+                        
+                        {/* Child Selection */}
+                        <div className="card-modern">
+                          <h3 className="text-lg font-semibold mb-4">
+                            <i className="fas fa-users mr-2 text-purple-400"></i>
+                            Wybierz dziecko
+                          </h3>
+                          <div className="flex gap-2 mb-4">
+                            {parentPanel.linkedChildren.map(child => (
+                              <button
+                                key={child.userId}
+                                onClick={() => setSelectedChild(child.userId)}
+                                className={`px-4 py-2 rounded-lg transition-all ${
+                                  selectedChild === child.userId 
+                                    ? 'bg-purple-600 text-white' 
+                                    : 'glass hover:bg-purple-600/20'
+                                }`}
+                              >
+                                {child.fullName || child.username}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Child Dashboard */}
+                        <div className="card-modern">
+                          <h3 className="text-lg font-semibold mb-4">
+                            <i className="fas fa-chart-bar mr-2 text-blue-400"></i>
+                            Dashboard dziecka
+                          </h3>
+                          <div dangerouslySetInnerHTML={{ 
+                            __html: parentPanel.renderChildDashboard(selectedChild) 
+                          }} />
+                        </div>
                       </>
                     )}
                   </div>

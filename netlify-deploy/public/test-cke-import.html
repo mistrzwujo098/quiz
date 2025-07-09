@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test importu CKE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Konfiguracja PDF.js
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="js/task-variant-generator.js"></script>
+    <script src="js/advanced-math-module.js"></script>
+    <script src="js/advanced-pdf-parser.js"></script>
+    <script src="js/gemini-api-mock.js"></script>
+    <script src="js/cke-parser-system.js"></script>
+    <script src="js/step-grading-system.js"></script>
+    <script src="js/ai-grader.js"></script>
+    <script src="js/cke-import-ui.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        #container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .error {
+            background: #ff4444;
+            color: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #44ff44;
+            color: black;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Test importu CKE</h1>
+        <div id="test-results"></div>
+        <div id="cke-import-container"></div>
+    </div>
+
+    <script>
+        // Test konsoli
+        const testResults = document.getElementById('test-results');
+        
+        function addResult(message, isError = false) {
+            const div = document.createElement('div');
+            div.className = isError ? 'error' : 'success';
+            div.textContent = message;
+            testResults.appendChild(div);
+        }
+
+        // Testy
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('Rozpoczynam testy...');
+            
+            // Test 1: Sprawdzenie dostępności klas
+            try {
+                if (window.CKEImportUI) {
+                    addResult('✓ CKEImportUI jest dostępna');
+                } else {
+                    addResult('✗ CKEImportUI nie jest dostępna', true);
+                }
+            } catch (e) {
+                addResult(`✗ Błąd sprawdzania CKEImportUI: ${e.message}`, true);
+            }
+
+            try {
+                if (window.CKEParserSystem) {
+                    addResult('✓ CKEParserSystem jest dostępna');
+                } else {
+                    addResult('✗ CKEParserSystem nie jest dostępna', true);
+                }
+            } catch (e) {
+                addResult(`✗ Błąd sprawdzania CKEParserSystem: ${e.message}`, true);
+            }
+
+            try {
+                if (window.AIGrader) {
+                    addResult('✓ AIGrader jest dostępna');
+                } else {
+                    addResult('✗ AIGrader nie jest dostępna', true);
+                }
+            } catch (e) {
+                addResult(`✗ Błąd sprawdzania AIGrader: ${e.message}`, true);
+            }
+
+            try {
+                if (window.StepGradingSystem) {
+                    addResult('✓ StepGradingSystem jest dostępna');
+                } else {
+                    addResult('✗ StepGradingSystem nie jest dostępna', true);
+                }
+            } catch (e) {
+                addResult(`✗ Błąd sprawdzania StepGradingSystem: ${e.message}`, true);
+            }
+
+            // Test 2: Tworzenie instancji
+            try {
+                const ui = new window.CKEImportUI();
+                addResult('✓ Utworzono instancję CKEImportUI');
+                
+                // Test 3: Renderowanie
+                try {
+                    const html = ui.render();
+                    if (html && html.length > 0) {
+                        addResult('✓ Metoda render() zwróciła HTML');
+                        document.getElementById('cke-import-container').innerHTML = html;
+                        addResult('✓ HTML został wyrenderowany');
+                    } else {
+                        addResult('✗ Metoda render() zwróciła pusty HTML', true);
+                    }
+                } catch (e) {
+                    addResult(`✗ Błąd podczas renderowania: ${e.message}`, true);
+                    console.error(e);
+                }
+            } catch (e) {
+                addResult(`✗ Błąd tworzenia instancji CKEImportUI: ${e.message}`, true);
+                console.error(e);
+            }
+
+            // Test 4: Sprawdzenie elementów DOM
+            setTimeout(() => {
+                const examInput = document.getElementById('exam-pdf');
+                const answerInput = document.getElementById('answer-pdf');
+                const startBtn = document.getElementById('start-import-btn');
+                
+                if (examInput) {
+                    addResult('✓ Input dla arkusza egzaminacyjnego znaleziony');
+                } else {
+                    addResult('✗ Input dla arkusza egzaminacyjnego nie znaleziony', true);
+                }
+                
+                if (answerInput) {
+                    addResult('✓ Input dla klucza odpowiedzi znaleziony');
+                } else {
+                    addResult('✗ Input dla klucza odpowiedzi nie znaleziony', true);
+                }
+                
+                if (startBtn) {
+                    addResult('✓ Przycisk rozpoczęcia importu znaleziony');
+                } else {
+                    addResult('✗ Przycisk rozpoczęcia importu nie znaleziony', true);
+                }
+            }, 1000);
+        });
+
+        // Globalne przechwytywanie błędów
+        window.addEventListener('error', (e) => {
+            addResult(`✗ Błąd globalny: ${e.message} (${e.filename}:${e.lineno})`, true);
+        });
+    </script>
+</body>
+</html>

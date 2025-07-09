@@ -5,7 +5,7 @@
 
 class AIGrader {
     constructor() {
-        this.geminiAPI = window.TaskVariantGenerator?.geminiAPI;
+        this.geminiAPI = null; // Będzie inicjalizowane później
         this.stepGrading = new StepGradingSystem();
         this.ckeParser = new CKEParserSystem();
         this.initialized = false;

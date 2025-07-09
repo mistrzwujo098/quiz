@@ -5,7 +5,7 @@
 
 class CKEParserSystem {
     constructor() {
-        this.geminiAPI = window.TaskVariantGenerator?.geminiAPI;
+        this.geminiAPI = null; // Będzie inicjalizowane później
         this.mathModule = window.AdvancedMathModule;
         this.pdfParser = window.AdvancedPDFParser;
         this.initialized = false;
@@ -16,6 +16,17 @@ class CKEParserSystem {
         
         // Ładowanie dodatkowych bibliotek
         await this.loadDependencies();
+        
+        // Inicjalizacja API (użyj mocka jeśli nie ma prawdziwego API)
+        if (!this.geminiAPI) {
+            if (window.GeminiAPIMock) {
+                this.geminiAPI = new window.GeminiAPIMock();
+                console.warn('Używam Mock API dla Gemini');
+            } else {
+                console.warn('Brak dostępnego API Gemini - niektóre funkcje mogą nie działać');
+            }
+        }
+        
         this.initialized = true;
     }
 
@@ -95,6 +106,13 @@ class CKEParserSystem {
      */
     async extractEnhancedPdfContent(pdfFile, config) {
         const arrayBuffer = await pdfFile.arrayBuffer();
+        
+        // Sprawdź czy pdf.js jest załadowany
+        if (typeof pdfjsLib === 'undefined') {
+            console.error('pdf.js nie jest załadowany!');
+            throw new Error('Brak biblioteki pdf.js');
+        }
+        
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         
         const content = {
@@ -232,60 +250,108 @@ class CKEParserSystem {
     }
 
     /**
+     * Sprawdza czy obrazek jest blisko zadania (pomocnicza metoda)
+     */
+    isImageNearTask(img, task) {
+        // Prosta heurystyka - jeśli obrazek jest na tej samej stronie co zadanie
+        return img.page && task.page && img.page === task.page;
+    }
+
+    /**
+     * Łączy wyniki OCR z istniejącą zawartością
+     */
+    mergeOCRResults(content, ocrResults) {
+        if (!ocrResults || !ocrResults.text) return;
+        
+        // Dodaj tekst z OCR do zawartości strony
+        if (ocrResults.text && ocrResults.text.trim()) {
+            content.text.push('\n--- OCR ---\n' + ocrResults.text);
+        }
+        
+        // Jeśli OCR znalazł formuły matematyczne
+        if (ocrResults.text.match(/[\d+\-*/=]|\\frac|\\sqrt/)) {
+            const formulas = ocrResults.text.match(/[^\s]+[+\-*/=][^\s]+/g) || [];
+            formulas.forEach(formula => {
+                content.formulas.push({
+                    formula: formula,
+                    type: 'ocr',
+                    source: 'OCR'
+                });
+            });
+        }
+    }
+
+    /**
      * Ekstrakcja obrazków z zachowaniem kontekstu
      */
     async extractImagesFromPage(page, pageNum) {
         const images = [];
-        const ops = await page.getOperatorList();
-        const viewport = page.getViewport({ scale: 2.0 });
         
-        // Canvas do renderowania
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        try {
+            const ops = await page.getOperatorList();
+            const viewport = page.getViewport({ scale: 2.0 });
+            
+            // Canvas do renderowania z flagą willReadFrequently dla optymalizacji
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
 
-        // Renderowanie strony
-        await page.render({ canvasContext: context, viewport }).promise;
+            // Renderowanie strony
+            await page.render({ canvasContext: context, viewport }).promise;
 
-        // Analiza operatorów graficznych
-        let currentImage = null;
-        let imageIndex = 0;
+            // Analiza operatorów graficznych
+            let imageIndex = 0;
 
-        for (let i = 0; i < ops.fnArray.length; i++) {
-            const fn = ops.fnArray[i];
-            const args = ops.argsArray[i];
+            for (let i = 0; i < ops.fnArray.length; i++) {
+                const fn = ops.fnArray[i];
+                const args = ops.argsArray[i];
 
-            if (fn === pdfjsLib.OPS.paintImageXObject) {
-                // Znaleziono obrazek
-                const transform = context.getTransform();
-                const bounds = this.getImageBounds(transform, args);
-                
-                // Wycinanie obrazka
-                const imageData = context.getImageData(
-                    bounds.x, bounds.y, bounds.width, bounds.height
-                );
-                
-                // Konwersja do base64
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = bounds.width;
-                tempCanvas.height = bounds.height;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.putImageData(imageData, 0, 0);
-                
-                images.push({
-                    page: pageNum,
-                    index: imageIndex++,
-                    base64: tempCanvas.toDataURL('image/png'),
-                    bounds: bounds,
-                    type: 'image'
-                });
+                if (pdfjsLib && pdfjsLib.OPS && fn === pdfjsLib.OPS.paintImageXObject) {
+                    try {
+                        // Znaleziono obrazek
+                        const transform = context.getTransform ? context.getTransform() : null;
+                        const bounds = this.getImageBounds(transform, args);
+                        
+                        // Sprawdzanie poprawności granic
+                        if (bounds.width > 0 && bounds.height > 0 && 
+                            bounds.x >= 0 && bounds.y >= 0 &&
+                            bounds.x + bounds.width <= canvas.width &&
+                            bounds.y + bounds.height <= canvas.height) {
+                            
+                            // Wycinanie obrazka
+                            const imageData = context.getImageData(
+                                bounds.x, bounds.y, bounds.width, bounds.height
+                            );
+                            
+                            // Konwersja do base64
+                            const tempCanvas = document.createElement('canvas');
+                            tempCanvas.width = bounds.width;
+                            tempCanvas.height = bounds.height;
+                            const tempCtx = tempCanvas.getContext('2d');
+                            tempCtx.putImageData(imageData, 0, 0);
+                            
+                            images.push({
+                                page: pageNum,
+                                index: imageIndex++,
+                                base64: tempCanvas.toDataURL('image/png'),
+                                bounds: bounds,
+                                type: 'image'
+                            });
+                        }
+                    } catch (imgError) {
+                        console.warn('Błąd przetwarzania obrazka:', imgError);
+                    }
+                }
             }
-        }
 
-        // Wykrywanie diagramów i wykresów
-        const diagrams = await this.detectDiagrams(canvas, pageNum);
-        images.push(...diagrams);
+            // Wykrywanie diagramów i wykresów
+            const diagrams = await this.detectDiagrams(canvas, pageNum);
+            images.push(...diagrams);
+
+        } catch (error) {
+            console.error('Błąd ekstrakcji obrazów ze strony', pageNum, ':', error);
+        }
 
         return images;
     }
@@ -354,6 +420,33 @@ class CKEParserSystem {
     }
 
     /**
+     * Obliczanie granic obrazka na podstawie transformacji
+     */
+    getImageBounds(transform, args) {
+        // Domyślne granice
+        const bounds = {
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100
+        };
+        
+        // Jeśli mamy transformację, użyj jej
+        if (transform) {
+            bounds.x = Math.max(0, transform.e); // translacja X
+            bounds.y = Math.max(0, transform.f); // translacja Y
+            
+            // Jeśli mamy argumenty z wymiarami
+            if (args && args.length >= 2) {
+                bounds.width = Math.abs(args[0]) || 100;
+                bounds.height = Math.abs(args[1]) || 100;
+            }
+        }
+        
+        return bounds;
+    }
+
+    /**
      * Wykrywanie formuł matematycznych
      */
     async detectMathFormulas(page, pageText) {
@@ -373,21 +466,43 @@ class CKEParserSystem {
         ];
 
         // Przeszukiwanie tekstu
-        const text = pageText.raw || pageText;
-        mathPatterns.forEach(pattern => {
-            const matches = text.matchAll(pattern);
-            for (const match of matches) {
-                formulas.push({
-                    formula: match[0],
-                    type: this.detectFormulaType(match[0]),
-                    index: match.index,
-                    context: text.substring(
-                        Math.max(0, match.index - 50),
-                        Math.min(text.length, match.index + match[0].length + 50)
-                    )
-                });
-            }
-        });
+        const text = (pageText.raw || pageText || '').toString();
+        
+        // Sprawdzenie czy matchAll jest dostępne
+        if (!text.matchAll) {
+            // Fallback dla starszych przeglądarek
+            mathPatterns.forEach(pattern => {
+                let match;
+                const globalPattern = new RegExp(pattern.source, pattern.flags || 'g');
+                while ((match = globalPattern.exec(text)) !== null) {
+                    formulas.push({
+                        formula: match[0],
+                        type: this.detectFormulaType(match[0]),
+                        index: match.index,
+                        context: text.substring(
+                            Math.max(0, match.index - 50),
+                            Math.min(text.length, match.index + match[0].length + 50)
+                        )
+                    });
+                }
+            });
+        } else {
+            // Użyj matchAll jeśli jest dostępne
+            mathPatterns.forEach(pattern => {
+                const matches = text.matchAll(pattern);
+                for (const match of matches) {
+                    formulas.push({
+                        formula: match[0],
+                        type: this.detectFormulaType(match[0]),
+                        index: match.index,
+                        context: text.substring(
+                            Math.max(0, match.index - 50),
+                            Math.min(text.length, match.index + match[0].length + 50)
+                        )
+                    });
+                }
+            });
+        }
 
         // Renderowanie formuł do obrazków jeśli potrzeba
         for (const formula of formulas) {
@@ -415,25 +530,51 @@ class CKEParserSystem {
      * OCR dla obszarów graficznych
      */
     async performOCR(page) {
-        const viewport = page.getViewport({ scale: 2.0 });
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        // Sprawdź czy Tesseract jest dostępny
+        if (typeof Tesseract === 'undefined') {
+            console.warn('Tesseract.js nie jest załadowany - pomijam OCR');
+            return {
+                text: '',
+                words: [],
+                lines: [],
+                confidence: 0
+            };
+        }
         
-        await page.render({ canvasContext: context, viewport }).promise;
-        
-        // Użycie Tesseract.js
-        const result = await Tesseract.recognize(canvas, 'pol+eng+equ', {
-            logger: m => console.log('OCR:', m)
-        });
-        
-        return {
-            text: result.data.text,
-            words: result.data.words,
-            lines: result.data.lines,
-            confidence: result.data.confidence
-        };
+        try {
+            const viewport = page.getViewport({ scale: 2.0 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({ canvasContext: context, viewport }).promise;
+            
+            // Użycie Tesseract.js
+            const result = await Tesseract.recognize(canvas, 'pol+eng+equ', {
+                logger: m => {
+                    // Ukryj szczegółowe logi OCR, pozostaw tylko błędy
+                    if (m.status === 'error') {
+                        console.error('OCR Error:', m);
+                    }
+                }
+            });
+            
+            return {
+                text: result.data.text,
+                words: result.data.words,
+                lines: result.data.lines,
+                confidence: result.data.confidence
+            };
+        } catch (error) {
+            console.error('Błąd OCR:', error);
+            return {
+                text: '',
+                words: [],
+                lines: [],
+                confidence: 0
+            };
+        }
     }
 
     /**
@@ -444,10 +585,10 @@ class CKEParserSystem {
         Przeanalizuj strukturę arkusza egzaminacyjnego CKE.
         
         TREŚĆ ARKUSZA:
-        ${examContent.text.slice(0, 10000).join('\n')}
+        ${this.getTextContent(examContent).slice(0, 10000)}
         
         KLUCZ ODPOWIEDZI:
-        ${answerContent.text.slice(0, 5000).join('\n')}
+        ${this.getTextContent(answerContent).slice(0, 5000)}
         
         Zidentyfikuj i zwróć w formacie JSON:
         {
@@ -483,6 +624,10 @@ class CKEParserSystem {
         `;
 
         try {
+            if (!this.geminiAPI) {
+                throw new Error('Brak dostępnego API');
+            }
+            
             const response = await this.geminiAPI.generateContent(prompt);
             const structured = JSON.parse(response);
             
@@ -499,6 +644,64 @@ class CKEParserSystem {
             // Fallback do prostszej analizy
             return this.fallbackStructureAnalysis(examContent, answerContent);
         }
+    }
+
+    /**
+     * Prosta analiza struktury bez AI
+     */
+    fallbackStructureAnalysis(examContent, answerContent) {
+        console.log('Używam prostej analizy bez AI');
+        
+        const tasks = [];
+        const text = this.getTextContent(examContent);
+        
+        // Proste wykrywanie zadań po wzorcach
+        const taskPattern = /Zadanie\s+(\d+)\.?\s*([\s\S]*?)(?=Zadanie\s+\d+|$)/gi;
+        const matches = text.matchAll(taskPattern);
+        
+        let taskNumber = 1;
+        for (const match of matches) {
+            const content = match[2].trim();
+            const isMultipleChoice = /\b[ABCD]\.\s+/.test(content);
+            
+            const task = {
+                number: match[1] || taskNumber.toString(),
+                type: isMultipleChoice ? 'zamkniete' : 'otwarte',
+                content: content.substring(0, 500), // Pierwsze 500 znaków
+                options: isMultipleChoice ? this.extractOptions(content) : null,
+                correctAnswer: 'Nieznana',
+                points: 1,
+                hasImage: /rysunek|wykres|diagram/i.test(content),
+                hasFormula: /[\d+\-*/=]|\\frac|\\sqrt/.test(content),
+                topic: 'nieznany',
+                difficulty: 'średnie'
+            };
+            
+            tasks.push(task);
+            taskNumber++;
+        }
+        
+        return {
+            subject: 'nieznany',
+            examType: 'nieznany',
+            year: new Date().getFullYear().toString(),
+            tasks: tasks
+        };
+    }
+    
+    /**
+     * Wyodrębnia opcje odpowiedzi
+     */
+    extractOptions(content) {
+        const options = [];
+        const optionPattern = /([ABCD])\.\s+([^\n]+)/g;
+        const matches = content.matchAll(optionPattern);
+        
+        for (const match of matches) {
+            options.push(`${match[1]}. ${match[2].trim()}`);
+        }
+        
+        return options.length > 0 ? options : null;
     }
 
     /**
@@ -526,8 +729,8 @@ class CKEParserSystem {
             // Mapowanie formuł
             if (task.hasFormula && formulas.length > 0) {
                 const taskFormulas = formulas.filter(formula => {
-                    return task.content.includes(formula.formula) ||
-                           formula.context.includes(task.number);
+                    return (task.content && task.content.includes(formula.formula)) ||
+                           (formula.context && task.number && formula.context.includes(task.number));
                 });
                 
                 task.formulas = taskFormulas.map(f => ({
@@ -634,6 +837,77 @@ class CKEParserSystem {
         }
         
         return scheme;
+    }
+
+    /**
+     * Parsuje schemat oceniania z odpowiedzi AI
+     */
+    parseAIScoringScheme(aiResponse) {
+        const steps = [];
+        
+        try {
+            // Próbuj sparsować jako JSON
+            const parsed = JSON.parse(aiResponse);
+            if (Array.isArray(parsed)) {
+                return parsed;
+            } else if (parsed.steps && Array.isArray(parsed.steps)) {
+                return parsed.steps;
+            }
+        } catch (e) {
+            // Jeśli nie jest JSON, parsuj jako tekst
+            const lines = aiResponse.split('\n');
+            lines.forEach((line, index) => {
+                const trimmed = line.trim();
+                if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('//')) {
+                    steps.push({
+                        points: 1,
+                        description: trimmed,
+                        required: index === 0
+                    });
+                }
+            });
+        }
+        
+        return steps;
+    }
+
+    /**
+     * Pobiera tekst z zawartości PDF
+     */
+    getTextContent(content) {
+        if (!content || !content.text) return '';
+        
+        // Jeśli text jest tablicą stringów
+        if (Array.isArray(content.text) && content.text.length > 0) {
+            if (typeof content.text[0] === 'string') {
+                return content.text.join('\n');
+            }
+            // Jeśli text jest tablicą obiektów (np. z pages)
+            else if (typeof content.text[0] === 'object') {
+                return content.text
+                    .map(page => {
+                        if (typeof page === 'string') return page;
+                        if (page.raw) return page.raw;
+                        if (page.lines) return page.lines.map(l => l.text || '').join('\n');
+                        return '';
+                    })
+                    .join('\n\n');
+            }
+        }
+        
+        // Jeśli content ma pages
+        if (content.pages && Array.isArray(content.pages)) {
+            return content.pages
+                .map(page => {
+                    if (typeof page === 'string') return page;
+                    if (page.raw) return page.raw;
+                    if (page.lines) return page.lines.map(l => l.text || '').join('\n');
+                    return '';
+                })
+                .join('\n\n');
+        }
+        
+        return '';
     }
 
     /**

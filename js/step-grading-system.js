@@ -5,7 +5,7 @@
 
 class StepGradingSystem {
     constructor() {
-        this.geminiAPI = window.TaskVariantGenerator?.geminiAPI;
+        this.geminiAPI = null; // Będzie inicjalizowane później
         this.currentTask = null;
         this.gradingHistory = [];
     }

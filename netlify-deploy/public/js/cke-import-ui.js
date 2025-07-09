@@ -25,13 +25,13 @@ class CKEImportUI {
                 <div class="import-wizard">
                     <!-- Krok 1: Wybór plików -->
                     <div class="wizard-step active" id="step-1">
-                        <h3>Krok 1: Wybierz pliki PDF</h3>
+                        <h3 style="color: #ffffff;">Krok 1: Wybierz pliki PDF</h3>
                         
                         <div class="file-input-group">
                             <div class="file-input-section">
                                 <label>
                                     <span class="file-icon">📄</span>
-                                    <span>Arkusz egzaminacyjny (PDF)</span>
+                                    <span style="color: #ffffff;">Arkusz egzaminacyjny (PDF)</span>
                                     <input type="file" 
                                            id="exam-pdf" 
                                            accept=".pdf" 
@@ -43,7 +43,7 @@ class CKEImportUI {
                             <div class="file-input-section">
                                 <label>
                                     <span class="file-icon">📋</span>
-                                    <span>Klucz odpowiedzi (PDF)</span>
+                                    <span style="color: #ffffff;">Klucz odpowiedzi (PDF)</span>
                                     <input type="file" 
                                            id="answer-pdf" 
                                            accept=".pdf" 
@@ -54,7 +54,7 @@ class CKEImportUI {
                         </div>
                         
                         <div class="import-options">
-                            <h4>Opcje importu:</h4>
+                            <h4 style="color: #ffffff;">Opcje importu:</h4>
                             <label>
                                 <input type="checkbox" id="use-ocr" checked>
                                 Użyj OCR dla słabej jakości skanów
@@ -63,7 +63,7 @@ class CKEImportUI {
                                 <input type="checkbox" id="extract-images" checked>
                                 Wyodrębnij obrazki i diagramy
                             </label>
-                            <label>
+                            <label style="color: #ffffff;">
                                 <input type="checkbox" id="extract-formulas" checked>
                                 Rozpoznaj formuły matematyczne
                             </label>
@@ -81,7 +81,7 @@ class CKEImportUI {
 
                     <!-- Krok 2: Analiza -->
                     <div class="wizard-step" id="step-2" style="display: none;">
-                        <h3>Krok 2: Analiza arkusza</h3>
+                        <h3 style="color: #ffffff;">Krok 2: Analiza arkusza</h3>
                         
                         <div class="analysis-progress">
                             <div class="progress-bar">
@@ -97,7 +97,7 @@ class CKEImportUI {
 
                     <!-- Krok 3: Weryfikacja -->
                     <div class="wizard-step" id="step-3" style="display: none;">
-                        <h3>Krok 3: Weryfikacja zadań</h3>
+                        <h3 style="color: #ffffff;">Krok 3: Weryfikacja zadań</h3>
                         
                         <div class="import-summary" id="import-summary"></div>
                         
@@ -115,7 +115,7 @@ class CKEImportUI {
 
                     <!-- Krok 4: Podsumowanie -->
                     <div class="wizard-step" id="step-4" style="display: none;">
-                        <h3>Import zakończony!</h3>
+                        <h3 style="color: #ffffff;">Import zakończony!</h3>
                         
                         <div class="import-results" id="import-results"></div>
                         
@@ -132,7 +132,7 @@ class CKEImportUI {
 
                 <!-- Panel masowego importu -->
                 <div class="bulk-import-panel" id="bulk-import-panel" style="display: none;">
-                    <h3>Import masowy</h3>
+                    <h3 style="color: #ffffff;">Import masowy</h3>
                     <div class="bulk-import-controls">
                         <label>
                             Arkusze PDF:
@@ -178,10 +178,11 @@ class CKEImportUI {
                 }
 
                 .import-wizard {
-                    background: white;
+                    background: #2a2a2a;
                     border-radius: 12px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
                     padding: 30px;
+                    color: #ffffff;
                 }
 
                 .wizard-step {
@@ -200,15 +201,16 @@ class CKEImportUI {
                     flex-direction: column;
                     align-items: center;
                     padding: 40px;
-                    border: 2px dashed #ddd;
+                    border: 2px dashed #555;
                     border-radius: 8px;
                     cursor: pointer;
                     transition: all 0.3s;
+                    background: #1a1a1a;
                 }
 
                 .file-input-section label:hover {
-                    border-color: #0066cc;
-                    background: #f0f7ff;
+                    border-color: #7c3aed;
+                    background: #2a2a2a;
                 }
 
                 .file-input-section input[type="file"] {
@@ -223,14 +225,15 @@ class CKEImportUI {
                 .file-info {
                     margin-top: 10px;
                     font-size: 14px;
-                    color: #666;
+                    color: #a0a0a0;
                 }
 
                 .import-options {
-                    background: #f8f9fa;
+                    background: #1a1a1a;
                     padding: 20px;
                     border-radius: 8px;
                     margin: 20px 0;
+                    border: 1px solid #333;
                 }
 
                 .import-options label {
@@ -245,14 +248,15 @@ class CKEImportUI {
 
                 .progress-bar {
                     height: 20px;
-                    background: #f0f0f0;
+                    background: #1a1a1a;
                     border-radius: 10px;
                     overflow: hidden;
+                    border: 1px solid #333;
                 }
 
                 .progress-fill {
                     height: 100%;
-                    background: linear-gradient(90deg, #0066cc, #0052a3);
+                    background: linear-gradient(90deg, #7c3aed, #a855f7);
                     width: 0%;
                     transition: width 0.3s ease;
                 }
@@ -260,11 +264,11 @@ class CKEImportUI {
                 .progress-status {
                     text-align: center;
                     margin-top: 10px;
-                    color: #666;
+                    color: #a0a0a0;
                 }
 
                 .analysis-log {
-                    background: #f8f9fa;
+                    background: #1a1a1a;
                     padding: 15px;
                     border-radius: 8px;
                     font-family: monospace;
@@ -272,11 +276,15 @@ class CKEImportUI {
                     max-height: 200px;
                     overflow-y: auto;
                     margin-top: 20px;
+                    border: 1px solid #333;
+                    color: #a0a0a0;
                 }
 
                 .import-summary {
-                    background: #e8f4fd;
+                    background: #1a1a1a;
                     padding: 20px;
+                    border: 1px solid #333;
+                    color: #ffffff;
                     border-radius: 8px;
                     margin-bottom: 20px;
                 }
@@ -284,13 +292,14 @@ class CKEImportUI {
                 .tasks-preview {
                     max-height: 400px;
                     overflow-y: auto;
-                    border: 1px solid #ddd;
+                    border: 1px solid #333;
                     border-radius: 8px;
                     padding: 20px;
+                    background: #1a1a1a;
                 }
 
                 .task-preview-item {
-                    border-bottom: 1px solid #eee;
+                    border-bottom: 1px solid #333;
                     padding: 15px 0;
                     margin-bottom: 15px;
                 }
@@ -307,24 +316,26 @@ class CKEImportUI {
                 .task-image {
                     max-width: 300px;
                     margin: 10px 0;
-                    border: 1px solid #ddd;
+                    border: 1px solid #333;
                     border-radius: 4px;
                 }
 
                 .task-formula {
-                    background: #f0f0f0;
+                    background: #2a2a2a;
                     padding: 5px 10px;
                     border-radius: 4px;
                     font-family: 'Courier New', monospace;
                     display: inline-block;
                     margin: 5px 0;
+                    color: #7c3aed;
+                    border: 1px solid #333;
                 }
 
                 .task-metadata {
                     display: flex;
                     gap: 15px;
                     font-size: 14px;
-                    color: #666;
+                    color: #a0a0a0;
                     margin-top: 10px;
                 }
 
@@ -345,26 +356,29 @@ class CKEImportUI {
                 }
 
                 .btn-primary {
-                    background: #0066cc;
+                    background: #7c3aed;
                     color: white;
                 }
 
                 .btn-primary:hover:not(:disabled) {
-                    background: #0052a3;
+                    background: #a855f7;
                 }
 
                 .btn-primary:disabled {
-                    background: #ccc;
+                    background: #444;
                     cursor: not-allowed;
+                    color: #666;
                 }
 
                 .btn-secondary {
-                    background: #e0e0e0;
-                    color: #333;
+                    background: #2a2a2a;
+                    color: #ffffff;
+                    border: 1px solid #333;
                 }
 
                 .btn-secondary:hover {
-                    background: #d0d0d0;
+                    background: #333;
+                    border-color: #7c3aed;
                 }
 
                 .import-results {
@@ -461,7 +475,7 @@ class CKEImportUI {
         if (file) {
             document.getElementById('exam-file-info').textContent = 
                 `✓ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-            this.checkIfReadyToImport();
+            CKEImportUI.checkIfReadyToImport();
         }
     }
 
@@ -470,7 +484,7 @@ class CKEImportUI {
         if (file) {
             document.getElementById('answer-file-info').textContent = 
                 `✓ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-            this.checkIfReadyToImport();
+            CKEImportUI.checkIfReadyToImport();
         }
     }
 
@@ -497,9 +511,9 @@ class CKEImportUI {
         }
 
         // Przejdź do kroku 2
-        this.showStep(2);
+        CKEImportUI.showStep(2);
         
-        const instance = this.getInstance();
+        const instance = CKEImportUI.getInstance();
         const options = {
             useOCR: document.getElementById('use-ocr').checked,
             extractImages: document.getElementById('extract-images').checked,
@@ -508,11 +522,11 @@ class CKEImportUI {
 
         try {
             // Aktualizacja statusu
-            this.updateAnalysisStatus('Inicjalizacja parsera CKE...', 10);
+            CKEImportUI.updateAnalysisStatus('Inicjalizacja parsera CKE...', 10);
             await instance.parser.initialize();
             
-            this.updateAnalysisStatus('Analizowanie arkusza egzaminacyjnego...', 30);
-            this.addToLog('📄 Przetwarzanie: ' + examFile.name);
+            CKEImportUI.updateAnalysisStatus('Analizowanie arkusza egzaminacyjnego...', 30);
+            CKEImportUI.addToLog('📄 Przetwarzanie: ' + examFile.name);
             
             // Parsowanie
             const result = await instance.parser.parseOfficialExam(
@@ -522,23 +536,23 @@ class CKEImportUI {
             );
             
             if (result.success) {
-                this.updateAnalysisStatus('Analiza zakończona pomyślnie!', 100);
-                this.addToLog(`✅ Znaleziono ${result.tasks.length} zadań`);
+                CKEImportUI.updateAnalysisStatus('Analiza zakończona pomyślnie!', 100);
+                CKEImportUI.addToLog(`✅ Znaleziono ${result.tasks.length} zadań`);
                 
                 // Zapisz wyniki
                 instance.currentImport = result;
                 instance.importedTasks = result.tasks;
                 
                 // Pokaż weryfikację
-                setTimeout(() => this.showVerification(result), 1000);
+                setTimeout(() => CKEImportUI.showVerification(result), 1000);
             } else {
                 throw new Error(result.error || 'Nieznany błąd parsowania');
             }
             
         } catch (error) {
             console.error('Błąd importu:', error);
-            this.updateAnalysisStatus('❌ Błąd: ' + error.message, 0);
-            this.addToLog('❌ Import nieudany: ' + error.message);
+            CKEImportUI.updateAnalysisStatus('❌ Błąd: ' + error.message, 0);
+            CKEImportUI.addToLog('❌ Import nieudany: ' + error.message);
             
             // Pokaż przycisk powrotu
             setTimeout(() => {
@@ -555,7 +569,7 @@ class CKEImportUI {
      * Pokazywanie weryfikacji
      */
     static showVerification(importResult) {
-        this.showStep(3);
+        CKEImportUI.showStep(3);
         
         // Podsumowanie
         document.getElementById('import-summary').innerHTML = `
@@ -581,7 +595,7 @@ class CKEImportUI {
         // Podgląd zadań
         const preview = document.getElementById('tasks-preview');
         preview.innerHTML = importResult.tasks.map((task, index) => 
-            this.renderTaskPreview(task, index)
+            CKEImportUI.renderTaskPreview(task, index)
         ).join('');
     }
 
@@ -666,7 +680,7 @@ class CKEImportUI {
      * Potwierdzenie importu
      */
     static async confirmImport() {
-        const instance = this.getInstance();
+        const instance = CKEImportUI.getInstance();
         const tasks = instance.importedTasks;
         
         if (!tasks || tasks.length === 0) {
@@ -676,10 +690,10 @@ class CKEImportUI {
         
         try {
             // Zapisz zadania
-            const savedCount = await this.saveTasks(tasks);
+            const savedCount = await CKEImportUI.saveTasks(tasks);
             
             // Pokaż wyniki
-            this.showStep(4);
+            CKEImportUI.showStep(4);
             document.getElementById('import-results').innerHTML = `
                 <div class="success-icon">✅</div>
                 <h3>Import zakończony pomyślnie!</h3>
@@ -731,7 +745,7 @@ class CKEImportUI {
      * Edycja zadania
      */
     static editTask(index) {
-        const instance = this.getInstance();
+        const instance = CKEImportUI.getInstance();
         const task = instance.importedTasks[index];
         
         // Tu można dodać modal z edytorem zadania
@@ -740,7 +754,7 @@ class CKEImportUI {
         if (newContent !== null) {
             task.tresc = newContent;
             // Odśwież podgląd
-            this.showVerification(instance.currentImport);
+            CKEImportUI.showVerification(instance.currentImport);
         }
     }
 
@@ -767,21 +781,21 @@ class CKEImportUI {
     static bulkAnswerFiles = [];
 
     static handleBulkExams(event) {
-        this.bulkExamFiles = Array.from(event.target.files);
-        this.updateBulkStatus();
+        CKEImportUI.bulkExamFiles = Array.from(event.target.files);
+        CKEImportUI.updateBulkStatus();
     }
 
     static handleBulkAnswers(event) {
-        this.bulkAnswerFiles = Array.from(event.target.files);
-        this.updateBulkStatus();
+        CKEImportUI.bulkAnswerFiles = Array.from(event.target.files);
+        CKEImportUI.updateBulkStatus();
     }
 
     static updateBulkStatus() {
         const status = document.getElementById('bulk-import-status');
         status.innerHTML = `
-            <div>Arkusze: ${this.bulkExamFiles.length} plików</div>
-            <div>Klucze: ${this.bulkAnswerFiles.length} plików</div>
-            ${this.bulkExamFiles.length !== this.bulkAnswerFiles.length ? 
+            <div>Arkusze: ${CKEImportUI.bulkExamFiles.length} plików</div>
+            <div>Klucze: ${CKEImportUI.bulkAnswerFiles.length} plików</div>
+            ${CKEImportUI.bulkExamFiles.length !== CKEImportUI.bulkAnswerFiles.length ? 
                 '<div class="validation-error">⚠️ Liczba arkuszy i kluczy musi być taka sama!</div>' : 
                 ''
             }
@@ -789,27 +803,27 @@ class CKEImportUI {
     }
 
     static async startBulkImport() {
-        if (this.bulkExamFiles.length !== this.bulkAnswerFiles.length) {
+        if (CKEImportUI.bulkExamFiles.length !== CKEImportUI.bulkAnswerFiles.length) {
             alert('Liczba arkuszy i kluczy odpowiedzi musi być taka sama!');
             return;
         }
         
-        if (this.bulkExamFiles.length === 0) {
+        if (CKEImportUI.bulkExamFiles.length === 0) {
             alert('Wybierz pliki do importu');
             return;
         }
         
-        const instance = this.getInstance();
+        const instance = CKEImportUI.getInstance();
         const status = document.getElementById('bulk-import-status');
         let allTasks = [];
         
-        for (let i = 0; i < this.bulkExamFiles.length; i++) {
-            status.innerHTML += `<div>Przetwarzanie ${i + 1}/${this.bulkExamFiles.length}: ${this.bulkExamFiles[i].name}...</div>`;
+        for (let i = 0; i < CKEImportUI.bulkExamFiles.length; i++) {
+            status.innerHTML += `<div>Przetwarzanie ${i + 1}/${CKEImportUI.bulkExamFiles.length}: ${CKEImportUI.bulkExamFiles[i].name}...</div>`;
             
             try {
                 const result = await instance.parser.parseOfficialExam(
-                    this.bulkExamFiles[i],
-                    this.bulkAnswerFiles[i],
+                    CKEImportUI.bulkExamFiles[i],
+                    CKEImportUI.bulkAnswerFiles[i],
                     {
                         useOCR: true,
                         extractImages: true,
@@ -830,7 +844,7 @@ class CKEImportUI {
         }
         
         if (allTasks.length > 0) {
-            const saved = await this.saveTasks(allTasks);
+            const saved = await CKEImportUI.saveTasks(allTasks);
             status.innerHTML += `<div class="success-icon">✅ Zaimportowano łącznie ${saved} zadań!</div>`;
         }
     }
@@ -858,7 +872,7 @@ class CKEImportUI {
     }
 
     static newImport() {
-        this.showStep(1);
+        CKEImportUI.showStep(1);
         document.getElementById('exam-pdf').value = '';
         document.getElementById('answer-pdf').value = '';
         document.getElementById('exam-file-info').textContent = '';
@@ -872,10 +886,10 @@ class CKEImportUI {
     }
 
     static getInstance() {
-        if (!this._instance) {
-            this._instance = new CKEImportUI();
+        if (!CKEImportUI._instance) {
+            CKEImportUI._instance = new CKEImportUI();
         }
-        return this._instance;
+        return CKEImportUI._instance;
     }
 }
 

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizMaster - Diagnostyka Modułów</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Załaduj wszystkie wymagane biblioteki -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+    
+    <!-- Załaduj moduły aplikacji -->
+    <script src="js/zadania-db.js"></script>
+    <script src="js/docx-parser.js"></script>
+    <script src="js/advanced-pdf-parser.js"></script>
+    <script src="js/pdf-import-manager.js"></script>
+    <script src="js/task-variant-generator.js"></script>
+    <script src="js/achievements-system.js"></script>
+    <script src="js/exam-templates-bank.js"></script>
+    <script src="js/exam-scheduler.js"></script>
+    <script src="js/recommendation-system.js"></script>
+    <script src="js/competition-system.js"></script>
+    <script src="js/test-data-generator.js"></script>
+    <script src="js/advanced-math-module.js"></script>
+    <script src="js/database-sync.js"></script>
+    <script src="js/ui-improvements.js"></script>
+    <script src="js/pdf-export.js"></script>
+    <script src="js/push-notifications.js"></script>
+    <script src="js/quick-review-mode.js"></script>
+    <script src="js/parent-panel.js"></script>
+    <script src="js/extended-gamification.js"></script>
+    <script src="js/navigation-integration.js"></script>
+    <script src="js/teacher-enhancements.js"></script>
+    <script src="js/cke-parser-system.js"></script>
+    <script src="js/step-grading-system.js"></script>
+    <script src="js/ai-grader.js"></script>
+    <script src="js/cke-import-ui.js"></script>
+    
+    <!-- Załaduj ulepszoną inicjalizację -->
+    <script src="js/init-enhanced.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-8">
+        <h1 class="text-4xl font-bold mb-8 text-center">
+            <i class="fas fa-stethoscope"></i> QuizMaster - Diagnostyka Modułów
+        </h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Panel bibliotek zewnętrznych -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">
+                    <i class="fas fa-book"></i> Biblioteki zewnętrzne
+                </h2>
+                <div id="libraries-status" class="space-y-2"></div>
+            </div>
+            
+            <!-- Panel modułów aplikacji -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">
+                    <i class="fas fa-puzzle-piece"></i> Moduły aplikacji
+                </h2>
+                <div id="modules-status" class="space-y-2"></div>
+            </div>
+            
+            <!-- Panel danych -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">
+                    <i class="fas fa-database"></i> Stan danych
+                </h2>
+                <div id="data-status" class="space-y-2"></div>
+            </div>
+            
+            <!-- Panel testów funkcjonalnych -->
+            <div class="bg-gray-800 rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4">
+                    <i class="fas fa-vial"></i> Testy funkcjonalne
+                </h2>
+                <div id="functional-tests" class="space-y-2"></div>
+            </div>
+        </div>
+        
+        <!-- Konsola diagnostyczna -->
+        <div class="mt-8 bg-gray-800 rounded-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">
+                <i class="fas fa-terminal"></i> Konsola diagnostyczna
+            </h2>
+            <div id="console-output" class="bg-black rounded p-4 font-mono text-sm text-green-400 h-64 overflow-y-auto"></div>
+        </div>
+        
+        <!-- Przyciski akcji -->
+        <div class="mt-8 flex gap-4 justify-center">
+            <button onclick="runFullDiagnostics()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold">
+                <i class="fas fa-sync"></i> Uruchom pełną diagnostykę
+            </button>
+            <button onclick="clearAllData()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold">
+                <i class="fas fa-trash"></i> Wyczyść wszystkie dane
+            </button>
+            <button onclick="initializeTestData()" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold">
+                <i class="fas fa-database"></i> Załaduj dane testowe
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        const consoleOutput = document.getElementById('console-output');
+        
+        // Przechwytuj console.log
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsole('LOG', args.join(' '), 'text-green-400');
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToConsole('WARN', args.join(' '), 'text-yellow-400');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsole('ERROR', args.join(' '), 'text-red-400');
+        };
+        
+        function addToConsole(type, message, colorClass) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = colorClass;
+            entry.innerHTML = `[${timestamp}] ${type}: ${message}`;
+            consoleOutput.appendChild(entry);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        function checkLibrary(name, check) {
+            try {
+                const result = check();
+                return { name, status: result ? 'OK' : 'Brak', details: result };
+            } catch (e) {
+                return { name, status: 'Błąd', details: e.message };
+            }
+        }
+        
+        function checkModule(name, className) {
+            try {
+                const exists = typeof window[className] !== 'undefined';
+                const instance = window[className.charAt(0).toLowerCase() + className.slice(1)];
+                return { 
+                    name, 
+                    status: exists ? 'OK' : 'Brak', 
+                    hasInstance: instance !== undefined,
+                    className 
+                };
+            } catch (e) {
+                return { name, status: 'Błąd', details: e.message };
+            }
+        }
+        
+        function runFullDiagnostics() {
+            console.log('=== Rozpoczęcie pełnej diagnostyki ===');
+            
+            // Sprawdź biblioteki
+            const libraries = [
+                checkLibrary('React', () => typeof React !== 'undefined' && React.version),
+                checkLibrary('ReactDOM', () => typeof ReactDOM !== 'undefined'),
+                checkLibrary('Babel', () => typeof Babel !== 'undefined'),
+                checkLibrary('PDF.js', () => typeof pdfjsLib !== 'undefined'),
+                checkLibrary('XLSX', () => typeof XLSX !== 'undefined'),
+                checkLibrary('CryptoJS', () => typeof CryptoJS !== 'undefined'),
+                checkLibrary('JSZip', () => typeof JSZip !== 'undefined'),
+                checkLibrary('Chart.js', () => typeof Chart !== 'undefined'),
+                checkLibrary('Tesseract.js', () => typeof Tesseract !== 'undefined')
+            ];
+            
+            // Sprawdź moduły
+            const modules = [
+                checkModule('AuthManager', 'AuthManager'),
+                checkModule('NavigationIntegration', 'NavigationIntegration'),
+                checkModule('AIGrader', 'AIGrader'),
+                checkModule('AchievementsSystem', 'AchievementsSystem'),
+                checkModule('RecommendationSystem', 'RecommendationSystem'),
+                checkModule('CKEParserSystem', 'CKEParserSystem'),
+                checkModule('StepGradingSystem', 'StepGradingSystem'),
+                checkModule('CKEImportUI', 'CKEImportUI'),
+                checkModule('TeacherEnhancements', 'TeacherEnhancements'),
+                checkModule('CompetitionSystem', 'CompetitionSystem'),
+                checkModule('AdvancedMathModule', 'AdvancedMathModule'),
+                checkModule('DatabaseSync', 'DatabaseSync'),
+                checkModule('PDFExportManager', 'PDFExportManager'),
+                checkModule('PushNotificationManager', 'PushNotificationManager'),
+                checkModule('QuickReviewMode', 'QuickReviewMode'),
+                checkModule('ParentPanel', 'ParentPanel'),
+                checkModule('ExtendedGamificationSystem', 'ExtendedGamificationSystem')
+            ];
+            
+            // Wyświetl wyniki
+            displayResults('libraries-status', libraries);
+            displayResults('modules-status', modules);
+            
+            // Sprawdź dane
+            checkDataStatus();
+            
+            // Sprawdź funkcjonalności
+            checkFunctionalTests();
+        }
+        
+        function displayResults(elementId, results) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+            
+            results.forEach(result => {
+                const div = document.createElement('div');
+                const statusClass = result.status === 'OK' ? 'text-green-400' : 
+                                   result.status === 'Brak' ? 'text-red-400' : 'text-yellow-400';
+                const instanceInfo = result.hasInstance !== undefined ? 
+                    (result.hasInstance ? ' ✓ Instancja' : ' ✗ Brak instancji') : '';
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span>${result.name}</span>
+                        <span class="${statusClass}">
+                            ${result.status} ${result.details || ''} ${instanceInfo}
+                        </span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function checkDataStatus() {
+            const dataChecks = [
+                {
+                    name: 'Użytkownicy',
+                    check: () => {
+                        const users = JSON.parse(localStorage.getItem('users') || '[]');
+                        return `${users.length} użytkowników`;
+                    }
+                },
+                {
+                    name: 'Zadania',
+                    check: () => {
+                        const tasks = JSON.parse(localStorage.getItem('zadaniaDB') || '[]');
+                        return `${tasks.length} zadań`;
+                    }
+                },
+                {
+                    name: 'Wyniki egzaminów',
+                    check: () => {
+                        const results = JSON.parse(localStorage.getItem('examResults') || '[]');
+                        return `${results.length} wyników`;
+                    }
+                },
+                {
+                    name: 'Sesja użytkownika',
+                    check: () => {
+                        const session = sessionStorage.getItem('currentUser');
+                        return session ? 'Aktywna' : 'Brak';
+                    }
+                }
+            ];
+            
+            const container = document.getElementById('data-status');
+            container.innerHTML = '';
+            
+            dataChecks.forEach(check => {
+                const div = document.createElement('div');
+                try {
+                    const result = check.check();
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span>${check.name}</span>
+                            <span class="text-blue-400">${result}</span>
+                        </div>
+                    `;
+                } catch (e) {
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span>${check.name}</span>
+                            <span class="text-red-400">Błąd: ${e.message}</span>
+                        </div>
+                    `;
+                }
+                container.appendChild(div);
+            });
+        }
+        
+        function checkFunctionalTests() {
+            const tests = [
+                {
+                    name: 'QuizMaster global',
+                    test: () => typeof window.QuizMaster !== 'undefined'
+                },
+                {
+                    name: 'Navigation Integration',
+                    test: () => window.navigationIntegration && window.navigationIntegration.initialized
+                },
+                {
+                    name: 'AI Grader gotowy',
+                    test: () => window.aiGrader !== undefined
+                },
+                {
+                    name: 'Safe module call',
+                    test: () => typeof window.safeModuleCall === 'function'
+                }
+            ];
+            
+            const container = document.getElementById('functional-tests');
+            container.innerHTML = '';
+            
+            tests.forEach(test => {
+                const div = document.createElement('div');
+                try {
+                    const result = test.test();
+                    const statusClass = result ? 'text-green-400' : 'text-red-400';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span>${test.name}</span>
+                            <span class="${statusClass}">${result ? 'Działa' : 'Nie działa'}</span>
+                        </div>
+                    `;
+                } catch (e) {
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span>${test.name}</span>
+                            <span class="text-red-400">Błąd: ${e.message}</span>
+                        </div>
+                    `;
+                }
+                container.appendChild(div);
+            });
+        }
+        
+        function clearAllData() {
+            if (confirm('Czy na pewno chcesz usunąć wszystkie dane? Ta operacja jest nieodwracalna!')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                console.log('Wszystkie dane zostały usunięte');
+                location.reload();
+            }
+        }
+        
+        function initializeTestData() {
+            console.log('Inicjalizacja danych testowych...');
+            
+            // Dodaj testowych użytkowników
+            if (typeof AuthManager !== 'undefined') {
+                try {
+                    AuthManager.createUser('test_teacher', 'test123', 'teacher');
+                    AuthManager.createUser('test_student', 'test123', 'student', 'egzamin ósmoklasisty');
+                    AuthManager.createUser('test_parent', 'test123', 'parent');
+                    console.log('Utworzono testowych użytkowników');
+                } catch (e) {
+                    console.warn('Niektórzy użytkownicy już istnieją');
+                }
+            }
+            
+            // Dodaj testowe zadania
+            const testTasks = [
+                {
+                    id: 'test_' + Date.now(),
+                    przedmiot: 'Matematyka',
+                    temat: 'Test diagnostyczny',
+                    poziom: 'podstawowy',
+                    typ: 'zamkniete',
+                    tresc: 'Ile to jest 2 + 2?',
+                    odpowiedzi: ['3', '4', '5', '6'],
+                    poprawna: '4',
+                    punkty: 1
+                }
+            ];
+            
+            const existingTasks = JSON.parse(localStorage.getItem('zadaniaDB') || '[]');
+            localStorage.setItem('zadaniaDB', JSON.stringify([...existingTasks, ...testTasks]));
+            console.log('Dodano testowe zadania');
+            
+            setTimeout(() => runFullDiagnostics(), 1000);
+        }
+        
+        // Uruchom diagnostykę po załadowaniu
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                console.log('Automatyczne uruchomienie diagnostyki...');
+                runFullDiagnostics();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
