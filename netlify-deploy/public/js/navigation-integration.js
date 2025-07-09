@@ -19,7 +19,7 @@ class NavigationIntegration {
   async init() {
     try {
       // Inicjalizuj moduły
-      this.modules.pdfExport = new PDFExporter();
+      this.modules.pdfExport = new PDFExportManager();
       this.modules.pushNotifications = new PushNotificationManager();
       this.modules.quickReview = new QuickReviewMode();
       this.modules.parentPanel = new ParentPanel();
@@ -93,8 +93,8 @@ class NavigationIntegration {
     // Modyfikuj AuthManager aby obsługiwał role rodzica
     if (window.AuthManager) {
       const originalLogin = window.AuthManager.login;
-      window.AuthManager.login = async function(username, password) {
-        const result = await originalLogin.call(this, username, password);
+      window.AuthManager.login = function(username, password) {
+        const result = originalLogin.call(this, username, password);
         
         // Sprawdź czy to konto rodzica
         if (username.startsWith('rodzic.') || username.includes('.rodzic')) {
