@@ -19,17 +19,17 @@ class NavigationIntegration {
   async init() {
     try {
       // Inicjalizuj moduły
-      this.modules.pdfExport = new PDFExportManager();
+      this.modules.pdfExport = window.PDFExporter ? new PDFExporter() : null;
       this.modules.pushNotifications = new PushNotificationManager();
       this.modules.quickReview = new QuickReviewMode();
       this.modules.parentPanel = new ParentPanel();
       this.modules.gamification = new ExtendedGamificationSystem();
 
       // Inicjalizuj każdy moduł
-      await this.modules.pushNotifications.init();
-      this.modules.quickReview.init();
-      this.modules.parentPanel.init();
-      this.modules.gamification.initializeSystem();
+      if (this.modules.pushNotifications) await this.modules.pushNotifications.init();
+      if (this.modules.quickReview) this.modules.quickReview.init();
+      if (this.modules.parentPanel) this.modules.parentPanel.init();
+      if (this.modules.gamification) this.modules.gamification.initializeSystem();
 
       this.initialized = true;
       console.log('Wszystkie moduły zostały zainicjalizowane');
