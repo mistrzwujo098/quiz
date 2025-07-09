@@ -1,6 +1,6 @@
 /**
- * System inteligentnego oceniania odpowiedzi z wykorzystaniem AI
- * Integruje parsowanie CKE, ocenianie krokowe i analizę odpowiedzi
+ * System oceniania zadań otwartych z wykorzystaniem AI
+ * Integruje parsowanie CKE z systemem oceniania krokowego
  */
 
 class AIGrader {
@@ -9,244 +9,185 @@ class AIGrader {
         this.stepGrading = new StepGradingSystem();
         this.ckeParser = new CKEParserSystem();
         this.initialized = false;
-        this.gradingCache = new Map();
     }
 
     async initialize() {
         if (this.initialized) return;
         
-        // Inicjalizacja modułów
-        await this.ckeParser.initialize();
-        
-        // Ładowanie modeli oceniania
-        await this.loadGradingModels();
-        
+        await this.stepGrading.initialize?.();
+        await this.ckeParser.initialize?.();
         this.initialized = true;
     }
 
     /**
-     * Ładowanie specjalistycznych modeli oceniania
-     */
-    async loadGradingModels() {
-        this.gradingModels = {
-            matematyka: {
-                patterns: [
-                    { type: 'equation_solving', weight: 1.0 },
-                    { type: 'geometric_proof', weight: 0.8 },
-                    { type: 'word_problem', weight: 0.9 }
-                ],
-                specificCriteria: {
-                    requiresSteps: true,
-                    requiresUnits: true,
-                    precisionMatters: true
-                }
-            },
-            polski: {
-                patterns: [
-                    { type: 'essay', weight: 1.0 },
-                    { type: 'interpretation', weight: 0.9 },
-                    { type: 'grammar', weight: 0.7 }
-                ],
-                specificCriteria: {
-                    requiresArguments: true,
-                    checkSpelling: true,
-                    styleMatters: true
-                }
-            },
-            fizyka: {
-                patterns: [
-                    { type: 'problem_solving', weight: 1.0 },
-                    { type: 'concept_explanation', weight: 0.8 },
-                    { type: 'experimental_analysis', weight: 0.9 }
-                ],
-                specificCriteria: {
-                    requiresFormulas: true,
-                    requiresUnits: true,
-                    requiresDiagrams: false
-                }
-            }
-        };
-    }
-
-    /**
-     * Główna funkcja oceniania odpowiedzi
+     * Ocenianie pojedynczej odpowiedzi
      */
     async gradeAnswer(task, studentAnswer, options = {}) {
         await this.initialize();
         
         const config = {
-            useCache: options.useCache !== false,
-            detailed: options.detailed !== false,
+            useStepGrading: options.useStepGrading !== false,
+            provideFeedback: options.provideFeedback !== false,
             compareWithModel: options.compareWithModel || false,
-            studentId: options.studentId || 'anonymous',
+            strictMode: options.strictMode || false,
             ...options
         };
 
-        // Sprawdzenie cache
-        const cacheKey = this.generateCacheKey(task.id, studentAnswer);
-        if (config.useCache && this.gradingCache.has(cacheKey)) {
-            return this.gradingCache.get(cacheKey);
-        }
-
         try {
-            // 1. Analiza typu zadania i dobór metody oceniania
-            const taskAnalysis = await this.analyzeTaskType(task);
+            // Określ typ zadania i metodę oceniania
+            const gradingMethod = this.determineGradingMethod(task);
             
-            // 2. Ocenianie odpowiednie do typu
-            let gradingResult;
-            
-            if (task.typ === 'zamkniete') {
-                gradingResult = this.gradeClosedQuestion(task, studentAnswer);
-            } else {
-                gradingResult = await this.gradeOpenQuestion(task, studentAnswer, taskAnalysis, config);
+            let result;
+            switch (gradingMethod) {
+                case 'closed':
+                    result = await this.gradeClosedQuestion(task, studentAnswer);
+                    break;
+                case 'open-simple':
+                    result = await this.gradeSimpleOpenQuestion(task, studentAnswer, config);
+                    break;
+                case 'open-complex':
+                    result = await this.gradeComplexOpenQuestion(task, studentAnswer, config);
+                    break;
+                case 'math':
+                    result = await this.gradeMathQuestion(task, studentAnswer, config);
+                    break;
+                default:
+                    result = await this.gradeGenericQuestion(task, studentAnswer, config);
             }
-            
-            // 3. Dodatkowa analiza jeśli wymagana
-            if (config.detailed) {
-                gradingResult.detailedAnalysis = await this.performDetailedAnalysis(
-                    task, studentAnswer, gradingResult
-                );
-            }
-            
-            // 4. Porównanie z modelem jeśli dostępne
-            if (config.compareWithModel && task.modelAnswer) {
-                gradingResult.modelComparison = await this.compareWithModel(
-                    studentAnswer, task.modelAnswer
-                );
-            }
-            
-            // 5. Generowanie raportu
-            gradingResult.report = await this.generateGradingReport(gradingResult, task, config);
-            
-            // Cache wyniku
-            if (config.useCache) {
-                this.gradingCache.set(cacheKey, gradingResult);
-            }
-            
-            // Zapisz do historii
-            this.saveToHistory(task, studentAnswer, gradingResult, config);
-            
-            return gradingResult;
-            
+
+            // Dodaj metadane
+            result.metadata = {
+                gradingMethod,
+                timestamp: new Date().toISOString(),
+                aiModel: 'Gemini Pro',
+                confidence: result.confidence || 0
+            };
+
+            return result;
+
         } catch (error) {
             console.error('Błąd oceniania:', error);
             return {
                 success: false,
                 error: error.message,
-                points: 0,
-                maxPoints: task.punkty,
-                feedback: ['Wystąpił błąd podczas oceniania. Sprawdź odpowiedź ręcznie.']
+                score: 0,
+                maxScore: task.punkty || 0
             };
         }
     }
 
     /**
-     * Analiza typu zadania
+     * Określanie metody oceniania
      */
-    async analyzeTaskType(task) {
-        const analysis = {
-            subject: this.detectSubject(task),
-            category: task.kategoria || 'general',
-            complexity: this.assessComplexity(task),
-            requiredSkills: [],
-            gradingStrategy: 'standard'
-        };
+    determineGradingMethod(task) {
+        if (task.typ === 'zamkniete') return 'closed';
         
-        // Użyj AI do głębszej analizy
-        if (this.geminiAPI) {
-            const prompt = `
-            Przeanalizuj to zadanie egzaminacyjne i określ:
-            1. Główne umiejętności wymagane do rozwiązania
-            2. Typ rozumowania (analityczne, twórcze, pamięciowe)
-            3. Zalecana strategia oceniania
-            
-            Zadanie: ${task.tresc}
-            Przedmiot: ${task.przedmiot}
-            Punkty: ${task.punkty}
-            `;
-            
-            try {
-                const aiAnalysis = await this.geminiAPI.generateContent(prompt);
-                Object.assign(analysis, this.parseAIAnalysis(aiAnalysis));
-            } catch (error) {
-                console.error('Błąd analizy AI:', error);
+        if (task.typ === 'otwarte') {
+            if (task.punkty === 1) return 'open-simple';
+            if (task.przedmiot?.includes('matematyka') || task.kategoria?.includes('obliczenia')) {
+                return 'math';
             }
+            return 'open-complex';
         }
         
-        return analysis;
+        return 'generic';
     }
 
     /**
-     * Ocenianie zadań zamkniętych
+     * Ocenianie zadania zamkniętego
      */
-    gradeClosedQuestion(task, studentAnswer) {
-        const isCorrect = this.normalizeAnswer(studentAnswer) === 
-                         this.normalizeAnswer(task.poprawna);
+    async gradeClosedQuestion(task, studentAnswer) {
+        const isCorrect = this.normalizeAnswer(studentAnswer) === this.normalizeAnswer(task.poprawna);
         
         return {
             success: true,
-            points: isCorrect ? task.punkty : 0,
-            maxPoints: task.punkty,
-            isCorrect: isCorrect,
-            correctAnswer: task.poprawna,
-            studentAnswer: studentAnswer,
+            score: isCorrect ? task.punkty : 0,
+            maxScore: task.punkty,
+            isCorrect,
             feedback: isCorrect ? 
-                ['✅ Odpowiedź poprawna!'] : 
-                [`❌ Odpowiedź niepoprawna. Poprawna odpowiedź to: ${task.poprawna}`],
+                'Odpowiedź poprawna!' : 
+                `Odpowiedź niepoprawna. Poprawna odpowiedź to: ${task.poprawna}`,
             confidence: 100
         };
     }
 
     /**
-     * Ocenianie zadań otwartych
+     * Ocenianie prostego zadania otwartego
      */
-    async gradeOpenQuestion(task, studentAnswer, taskAnalysis, config) {
-        // Użyj systemu oceniania krokowego
-        const stepGradingData = await this.stepGrading.initializeGrading(task, studentAnswer);
-        
-        // Dodatkowa analiza AI
-        const aiGrading = await this.performAIGrading(task, studentAnswer, taskAnalysis);
-        
-        // Połączenie wyników
-        const combinedResult = this.combineGradingResults(stepGradingData, aiGrading);
-        
-        // Specyficzne kryteria przedmiotowe
-        if (taskAnalysis.subject && this.gradingModels[taskAnalysis.subject]) {
-            await this.applySubjectSpecificCriteria(
-                combinedResult, 
-                task, 
-                studentAnswer, 
-                this.gradingModels[taskAnalysis.subject]
-            );
-        }
-        
-        return {
-            success: true,
-            points: combinedResult.finalScore,
-            maxPoints: task.punkty,
-            stepBreakdown: stepGradingData.gradingPlan.steps.map(step => ({
-                name: step.name,
-                points: step.points,
-                awarded: stepGradingData.initialAnalysis.identifiedSteps
-                    .find(s => s.step.id === step.id)?.pointsAwarded || 0
-            })),
-            feedback: combinedResult.feedback,
-            confidence: combinedResult.confidence,
-            aiInsights: aiGrading.insights,
-            gradingDetails: stepGradingData
-        };
-    }
-
-    /**
-     * Ocenianie AI
-     */
-    async performAIGrading(task, studentAnswer, taskAnalysis) {
+    async gradeSimpleOpenQuestion(task, studentAnswer, config) {
         const prompt = `
-        Oceń odpowiedź ucznia na to zadanie egzaminacyjne.
+        Oceń odpowiedź ucznia na zadanie.
         
         ZADANIE:
         ${task.tresc}
-        ${task.obrazki ? 'Zadanie zawiera obrazek/diagram.' : ''}
+        
+        POPRAWNA ODPOWIEDŹ/KRYTERIA:
+        ${task.poprawna || task.kryteriaOceniania || 'Brak wzorca odpowiedzi'}
+        
+        ODPOWIEDŹ UCZNIA:
+        ${studentAnswer}
+        
+        Przyznaj 1 punkt jeśli odpowiedź jest poprawna, 0 punktów jeśli niepoprawna.
+        Weź pod uwagę:
+        - Merytoryczną poprawność
+        - Dopuszczalne są drobne błędy językowe
+        - Różne poprawne sformułowania tej samej odpowiedzi
+        
+        Zwróć w formacie JSON:
+        {
+            "score": 0 lub 1,
+            "isCorrect": true/false,
+            "feedback": "krótkie uzasadnienie",
+            "confidence": liczba 0-100
+        }
+        `;
+
+        try {
+            const response = await this.geminiAPI.generateContent(prompt);
+            const result = JSON.parse(response);
+            
+            return {
+                success: true,
+                score: result.score,
+                maxScore: 1,
+                isCorrect: result.isCorrect,
+                feedback: result.feedback,
+                confidence: result.confidence
+            };
+        } catch (error) {
+            return this.fallbackGrading(task, studentAnswer);
+        }
+    }
+
+    /**
+     * Ocenianie złożonego zadania otwartego
+     */
+    async gradeComplexOpenQuestion(task, studentAnswer, config) {
+        if (config.useStepGrading && task.punkty > 1) {
+            // Użyj systemu oceniania krokowego
+            const gradingData = await this.stepGrading.initializeGrading(task, studentAnswer);
+            const analysis = gradingData.initialAnalysis;
+            
+            return {
+                success: true,
+                score: analysis.totalPoints,
+                maxScore: task.punkty,
+                isCorrect: analysis.totalPoints === task.punkty,
+                feedback: analysis.feedback.join('\n'),
+                stepAnalysis: analysis,
+                confidence: analysis.confidence
+            };
+        }
+        
+        // Standardowe ocenianie AI
+        const prompt = `
+        Oceń szczegółowo odpowiedź ucznia na zadanie otwarte.
+        
+        ZADANIE:
+        ${task.tresc}
+        ${task.obrazki ? '[Zadanie zawiera obrazki/diagramy]' : ''}
+        
+        Maksymalna liczba punktów: ${task.punkty}
         
         KRYTERIA OCENIANIA:
         ${JSON.stringify(task.kryteriaOceniania || task.schematOceniania || 'Standardowe kryteria', null, 2)}
@@ -254,630 +195,318 @@ class AIGrader {
         ODPOWIEDŹ UCZNIA:
         ${studentAnswer}
         
-        Maksymalna liczba punktów: ${task.punkty}
-        Przedmiot: ${task.przedmiot}
+        Oceń odpowiedź przyznając punkty od 0 do ${task.punkty}.
+        Uwzględnij:
+        1. Kompletność odpowiedzi
+        2. Poprawność merytoryczną
+        3. Sposób rozwiązania
+        4. Klarowność wywodu
         
-        Oceń odpowiedź uwzględniając:
-        1. Poprawność merytoryczną
-        2. Kompletność rozwiązania
-        3. Poprawność obliczeń (jeśli dotyczy)
-        4. Użycie właściwej terminologii
-        5. Struktura i klarowność odpowiedzi
-        
-        Zwróć ocenę w formacie JSON:
+        Zwróć w formacie JSON:
         {
-            "score": liczba_punktów,
+            "score": liczba punktów,
             "maxScore": ${task.punkty},
-            "strengths": ["lista mocnych stron"],
-            "weaknesses": ["lista słabych stron"],
-            "errors": ["lista błędów"],
-            "suggestions": ["sugestie poprawy"],
-            "insights": {
-                "understanding": "poziom zrozumienia (0-100)",
-                "methodology": "poprawność metodologii (0-100)",
-                "execution": "jakość wykonania (0-100)",
-                "presentation": "jakość prezentacji (0-100)"
+            "isCorrect": true jeśli pełna punktacja,
+            "partialCredit": {
+                "element1": { "points": x, "comment": "..." },
+                "element2": { "points": y, "comment": "..." }
             },
-            "partialCredits": [
-                {"aspect": "aspekt rozwiązania", "points": punkty}
-            ]
+            "feedback": "szczegółowe uzasadnienie",
+            "suggestions": ["wskazówka 1", "wskazówka 2"],
+            "confidence": liczba 0-100
         }
         `;
-        
+
         try {
             const response = await this.geminiAPI.generateContent(prompt);
-            return JSON.parse(response);
-        } catch (error) {
-            console.error('Błąd oceniania AI:', error);
+            const result = JSON.parse(response);
+            
             return {
-                score: 0,
-                maxScore: task.punkty,
-                strengths: [],
-                weaknesses: ['Nie można przeprowadzić automatycznej oceny'],
-                errors: [error.message],
-                suggestions: ['Wymagana ocena ręczna'],
-                insights: {
-                    understanding: 0,
-                    methodology: 0,
-                    execution: 0,
-                    presentation: 0
-                },
-                partialCredits: []
+                success: true,
+                ...result
             };
+        } catch (error) {
+            return this.fallbackGrading(task, studentAnswer);
         }
     }
 
     /**
-     * Łączenie wyników różnych metod oceniania
+     * Ocenianie zadania matematycznego
      */
-    combineGradingResults(stepGrading, aiGrading) {
-        // Średnia ważona wyników
-        const stepScore = stepGrading.initialAnalysis.totalPoints;
-        const aiScore = aiGrading.score;
-        
-        // Wagi zależne od pewności
-        const stepWeight = stepGrading.initialAnalysis.confidence / 100;
-        const aiWeight = 0.8; // Stała waga dla AI
-        
-        const finalScore = Math.round(
-            (stepScore * stepWeight + aiScore * aiWeight) / (stepWeight + aiWeight) * 2
-        ) / 2; // Zaokrąglenie do 0.5
-        
-        // Łączenie feedbacku
-        const feedback = [
-            ...stepGrading.initialAnalysis.feedback,
-            ...aiGrading.strengths.map(s => `✅ ${s}`),
-            ...aiGrading.weaknesses.map(w => `⚠️ ${w}`),
-            ...aiGrading.suggestions.map(s => `💡 ${s}`)
-        ];
-        
-        // Obliczenie końcowej pewności
-        const confidence = Math.round(
-            (stepGrading.initialAnalysis.confidence + 80) / 2
-        );
-        
-        return {
-            finalScore,
-            feedback,
-            confidence,
-            insights: aiGrading.insights
-        };
-    }
-
-    /**
-     * Zastosowanie kryteriów specyficznych dla przedmiotu
-     */
-    async applySubjectSpecificCriteria(result, task, answer, subjectModel) {
-        const criteria = subjectModel.specificCriteria;
-        
-        // Matematyka/Fizyka - sprawdzanie jednostek
-        if (criteria.requiresUnits) {
-            const hasUnits = await this.checkUnits(answer, task);
-            if (!hasUnits && task.wymagaJednostek !== false) {
-                result.finalScore = Math.max(0, result.finalScore - 0.5);
-                result.feedback.push('⚠️ Brak jednostek w odpowiedzi końcowej (-0.5 pkt)');
-            }
-        }
-        
-        // Polski - sprawdzanie ortografii
-        if (criteria.checkSpelling) {
-            const spellingErrors = await this.checkSpelling(answer);
-            if (spellingErrors.length > 3) {
-                result.finalScore = Math.max(0, result.finalScore - 1);
-                result.feedback.push(`⚠️ Błędy ortograficzne: ${spellingErrors.length} (-1 pkt)`);
-            }
-        }
-        
-        // Sprawdzanie wymaganych elementów
-        if (criteria.requiresArguments) {
-            const hasArguments = await this.checkArguments(answer);
-            if (!hasArguments) {
-                result.finalScore = Math.max(0, result.finalScore - 1);
-                result.feedback.push('⚠️ Brak argumentacji (-1 pkt)');
-            }
-        }
-    }
-
-    /**
-     * Szczegółowa analiza odpowiedzi
-     */
-    async performDetailedAnalysis(task, studentAnswer, basicGrading) {
-        const analysis = {
-            linguistic: await this.analyzeLinguistic(studentAnswer),
-            conceptual: await this.analyzeConceptual(studentAnswer, task),
-            computational: null,
-            visual: null
-        };
-        
-        // Analiza obliczeniowa dla zadań matematycznych
-        if (task.przedmiot.includes('matematyka') || task.przedmiot.includes('fizyka')) {
-            analysis.computational = await this.analyzeComputational(studentAnswer);
-        }
-        
-        // Analiza wizualna jeśli są diagramy
-        if (task.obrazki || studentAnswer.includes('[diagram]')) {
-            analysis.visual = await this.analyzeVisual(studentAnswer, task);
-        }
-        
-        return analysis;
-    }
-
-    /**
-     * Porównanie z odpowiedzią modelową
-     */
-    async compareWithModel(studentAnswer, modelAnswer) {
+    async gradeMathQuestion(task, studentAnswer, config) {
         const prompt = `
-        Porównaj odpowiedź ucznia z odpowiedzią modelową.
+        Oceń rozwiązanie zadania matematycznego.
         
-        ODPOWIEDŹ UCZNIA:
+        ZADANIE:
+        ${task.tresc}
+        
+        Punkty: ${task.punkty}
+        
+        ROZWIĄZANIE UCZNIA:
         ${studentAnswer}
         
-        ODPOWIEDŹ MODELOWA:
-        ${modelAnswer}
+        Oceń uwzględniając:
+        1. Poprawność obliczeń
+        2. Metodę rozwiązania
+        3. Zapis matematyczny
+        4. Jednostki (jeśli wymagane)
+        5. Odpowiedź końcową
         
-        Analiza powinna zawierać:
-        1. Kluczowe elementy obecne w obu odpowiedziach
-        2. Elementy obecne tylko w modelu (pominięte przez ucznia)
-        3. Elementy dodatkowe w odpowiedzi ucznia
-        4. Ocena równoważności podejść
-        5. Procentowe podobieństwo (0-100%)
+        Przyznaj punkty częściowe za:
+        - Poprawną metodę nawet przy błędach rachunkowych
+        - Częściowe rozwiązanie
+        - Poprawne kroki pośrednie
         
-        Zwróć jako JSON.
+        Zwróć w formacie JSON:
+        {
+            "score": przyznane punkty,
+            "maxScore": ${task.punkty},
+            "breakdown": {
+                "method": { "points": x, "max": y, "comment": "..." },
+                "calculations": { "points": x, "max": y, "comment": "..." },
+                "finalAnswer": { "points": x, "max": y, "comment": "..." }
+            },
+            "errors": ["błąd 1", "błąd 2"],
+            "feedback": "pełne uzasadnienie",
+            "confidence": liczba 0-100
+        }
         `;
-        
+
         try {
             const response = await this.geminiAPI.generateContent(prompt);
-            return JSON.parse(response);
-        } catch (error) {
+            const result = JSON.parse(response);
+            
+            // Walidacja wyniku matematycznego
+            if (task.poprawna && this.isMathExpression(task.poprawna)) {
+                const expectedValue = this.evaluateMathExpression(task.poprawna);
+                const studentValue = this.extractNumericAnswer(studentAnswer);
+                
+                if (expectedValue !== null && studentValue !== null) {
+                    const isNumericallyCorrect = Math.abs(expectedValue - studentValue) < 0.001;
+                    
+                    // Korekta oceny jeśli wartość numeryczna się zgadza
+                    if (isNumericallyCorrect && result.score < result.maxScore) {
+                        result.score = Math.max(result.score, result.maxScore * 0.8);
+                        result.feedback += '\n[Wartość numeryczna poprawna]';
+                    }
+                }
+            }
+            
             return {
-                similarity: 0,
-                missingElements: ['Nie można porównać'],
-                additionalElements: [],
-                equivalent: false
+                success: true,
+                ...result
             };
+        } catch (error) {
+            return this.fallbackGrading(task, studentAnswer);
         }
+    }
+
+    /**
+     * Ocenianie masowe
+     */
+    async gradeBatch(tasks, answers, options = {}) {
+        const results = [];
+        const batchSize = options.batchSize || 5;
+        
+        for (let i = 0; i < tasks.length; i += batchSize) {
+            const batch = tasks.slice(i, i + batchSize);
+            const batchAnswers = answers.slice(i, i + batchSize);
+            
+            const batchResults = await Promise.all(
+                batch.map((task, index) => 
+                    this.gradeAnswer(task, batchAnswers[index], options)
+                )
+            );
+            
+            results.push(...batchResults);
+            
+            // Callback postępu
+            if (options.onProgress) {
+                options.onProgress({
+                    current: Math.min(i + batchSize, tasks.length),
+                    total: tasks.length,
+                    percentage: Math.round(((i + batchSize) / tasks.length) * 100)
+                });
+            }
+        }
+        
+        return results;
     }
 
     /**
      * Generowanie raportu oceniania
      */
-    async generateGradingReport(gradingResult, task, config) {
+    generateGradingReport(gradingResults, studentInfo) {
+        const totalScore = gradingResults.reduce((sum, r) => sum + (r.score || 0), 0);
+        const maxScore = gradingResults.reduce((sum, r) => sum + (r.maxScore || 0), 0);
+        const percentage = Math.round((totalScore / maxScore) * 100);
+        
         const report = {
+            student: studentInfo,
             summary: {
-                taskId: task.id,
-                studentId: config.studentId,
-                score: gradingResult.points,
-                maxScore: gradingResult.maxPoints,
-                percentage: Math.round((gradingResult.points / gradingResult.maxPoints) * 100),
-                grade: this.calculateGrade(gradingResult.points, gradingResult.maxPoints),
-                timestamp: new Date().toISOString()
+                totalScore,
+                maxScore,
+                percentage,
+                grade: this.calculateGrade(percentage),
+                passed: percentage >= 50
             },
-            details: {
-                feedback: gradingResult.feedback,
-                confidence: gradingResult.confidence,
-                gradingMethod: gradingResult.stepBreakdown ? 'step-by-step' : 'holistic'
-            }
+            details: gradingResults.map((result, index) => ({
+                questionNumber: index + 1,
+                score: result.score,
+                maxScore: result.maxScore,
+                feedback: result.feedback,
+                confidence: result.confidence
+            })),
+            statistics: {
+                avgConfidence: this.average(gradingResults.map(r => r.confidence || 0)),
+                correctAnswers: gradingResults.filter(r => r.isCorrect).length,
+                partialAnswers: gradingResults.filter(r => 
+                    r.score > 0 && r.score < r.maxScore
+                ).length,
+                incorrectAnswers: gradingResults.filter(r => r.score === 0).length
+            },
+            timestamp: new Date().toISOString()
         };
-        
-        // Dodaj szczegóły krokowe jeśli dostępne
-        if (gradingResult.stepBreakdown) {
-            report.details.steps = gradingResult.stepBreakdown;
-        }
-        
-        // Dodaj analizę AI jeśli dostępna
-        if (gradingResult.aiInsights) {
-            report.aiAnalysis = gradingResult.aiInsights;
-        }
-        
-        // Generuj rekomendacje
-        report.recommendations = await this.generateRecommendations(
-            gradingResult, task, config
-        );
-        
-        // Wizualizacja HTML
-        report.html = this.generateReportHTML(report);
         
         return report;
     }
 
     /**
-     * Generowanie rekomendacji dla ucznia
+     * Porównanie z odpowiedzią modelową
      */
-    async generateRecommendations(gradingResult, task, config) {
-        const recommendations = [];
+    async compareWithModelAnswer(task, studentAnswer, modelAnswer) {
+        const prompt = `
+        Porównaj odpowiedź ucznia z odpowiedzią modelową.
         
-        // Na podstawie wyniku
-        const percentage = (gradingResult.points / gradingResult.maxPoints) * 100;
+        ZADANIE:
+        ${task.tresc}
         
-        if (percentage < 50) {
-            recommendations.push({
-                type: 'review',
-                priority: 'high',
-                message: 'Zalecana powtórka materiału z działu: ' + task.temat
-            });
-        } else if (percentage < 80) {
-            recommendations.push({
-                type: 'practice',
-                priority: 'medium',
-                message: 'Rozwiąż więcej zadań podobnego typu'
-            });
+        ODPOWIEDŹ MODELOWA:
+        ${modelAnswer}
+        
+        ODPOWIEDŹ UCZNIA:
+        ${studentAnswer}
+        
+        Oceń na ile odpowiedź ucznia pokrywa się z modelową.
+        Zwróć analizę w formacie JSON:
+        {
+            "similarity": procent podobieństwa 0-100,
+            "coveredPoints": ["punkt 1", "punkt 2"],
+            "missingPoints": ["brakujący punkt 1"],
+            "additionalPoints": ["dodatkowy punkt"],
+            "overallAssessment": "ogólna ocena",
+            "score": sugerowana punktacja 0-${task.punkty}
         }
-        
-        // Na podstawie błędów
-        if (gradingResult.feedback.some(f => f.includes('jednostek'))) {
-            recommendations.push({
-                type: 'attention',
-                priority: 'medium',
-                message: 'Pamiętaj o zapisywaniu jednostek w odpowiedziach'
-            });
-        }
-        
-        // Rekomendacje AI
-        if (this.geminiAPI && recommendations.length < 3) {
-            const aiRecs = await this.generateAIRecommendations(gradingResult, task);
-            recommendations.push(...aiRecs);
-        }
-        
-        return recommendations;
-    }
-
-    /**
-     * Generowanie HTML raportu
-     */
-    generateReportHTML(report) {
-        return `
-            <div class="grading-report">
-                <h3>Raport oceniania</h3>
-                
-                <div class="report-summary">
-                    <div class="score-display">
-                        <span class="score">${report.summary.score}</span>
-                        <span class="max-score">/ ${report.summary.maxScore} pkt</span>
-                        <span class="percentage">(${report.summary.percentage}%)</span>
-                    </div>
-                    <div class="grade">Ocena: ${report.summary.grade}</div>
-                    <div class="confidence">Pewność oceny: ${report.details.confidence}%</div>
-                </div>
-                
-                ${report.details.steps ? `
-                    <div class="step-details">
-                        <h4>Punktacja krokowa:</h4>
-                        <ul>
-                            ${report.details.steps.map(step => `
-                                <li>
-                                    ${step.name}: 
-                                    <strong>${step.awarded} / ${step.points} pkt</strong>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                ` : ''}
-                
-                <div class="feedback-section">
-                    <h4>Feedback:</h4>
-                    <ul>
-                        ${report.details.feedback.map(f => `<li>${f}</li>`).join('')}
-                    </ul>
-                </div>
-                
-                ${report.aiAnalysis ? `
-                    <div class="ai-insights">
-                        <h4>Analiza AI:</h4>
-                        <div class="insights-grid">
-                            <div>Zrozumienie: ${report.aiAnalysis.understanding}%</div>
-                            <div>Metodologia: ${report.aiAnalysis.methodology}%</div>
-                            <div>Wykonanie: ${report.aiAnalysis.execution}%</div>
-                            <div>Prezentacja: ${report.aiAnalysis.presentation}%</div>
-                        </div>
-                    </div>
-                ` : ''}
-                
-                ${report.recommendations.length > 0 ? `
-                    <div class="recommendations">
-                        <h4>Rekomendacje:</h4>
-                        ${report.recommendations.map(rec => `
-                            <div class="recommendation ${rec.priority}">
-                                <span class="rec-type">${rec.type}</span>
-                                ${rec.message}
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-                
-                <div class="report-footer">
-                    <small>Wygenerowano: ${new Date(report.summary.timestamp).toLocaleString('pl-PL')}</small>
-                </div>
-            </div>
         `;
+
+        try {
+            const response = await this.geminiAPI.generateContent(prompt);
+            return JSON.parse(response);
+        } catch (error) {
+            console.error('Błąd porównania:', error);
+            return null;
+        }
     }
 
     /**
-     * Pomocnicze funkcje
+     * Funkcje pomocnicze
      */
-    
-    generateCacheKey(taskId, answer) {
-        return `${taskId}_${this.hashString(answer)}`;
-    }
-    
-    hashString(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return hash.toString(36);
-    }
-    
     normalizeAnswer(answer) {
-        return answer.toString().trim().toLowerCase()
-            .replace(/\s+/g, ' ')
-            .replace(/[.,;:!?]/g, '');
+        return answer?.toString().trim().toUpperCase();
     }
-    
-    detectSubject(task) {
-        const subject = task.przedmiot.toLowerCase();
-        if (subject.includes('matematyka')) return 'matematyka';
-        if (subject.includes('polski')) return 'polski';
-        if (subject.includes('fizyka')) return 'fizyka';
-        if (subject.includes('chemia')) return 'chemia';
-        if (subject.includes('biologia')) return 'biologia';
-        if (subject.includes('historia')) return 'historia';
-        if (subject.includes('geografia')) return 'geografia';
-        if (subject.includes('angielski')) return 'angielski';
-        return 'ogólny';
+
+    fallbackGrading(task, studentAnswer) {
+        // Prosta heurystyka gdy AI zawiedzie
+        const hasAnswer = studentAnswer && studentAnswer.trim().length > 0;
+        const answerLength = studentAnswer?.trim().length || 0;
+        const expectedLength = task.tresc.length * 0.2; // Oczekuj odpowiedzi ~20% długości pytania
+        
+        let score = 0;
+        if (hasAnswer) {
+            if (answerLength >= expectedLength) {
+                score = Math.ceil(task.punkty * 0.5); // 50% punktów za próbę
+            } else {
+                score = Math.ceil(task.punkty * 0.25); // 25% za krótką odpowiedź
+            }
+        }
+        
+        return {
+            success: true,
+            score,
+            maxScore: task.punkty,
+            isCorrect: false,
+            feedback: 'Ocena automatyczna niedostępna. Przyznano punkty za próbę odpowiedzi.',
+            confidence: 20,
+            fallback: true
+        };
     }
-    
-    assessComplexity(task) {
-        let complexity = 1; // Podstawowy
-        
-        // Więcej punktów = większa złożoność
-        if (task.punkty > 3) complexity++;
-        if (task.punkty > 5) complexity++;
-        
-        // Zadania z obrazkami są trudniejsze
-        if (task.obrazki) complexity++;
-        
-        // Długa treść = większa złożoność
-        if (task.tresc.length > 500) complexity++;
-        
-        return Math.min(5, complexity);
+
+    isMathExpression(text) {
+        return /[\d+\-*/=()^√]/.test(text);
     }
-    
-    calculateGrade(points, maxPoints) {
-        const percentage = (points / maxPoints) * 100;
-        
-        if (percentage >= 90) return '6';
-        if (percentage >= 80) return '5';
-        if (percentage >= 70) return '4';
+
+    evaluateMathExpression(expr) {
+        try {
+            // Podstawowa ewaluacja - w produkcji użyj math.js
+            const cleaned = expr.replace(/[^0-9+\-*/().]/g, '');
+            return Function('"use strict"; return (' + cleaned + ')')();
+        } catch {
+            return null;
+        }
+    }
+
+    extractNumericAnswer(text) {
+        const match = text.match(/[\d.,]+/g);
+        if (match) {
+            const num = parseFloat(match[match.length - 1].replace(',', '.'));
+            return isNaN(num) ? null : num;
+        }
+        return null;
+    }
+
+    calculateGrade(percentage) {
+        if (percentage >= 90) return '5';
+        if (percentage >= 75) return '4';
         if (percentage >= 60) return '3';
         if (percentage >= 50) return '2';
         return '1';
     }
-    
-    parseAIAnalysis(aiResponse) {
-        try {
-            return JSON.parse(aiResponse);
-        } catch {
-            return {};
-        }
+
+    average(numbers) {
+        return numbers.reduce((a, b) => a + b, 0) / numbers.length;
     }
-    
-    saveToHistory(task, answer, result, config) {
-        const history = JSON.parse(localStorage.getItem('aiGradingHistory') || '[]');
-        
-        history.push({
-            taskId: task.id,
-            studentId: config.studentId,
-            timestamp: new Date().toISOString(),
-            answer: answer.substring(0, 200), // Pierwsze 200 znaków
-            score: result.points,
-            maxScore: result.maxPoints,
-            confidence: result.confidence
-        });
-        
-        // Zachowaj tylko ostatnie 100 wpisów
-        if (history.length > 100) {
-            history.splice(0, history.length - 100);
-        }
-        
-        localStorage.setItem('aiGradingHistory', JSON.stringify(history));
-    }
-    
+
     /**
-     * Funkcje analizy specjalistycznej
+     * Eksport ocen do różnych formatów
      */
-    
-    async analyzeLinguistic(text) {
-        // Podstawowa analiza językowa
-        return {
-            wordCount: text.split(/\s+/).length,
-            sentenceCount: text.split(/[.!?]+/).filter(s => s.trim()).length,
-            avgWordLength: text.replace(/\s/g, '').length / text.split(/\s+/).length,
-            complexity: this.assessTextComplexity(text)
-        };
-    }
-    
-    async analyzeConceptual(answer, task) {
-        // Analiza pojęciowa
-        const concepts = this.extractConcepts(task.tresc);
-        const usedConcepts = concepts.filter(c => 
-            answer.toLowerCase().includes(c.toLowerCase())
-        );
-        
-        return {
-            expectedConcepts: concepts,
-            usedConcepts: usedConcepts,
-            coverage: (usedConcepts.length / concepts.length) * 100
-        };
-    }
-    
-    async analyzeComputational(answer) {
-        // Znajdź i sprawdź obliczenia
-        const calculations = this.extractCalculations(answer);
-        const verified = [];
-        
-        for (const calc of calculations) {
-            try {
-                // Bezpieczna ewaluacja prostych obliczeń
-                const result = this.safeEvaluate(calc);
-                verified.push({
-                    expression: calc,
-                    correct: result.correct,
-                    expected: result.expected,
-                    actual: result.actual
-                });
-            } catch (error) {
-                verified.push({
-                    expression: calc,
-                    correct: false,
-                    error: error.message
-                });
-            }
-        }
-        
-        return {
-            calculations: verified,
-            accuracy: verified.filter(v => v.correct).length / verified.length * 100
-        };
-    }
-    
-    async checkUnits(answer, task) {
-        // Implementacja sprawdzania jednostek
-        const unitPatterns = [
-            /\d+\s*(?:m|cm|mm|km|kg|g|mg|s|min|h|°C|K|J|W|N|Pa|V|A|Ω)(?:\b|²|³)/,
-            /\d+\s*(?:metr|centymetr|kilogram|gram|sekund|minut|godzin)/i
-        ];
-        
-        return unitPatterns.some(pattern => pattern.test(answer));
-    }
-    
-    async checkSpelling(text) {
-        // Podstawowe sprawdzanie błędów
-        // W prawdziwej implementacji użyłbyś API do sprawdzania pisowni
-        const commonErrors = [
-            { wrong: 'wziąść', correct: 'wziąć' },
-            { wrong: 'włanczać', correct: 'włączać' },
-            { wrong: 'prosze', correct: 'proszę' }
-        ];
-        
-        const found = [];
-        commonErrors.forEach(error => {
-            if (text.includes(error.wrong)) {
-                found.push(error);
-            }
+    async exportGrades(gradingResults, format = 'json') {
+        const report = this.generateGradingReport(gradingResults, {
+            // Dane ucznia z kontekstu
         });
         
-        return found;
-    }
-    
-    async checkArguments(text) {
-        // Sprawdzanie obecności argumentacji
-        const argumentIndicators = [
-            'ponieważ', 'dlatego', 'gdyż', 'z powodu',
-            'wynika to z', 'świadczy o tym', 'dowodzi',
-            'po pierwsze', 'po drugie', 'dodatkowo'
-        ];
-        
-        return argumentIndicators.some(indicator => 
-            text.toLowerCase().includes(indicator)
-        );
-    }
-    
-    extractConcepts(taskText) {
-        // Wyodrębnianie kluczowych pojęć z treści zadania
-        // Uproszczona wersja - w rzeczywistości użyłbyś NLP
-        const words = taskText.split(/\s+/)
-            .filter(w => w.length > 4)
-            .filter(w => !['który', 'która', 'które', 'jakie'].includes(w.toLowerCase()));
-        
-        return [...new Set(words)];
-    }
-    
-    extractCalculations(text) {
-        // Znajdowanie obliczeń w tekście
-        const patterns = [
-            /\d+\s*[+\-*/]\s*\d+\s*=\s*\d+/g,
-            /\d+\s*[+\-*/]\s*\d+/g
-        ];
-        
-        const calculations = [];
-        patterns.forEach(pattern => {
-            const matches = text.match(pattern);
-            if (matches) {
-                calculations.push(...matches);
-            }
-        });
-        
-        return calculations;
-    }
-    
-    safeEvaluate(expression) {
-        // Bezpieczna ewaluacja prostych wyrażeń matematycznych
-        // NIE używaj eval() w produkcji!
-        const cleaned = expression.replace(/[^0-9+\-*/().\s]/g, '');
-        
-        try {
-            // Tu należałoby użyć bezpiecznego parsera matematycznego
-            // np. math.js
-            return {
-                correct: true,
-                expected: 'calculated',
-                actual: 'calculated'
-            };
-        } catch (error) {
-            return {
-                correct: false,
-                error: error.message
-            };
+        switch (format) {
+            case 'json':
+                return JSON.stringify(report, null, 2);
+                
+            case 'csv':
+                const csv = [
+                    'Nr,Punkty,Max,Procent,Feedback',
+                    ...report.details.map(d => 
+                        `${d.questionNumber},${d.score},${d.maxScore},${Math.round((d.score/d.maxScore)*100)}%,"${d.feedback}"`
+                    )
+                ].join('\n');
+                return csv;
+                
+            case 'pdf':
+                // Integracja z PDFExportManager
+                if (window.PDFExportManager) {
+                    const pdfExporter = new PDFExportManager();
+                    return await pdfExporter.generateGradingReport(report);
+                }
+                break;
         }
-    }
-    
-    assessTextComplexity(text) {
-        const avgSentenceLength = text.split(/[.!?]/).filter(s => s.trim()).length / 
-                                 text.split(/\s+/).length;
         
-        if (avgSentenceLength > 20) return 'complex';
-        if (avgSentenceLength > 15) return 'moderate';
-        return 'simple';
-    }
-    
-    async generateAIRecommendations(gradingResult, task) {
-        if (!this.geminiAPI) return [];
-        
-        const prompt = `
-        Na podstawie wyniku oceniania, zaproponuj 2-3 spersonalizowane rekomendacje dla ucznia.
-        
-        Wynik: ${gradingResult.points}/${gradingResult.maxPoints} punktów
-        Główne błędy: ${gradingResult.feedback.filter(f => f.includes('❌') || f.includes('⚠️')).join(', ')}
-        Temat zadania: ${task.temat}
-        
-        Rekomendacje powinny być konkretne i pomocne.
-        `;
-        
-        try {
-            const response = await this.geminiAPI.generateContent(prompt);
-            const recommendations = response.split('\n')
-                .filter(line => line.trim())
-                .map(line => ({
-                    type: 'ai-suggestion',
-                    priority: 'medium',
-                    message: line
-                }));
-            
-            return recommendations.slice(0, 3);
-        } catch (error) {
-            return [];
-        }
-    }
-    
-    async analyzeVisual(answer, task) {
-        // Analiza elementów wizualnych
-        return {
-            hasDiagrams: answer.includes('[diagram]') || answer.includes('[rysunek]'),
-            referencesImages: task.obrazki && answer.includes('rysunek'),
-            visualCommunication: 'text-only' // W przyszłości: analiza załączonych obrazków
-        };
+        return report;
     }
 }
 
