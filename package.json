@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "quizmaster",
   "version": "1.0.0",
   "description": "QuizMaster - Generator arkuszy egzaminacyjnych z AI",
@@ -8,19 +9,36 @@
     "dev": "nodemon server/server.js",
     "install-all": "npm install && cd server && npm install",
     "test": "node tests/run-tests-local.sh"
+=======
+  "name": "quizmaster-netlify",
+  "version": "2.0.0",
+  "description": "QuizMaster - Platforma egzaminacyjna z importem CKE i AI",
+  "scripts": {
+    "build": "echo 'No build required for static site'",
+    "dev": "netlify dev"
+>>>>>>> 8a0b00401063f1e82317c8d6f0f214c73831abe8
   },
   "keywords": [
     "education",
     "quiz",
     "exam",
+<<<<<<< HEAD
     "generator",
+=======
+    "CKE",
+>>>>>>> 8a0b00401063f1e82317c8d6f0f214c73831abe8
     "AI",
     "Gemini"
   ],
   "author": "QuizMaster Team",
   "license": "MIT",
+<<<<<<< HEAD
   "engines": {
     "node": ">=14.0.0",
     "npm": ">=6.0.0"
+=======
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+>>>>>>> 8a0b00401063f1e82317c8d6f0f214c73831abe8
   }
 }

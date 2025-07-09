@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Konfiguracja Netlify dla QuizMaster
 
 [build]
@@ -9,10 +10,29 @@
   # SUPABASE_URL = "your-supabase-url"
   # SUPABASE_ANON_KEY = "your-supabase-anon-key"
   # GEMINI_API_KEY = "your-gemini-api-key"
+=======
+[build]
+  publish = "public"
+  functions = "functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api-proxy.php/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+>>>>>>> 8a0b00401063f1e82317c8d6f0f214c73831abe8
 
 [[headers]]
   for = "/*"
   [headers.values]
+<<<<<<< HEAD
     # Bezpieczeństwo
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
@@ -31,12 +51,22 @@
 
 [[headers]]
   for = "/*.css"
+=======
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/js/*"
+>>>>>>> 8a0b00401063f1e82317c8d6f0f214c73831abe8
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/*.json"
   [headers.values]
+<<<<<<< HEAD
     Cache-Control = "public, max-age=3600"
 
 # Przekierowania
@@ -57,3 +87,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
+=======
+    Cache-Control = "public, max-age=3600"
+>>>>>>> 8a0b00401063f1e82317c8d6f0f214c73831abe8
