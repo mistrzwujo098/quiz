@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wyniki egzaminu - QuizMaster</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/pdf-export.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-tertiary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-primary: #7c3aed;
+            --accent-secondary: #a855f7;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * { font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-primary); color: var(--text-primary); }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        function ResultsPage() {
+            const [examData, setExamData] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            
+            useEffect(() => {
+                // Pobierz examId z URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const examId = urlParams.get('examId');
+                
+                if (!examId) {
+                    setError('Brak ID egzaminu');
+                    setLoading(false);
+                    return;
+                }
+                
+                // Pobierz dane egzaminu
+                try {
+                    const results = JSON.parse(localStorage.getItem('examResults') || '[]');
+                    const result = results.find(r => r.id === examId);
+                    
+                    if (result) {
+                        setExamData(result);
+                    } else {
+                        setError('Nie znaleziono wyników egzaminu');
+                    }
+                } catch (err) {
+                    setError('Błąd ładowania danych');
+                }
+                
+                setLoading(false);
+            }, []);
+            
+            const exportToPDF = async () => {
+                if (!examData) return;
+                
+                try {
+                    const pdfExporter = new PDFExporter();
+                    await pdfExporter.generateStudentReport(examData.studentId, {
+                        includeAnswers: true,
+                        includeAnalysis: true
+                    });
+                } catch (error) {
+                    console.error('Błąd eksportu PDF:', error);
+                    alert('Nie udało się wygenerować PDF');
+                }
+            };
+            
+            if (loading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="text-xl">Ładowanie wyników...</div>
+                    </div>
+                );
+            }
+            
+            if (error) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="glass p-8 rounded-xl max-w-md">
+                            <div className="text-red-500 text-xl mb-4">{error}</div>
+                            <button 
+                                onClick={() => window.location.href = 'index.html'}
+                                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg"
+                            >
+                                Powrót do aplikacji
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            const score = Math.round((examData.correctAnswers / examData.totalQuestions) * 100);
+            const isPassed = score >= 50;
+            
+            return (
+                <div className="min-h-screen p-6">
+                    <div className="max-w-4xl mx-auto">
+                        {/* Header */}
+                        <div className="glass p-6 rounded-xl mb-6">
+                            <div className="flex justify-between items-center">
+                                <h1 className="text-3xl font-bold">Wyniki egzaminu</h1>
+                                <button 
+                                    onClick={() => window.location.href = 'index.html'}
+                                    className="text-purple-400 hover:text-purple-300"
+                                >
+                                    <i className="fas fa-arrow-left mr-2"></i>
+                                    Powrót
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Main Results */}
+                        <div className="glass p-8 rounded-xl mb-6">
+                            <div className="text-center mb-8">
+                                <div className={`text-6xl font-bold mb-4 ${isPassed ? 'text-green-500' : 'text-red-500'}`}>
+                                    {score}%
+                                </div>
+                                <div className="text-2xl mb-2">{examData.examTitle}</div>
+                                <div className="text-gray-400">
+                                    {new Date(examData.completedAt).toLocaleString('pl-PL')}
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div className="glass p-4 rounded-lg">
+                                    <div className="text-2xl font-bold text-green-500">
+                                        {examData.correctAnswers}
+                                    </div>
+                                    <div className="text-sm text-gray-400">Poprawne</div>
+                                </div>
+                                <div className="glass p-4 rounded-lg">
+                                    <div className="text-2xl font-bold text-red-500">
+                                        {examData.totalQuestions - examData.correctAnswers}
+                                    </div>
+                                    <div className="text-sm text-gray-400">Błędne</div>
+                                </div>
+                                <div className="glass p-4 rounded-lg">
+                                    <div className="text-2xl font-bold text-purple-500">
+                                        {examData.totalQuestions}
+                                    </div>
+                                    <div className="text-sm text-gray-400">Wszystkie</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Actions */}
+                        <div className="glass p-6 rounded-xl">
+                            <h3 className="text-xl font-semibold mb-4">Opcje</h3>
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={exportToPDF}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg flex items-center"
+                                >
+                                    <i className="fas fa-file-pdf mr-2"></i>
+                                    Eksportuj do PDF
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        const reviewMode = new QuickReviewMode();
+                                        reviewMode.startReview(examData.id);
+                                        window.location.href = 'index.html#review';
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center"
+                                >
+                                    <i className="fas fa-redo mr-2"></i>
+                                    Przejrzyj błędy
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        if (navigator.share) {
+                                            navigator.share({
+                                                title: 'Mój wynik z QuizMaster',
+                                                text: `Uzyskałem ${score}% w egzaminie ${examData.examTitle}!`,
+                                                url: window.location.href
+                                            });
+                                        }
+                                    }}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg flex items-center"
+                                >
+                                    <i className="fas fa-share mr-2"></i>
+                                    Udostępnij
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Message */}
+                        <div className="glass p-6 rounded-xl mt-6 text-center">
+                            {isPassed ? (
+                                <>
+                                    <div className="text-4xl mb-4">🎉</div>
+                                    <h3 className="text-2xl font-bold text-green-500 mb-2">Gratulacje!</h3>
+                                    <p className="text-gray-300">Zdałeś egzamin! Świetna robota!</p>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="text-4xl mb-4">📚</div>
+                                    <h3 className="text-2xl font-bold text-yellow-500 mb-2">Nie poddawaj się!</h3>
+                                    <p className="text-gray-300">Przejrzyj błędy i spróbuj ponownie. Następnym razem będzie lepiej!</p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<ResultsPage />, document.getElementById('root'));
+    </script>
+</body>
+</html>

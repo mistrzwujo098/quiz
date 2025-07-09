@@ -103,12 +103,12 @@ class UIImprovements {
    * Poprawia dostępność
    */
   enhanceAccessibility() {
-    // Skip links
-    const skipLink = document.createElement('a');
-    skipLink.href = '#main-content';
-    skipLink.className = 'skip-link';
-    skipLink.textContent = 'Przejdź do głównej treści';
-    document.body.insertBefore(skipLink, document.body.firstChild);
+    // Skip links - disabled for now
+    // const skipLink = document.createElement('a');
+    // skipLink.href = '#main-content';
+    // skipLink.className = 'skip-link';
+    // skipLink.textContent = 'Przejdź do głównej treści';
+    // document.body.insertBefore(skipLink, document.body.firstChild);
 
     // ARIA live regions
     const liveRegion = document.createElement('div');

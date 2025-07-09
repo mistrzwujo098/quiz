@@ -19,7 +19,7 @@ class NavigationIntegration {
   async init() {
     try {
       // Inicjalizuj moduły
-      this.modules.pdfExport = new PDFExportManager();
+      this.modules.pdfExport = new PDFExporter();
       this.modules.pushNotifications = new PushNotificationManager();
       this.modules.quickReview = new QuickReviewMode();
       this.modules.parentPanel = new ParentPanel();
