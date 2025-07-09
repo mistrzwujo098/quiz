@@ -794,7 +794,7 @@ class TeacherEnhancements {
     );
     
     const pendingGrades = results.filter(r => 
-      r.answers.some(a => a.type === 'otwarte' && a.points === undefined)
+      Array.isArray(r.answers) && r.answers.some(a => a.type === 'otwarte' && a.points === undefined)
     ).length;
     
     return {

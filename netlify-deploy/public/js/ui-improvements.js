@@ -119,7 +119,7 @@ class UIImprovements {
     document.body.appendChild(liveRegion);
 
     // Focus trap dla modali
-    this.setupFocusTrap();
+    // this.setupFocusTrap(); // TODO: Implement focus trap
 
     // Ulepszone etykiety formularzy
     this.enhanceFormLabels();
