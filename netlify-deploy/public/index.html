@@ -473,7 +473,35 @@
             return newUser;
           }
 
-          static login(username, password) {
+          static async login(username, password) {
+            // Specjalna obsługa dla nauczyciela Pauliny
+            if (username === 'paulinaodmatematyki') {
+              try {
+                const response = await fetch('/.netlify/functions/check-teacher-password', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ username, password })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                  const session = {
+                    userId: Date.now(),
+                    username: result.user.username,
+                    role: result.user.role,
+                    fullName: result.user.fullName,
+                    loginTime: new Date()
+                  };
+                  sessionStorage.setItem('currentUser', JSON.stringify(session));
+                  return session;
+                }
+              } catch (error) {
+                console.error('Błąd sprawdzania hasła nauczyciela:', error);
+              }
+            }
+            
+            // Standardowe logowanie dla innych użytkowników
             const users = JSON.parse(localStorage.getItem('users') || '[]');
             const hashedPassword = this.hashPassword(password);
             
@@ -521,14 +549,7 @@
               localStorage.setItem('users', JSON.stringify(users));
             }
             
-            // Zawsze sprawdź czy istnieje główny nauczyciel
-            if (!users.find(u => u.username === 'paulinaodmatematyki')) {
-              try {
-                this.createUser('paulinaodmatematyki', 'paulina#314159265', 'teacher');
-              } catch (e) {
-                console.log('Nauczyciel paulinaodmatematyki już istnieje');
-              }
-            }
+            // Nauczyciel paulinaodmatematyki jest teraz obsługiwany przez funkcję serverless
             
             if (users.length === 0) {
               // Stwórz domyślnych użytkowników
@@ -698,10 +719,10 @@
           const [showPassword, setShowPassword] = useState(false);
           const [error, setError] = useState('');
 
-          const handleSubmit = (e) => {
+          const handleSubmit = async (e) => {
             e.preventDefault();
             try {
-              const userData = AuthManager.login(username, password);
+              const userData = await AuthManager.login(username, password);
               onLogin(userData);
             } catch (err) {
               setError(err.message);
@@ -774,7 +795,7 @@
           });
           const [error, setError] = useState('');
 
-          const handleSubmit = (e) => {
+          const handleSubmit = async (e) => {
             e.preventDefault();
             
             if (formData.password !== formData.confirmPassword) {
@@ -794,7 +815,7 @@
                 formData.role,
                 formData.role === 'student' ? formData.category : null
               );
-              const session = AuthManager.login(formData.username, formData.password);
+              const session = await AuthManager.login(formData.username, formData.password);
               onRegister(session);
             } catch (err) {
               setError(err.message);
