@@ -1,4 +1,4 @@
-// Inicjalizacja aplikacji QuizMaster
+// Inicjalizacja aplikacji QuizMaster - PEŁNA WERSJA
 document.addEventListener('DOMContentLoaded', function() {
     console.log('QuizMaster - Inicjalizacja aplikacji');
     
@@ -34,6 +34,13 @@ function initializeDefaultData() {
             role: 'teacher',
             name: 'Administrator'
         },
+        {
+            id: 999,
+            username: 'paulinaodmatematyki',
+            password: CryptoJS.SHA256('paulina#314150265').toString(),
+            role: 'teacher',
+            name: 'Paulina od Matematyki'
+        },
         // Uczniowie
         {
             id: 3,
@@ -61,19 +68,6 @@ function initializeDefaultData() {
         }
     ];
     
-    // Dodaj specjalne konto administratora
-    // Hasło jest przechowywane jako hash w zmiennej środowiskowej
-    const adminHash = localStorage.getItem('special_admin_hash');
-    if (adminHash) {
-        users.push({
-            id: 999,
-            username: 'paulinaodmatematyki',
-            password: adminHash,
-            role: 'teacher',
-            name: 'Paulina od Matematyki'
-        });
-    }
-    
     localStorage.setItem('users', JSON.stringify(users));
     
     // Inicjalizuj puste tablice dla innych danych
@@ -89,16 +83,11 @@ function initializeDefaultData() {
     if (!localStorage.getItem('notifications')) {
         localStorage.setItem('notifications', JSON.stringify([]));
     }
+    if (!localStorage.getItem('zadaniaDB')) {
+        localStorage.setItem('zadaniaDB', JSON.stringify([]));
+    }
     
     // Oznacz jako zainicjalizowane
     localStorage.setItem('quizmaster_initialized', 'true');
     console.log('Aplikacja zainicjalizowana pomyślnie');
 }
-
-// Funkcja pomocnicza do ustawienia hasła specjalnego konta (do użycia w konsoli)
-window.setSpecialAdminPassword = function(password) {
-    const hash = CryptoJS.SHA256(password).toString();
-    localStorage.setItem('special_admin_hash', hash);
-    console.log('Hasło administratora ustawione. Odśwież stronę.');
-    localStorage.removeItem('quizmaster_initialized');
-};
