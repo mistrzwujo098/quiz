@@ -1,0 +1,28 @@
+{
+  "version": "2.0.0",
+  "buildDate": "2025-07-09",
+  "features": {
+    "teacherDashboard": true,
+    "studentManagement": true,
+    "parentPanel": true,
+    "pdfExport": true,
+    "pushNotifications": true,
+    "quickReview": true,
+    "gamification": true,
+    "mathFormulas": true,
+    "wordImport": true,
+    "aiGeneration": true
+  },
+  "changelog": [
+    "Dodano dashboard nauczyciela",
+    "System zarządzania uczniami z importem CSV",
+    "Panel rodzica z monitorowaniem postępów",
+    "Eksport do PDF (raporty, certyfikaty)",
+    "System powiadomień push",
+    "Tryb szybkiej powtórki",
+    "Rozszerzona gamifikacja",
+    "Wsparcie dla formuł matematycznych",
+    "Import zadań z Word",
+    "Integracja z AI (Gemini)"
+  ]
+}
