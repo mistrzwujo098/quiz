@@ -1,0 +1,812 @@
+{
+  "metadata": {
+    "title": "Egzamin ósmoklasisty z matematyki 2019-2025",
+    "description": "100 zadań przygotowujących do egzaminu ósmoklasisty z matematyki",
+    "version": "1.0",
+    "subject": "matematyka",
+    "totalQuestions": 100,
+    "maxPoints": 100
+  },
+  "questions": [
+    {
+      "id": 1,
+      "department": "Liczby i działania",
+      "type": "Potęgi i pierwiastki",
+      "question": "Wartość wyrażenia (2^3 * 2^5) / 2^6 jest równa:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "2",
+        "b": "4",
+        "c": "8",
+        "d": "1"
+      },
+      "correctAnswer": "b",
+      "explanation": "Korzystając z własności potęg: (a^m * a^n) = a^(m+n) oraz a^m / a^n = a^(m-n). Mamy (2^(3+5)) / 2^6 = 2^8 / 2^6 = 2^(8-6) = 2^2 = 4."
+    },
+    {
+      "id": 2,
+      "department": "Liczby i działania",
+      "type": "Potęgi i pierwiastki",
+      "question": "Liczba √48 jest równa:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "4√3",
+        "b": "3√4",
+        "c": "16√3",
+        "d": "12√4"
+      },
+      "correctAnswer": "a",
+      "explanation": "Aby uprościć pierwiastek, szukamy największego kwadratu liczby całkowitej, przez który dzieli się 48. Jest to 16. Zatem √48 = √(16 * 3) = √16 * √3 = 4√3."
+    },
+    {
+      "id": 3,
+      "department": "Liczby i działania",
+      "type": "Kolejność wykonywania działań",
+      "question": "Wynik działania 24 / (3 * 2^2) - 1 to:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "5",
+        "b": "1",
+        "c": "23",
+        "d": "11"
+      },
+      "correctAnswer": "b",
+      "explanation": "Zgodnie z kolejnością działań, najpierw potęgowanie, potem mnożenie w nawiasie, dzielenie i na końcu odejmowanie: 24 / (3 * 4) - 1 = 24 / 12 - 1 = 2 - 1 = 1."
+    },
+    {
+      "id": 4,
+      "department": "Liczby i działania",
+      "type": "Procenty",
+      "question": "Cenę towaru wynoszącą 200 zł obniżono o 15%. Jaka jest nowa cena?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "170 zł",
+        "b": "185 zł",
+        "c": "30 zł",
+        "d": "215 zł"
+      },
+      "correctAnswer": "a",
+      "explanation": "Obniżka wynosi 15% z 200 zł, czyli 0,15 * 200 = 30 zł. Nowa cena to 200 zł - 30 zł = 170 zł."
+    },
+    {
+      "id": 5,
+      "department": "Wyrażenia algebraiczne",
+      "type": "Wzory skróconego mnożenia",
+      "question": "Wyrażenie (x - 5)^2 jest równe:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "x^2 - 25",
+        "b": "x^2 + 25",
+        "c": "x^2 - 10x + 25",
+        "d": "x^2 + 10x + 25"
+      },
+      "correctAnswer": "c",
+      "explanation": "Stosujemy wzór skróconego mnożenia (a - b)^2 = a^2 - 2ab + b^2. Dla a=x i b=5 mamy x^2 - 2*x*5 + 5^2 = x^2 - 10x + 25."
+    },
+    {
+      "id": 6,
+      "department": "Równania i nierówności",
+      "type": "Równania liniowe",
+      "question": "Rozwiązaniem równania 3(x - 1) = 2x + 5 jest liczba:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "2",
+        "b": "8",
+        "c": "-2",
+        "d": "4"
+      },
+      "correctAnswer": "b",
+      "explanation": "Przekształcamy równanie: 3x - 3 = 2x + 5. Przenosimy niewiadome na jedną stronę, a liczby na drugą: 3x - 2x = 5 + 3, co daje x = 8."
+    },
+    {
+      "id": 7,
+      "department": "Planimetria",
+      "type": "Twierdzenie Pitagorasa",
+      "question": "W trójkącie prostokątnym przyprostokątne mają długości 6 cm i 8 cm. Jaką długość ma przeciwprostokątna?",
+      "hasImage": true,
+      "imageSvg": "<svg width='150' height='120' viewBox='0 0 150 120'><polygon points='10,110 10,10 130,110' stroke='black' stroke-width='2' fill='none'/><rect x='10' y='90' width='20' height='20' stroke='black' stroke-width='1' fill='none'/><text x='5' y='65' font-size='16'>6</text><text x='65' y='115' font-size='16'>8</text><text x='70' y='60' font-size='16' fill='red'>c=?</text></svg>",
+      "options": {
+        "a": "14 cm",
+        "b": "10 cm",
+        "c": "12 cm",
+        "d": "100 cm"
+      },
+      "correctAnswer": "b",
+      "explanation": "Z twierdzenia Pitagorasa: a^2 + b^2 = c^2. Mamy 6^2 + 8^2 = c^2, czyli 36 + 64 = c^2. Stąd 100 = c^2, a więc c = 10 cm."
+    },
+    {
+      "id": 8,
+      "department": "Zadania tekstowe",
+      "type": "Układanie równań",
+      "question": "Ania ma x lat, a jej siostra jest o 3 lata starsza. Razem mają 27 lat. Które równanie opisuje tę sytuację?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "x + 3 = 27",
+        "b": "x + (x+3) = 27",
+        "c": "x * (x+3) = 27",
+        "d": "2x - 3 = 27"
+      },
+      "correctAnswer": "b",
+      "explanation": "Wiek Ani to x, wiek siostry to x+3. Suma ich wieku to x + (x+3). Skoro razem mają 27 lat, poprawne równanie to x + (x+3) = 27."
+    },
+    {
+      "id": 9,
+      "department": "Planimetria",
+      "type": "Pola figur płaskich",
+      "question": "Pole kwadratu wynosi 64 cm^2. Jaki jest jego obwód?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "16 cm",
+        "b": "32 cm",
+        "c": "64 cm",
+        "d": "8 cm"
+      },
+      "correctAnswer": "b",
+      "explanation": "Pole kwadratu to a^2. Jeśli a^2 = 64, to bok a = √64 = 8 cm. Obwód kwadratu to 4a, czyli 4 * 8 = 32 cm."
+    },
+    {
+      "id": 10,
+      "department": "Stereometria",
+      "type": "Objętość graniastosłupów",
+      "question": "Podstawą graniastosłupa prostego jest kwadrat o boku 5 cm. Wysokość graniastosłupa wynosi 10 cm. Jaka jest jego objętość?",
+      "hasImage": true,
+      "imageSvg": "<svg width='120' height='150' viewBox='0 0 120 150'><polygon points='20,40 100,40 80,10 0,10' fill='#ddd' stroke='black' stroke-width='1'/><polygon points='100,40 100,140 80,110 80,10' fill='#ccc' stroke='black' stroke-width='1'/><polygon points='20,40 20,140 0,110 0,10' fill='#eee' stroke='black' stroke-width='1' stroke-dasharray='3,3'/><polygon points='20,140 100,140 80,110 0,110' fill='#bbb' stroke='black' stroke-width='1'/><line x1='20' y1='40' x2='20' y2='140' stroke='black' stroke-width='1'/><line x1='100' y1='40' x2='100' y2='140' stroke='black' stroke-width='1'/><text x='45' y='35' font-size='14'>5</text><text x='102' y='95' font-size='14'>10</text></svg>",
+      "options": {
+        "a": "250 cm^3",
+        "b": "500 cm^3",
+        "c": "150 cm^3",
+        "d": "200 cm^3"
+      },
+      "correctAnswer": "a",
+      "explanation": "Objętość graniastosłupa (V) to pole podstawy (Pp) razy wysokość (H). Pole podstawy (kwadratu) to 5*5 = 25 cm^2. V = 25 cm^2 * 10 cm = 250 cm^3."
+    },
+    {
+      "id": 11,
+      "department": "Statystyka i prawdopodobieństwo",
+      "type": "Średnia arytmetyczna",
+      "question": "Ania otrzymała z matematyki następujące oceny: 4, 5, 3, 6, 4. Jaka jest średnia jej ocen?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "4,0",
+        "b": "4,2",
+        "c": "4,4",
+        "d": "4,5"
+      },
+      "correctAnswer": "c",
+      "explanation": "Aby obliczyć średnią arytmetyczną, sumujemy wszystkie oceny i dzielimy przez ich liczbę: (4+5+3+6+4) / 5 = 22 / 5 = 4,4."
+    },
+    {
+      "id": 12,
+      "department": "Liczby i działania",
+      "type": "Działania na ułamkach",
+      "question": "Wynik działania 1/2 + 1/3 to:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "2/5",
+        "b": "1/5",
+        "c": "5/6",
+        "d": "1/6"
+      },
+      "correctAnswer": "c",
+      "explanation": "Aby dodać ułamki, sprowadzamy je do wspólnego mianownika, którym jest 6. 1/2 = 3/6, 1/3 = 2/6. Suma: 3/6 + 2/6 = 5/6."
+    },
+    {
+      "id": 13,
+      "department": "Równania i nierówności",
+      "type": "Nierówności liniowe",
+      "question": "Zbiorem rozwiązań nierówności 2x - 4 > 6 jest:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "x > 5",
+        "b": "x < 5",
+        "c": "x > 1",
+        "d": "x < 1"
+      },
+      "correctAnswer": "a",
+      "explanation": "Przekształcamy nierówność: 2x > 6 + 4, czyli 2x > 10. Dzielimy obie strony przez 2, co daje x > 5."
+    },
+    {
+      "id": 14,
+      "department": "Planimetria",
+      "type": "Kąty",
+      "question": "Suma miar kątów wewnętrznych w trójkącie wynosi:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "90°",
+        "b": "180°",
+        "c": "270°",
+        "d": "360°"
+      },
+      "correctAnswer": "b",
+      "explanation": "Zgodnie z podstawową własnością geometrii euklidesowej, suma miar kątów wewnętrznych w każdym trójkącie jest zawsze równa 180°."
+    },
+    {
+      "id": 15,
+      "department": "Zadania tekstowe",
+      "type": "Prędkość, droga, czas",
+      "question": "Samochód jedzie z prędkością 80 km/h. Jaką drogę pokona w ciągu 2,5 godziny?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "160 km",
+        "b": "200 km",
+        "c": "240 km",
+        "d": "180 km"
+      },
+      "correctAnswer": "b",
+      "explanation": "Droga (s) to prędkość (v) pomnożona przez czas (t). s = 80 km/h * 2,5 h = 200 km."
+    },
+    {
+      "id": 16,
+      "department": "Liczby i działania",
+      "type": "Liczby wymierne i niewymierne",
+      "question": "Która z poniższych liczb jest niewymierna?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "√25",
+        "b": "0.5",
+        "c": "√8",
+        "d": "9"
+      },
+      "correctAnswer": "c",
+      "explanation": "Liczba niewymierna to taka, której nie da się zapisać w postaci ułamka zwykłego. √25=5, 0.5=1/2, 9=9/1. √8 = 2√2, a √2 jest liczbą niewymierną, więc całe wyrażenie również."
+    },
+    {
+      "id": 17,
+      "department": "Wyrażenia algebraiczne",
+      "type": "Redukcja wyrazów podobnych",
+      "question": "Po uproszczeniu wyrażenia 3x - 2y + 5x + 4y otrzymamy:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "8x + 2y",
+        "b": "8x - 2y",
+        "c": "2x + 2y",
+        "d": "-2x + 6y"
+      },
+      "correctAnswer": "a",
+      "explanation": "Redukujemy wyrazy podobne: (3x + 5x) + (-2y + 4y) = 8x + 2y."
+    },
+    {
+      "id": 18,
+      "department": "Planimetria",
+      "type": "Pola figur płaskich",
+      "question": "Pole trapezu o podstawach 10 cm i 6 cm oraz wysokości 5 cm wynosi:",
+      "hasImage": true,
+      "imageSvg": "<svg width='180' height='100' viewBox='0 0 180 100'><polygon points='30,80 150,80 120,20 60,20' stroke='black' stroke-width='2' fill='lightgray'/><line x1='60' y1='20' x2='60' y2='80' stroke='red' stroke-width='1.5' stroke-dasharray='4,4'/><text x='85' y='18' font-size='16'>6</text><text x='85' y='95' font-size='16'>10</text><text x='65' y='55' font-size='16' fill='red'>5</text></svg>",
+      "options": {
+        "a": "80 cm^2",
+        "b": "40 cm^2",
+        "c": "50 cm^2",
+        "d": "16 cm^2"
+      },
+      "correctAnswer": "b",
+      "explanation": "Pole trapezu (P) to P = ((a+b)*h)/2. P = ((10+6)*5)/2 = (16*5)/2 = 80/2 = 40 cm^2."
+    },
+    {
+      "id": 19,
+      "department": "Statystyka i prawdopodobieństwo",
+      "type": "Prawdopodobieństwo",
+      "question": "Jakie jest prawdopodobieństwo wyrzucenia liczby oczek większej niż 4 przy jednokrotnym rzucie standardową kostką do gry?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "1/6",
+        "b": "1/3",
+        "c": "1/2",
+        "d": "2/3"
+      },
+      "correctAnswer": "b",
+      "explanation": "Wszystkich możliwych wyników jest 6. Zdarzenia sprzyjające to wyrzucenie 5 lub 6 (2 zdarzenia). Prawdopodobieństwo wynosi 2/6, co po skróceniu daje 1/3."
+    },
+    {
+      "id": 20,
+      "department": "Równania i nierówności",
+      "type": "Układy równań",
+      "question": "Para liczb (x, y), która jest rozwiązaniem układu równań {x + y = 5, x - y = 1} to:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "(2, 3)",
+        "b": "(3, 2)",
+        "c": "(4, 1)",
+        "d": "(1, 4)"
+      },
+      "correctAnswer": "b",
+      "explanation": "Dodając równania stronami, otrzymujemy: 2x = 6, więc x = 3. Podstawiając x=3 do pierwszego równania: 3 + y = 5, więc y = 2. Rozwiązaniem jest para (3, 2)."
+    },
+    {
+      "id": 21,
+      "department": "Liczby i działania",
+      "type": "Procenty",
+      "question": "Po podwyżce o 20% cena butów wynosi 240 zł. Jaka była cena przed podwyżką?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "200 zł",
+        "b": "192 zł",
+        "c": "220 zł",
+        "d": "210 zł"
+      },
+      "correctAnswer": "a",
+      "explanation": "Niech x to cena początkowa. Po podwyżce cena wynosi 120% ceny początkowej, czyli 1,2x = 240 zł. Dzieląc przez 1,2, otrzymujemy x = 200 zł."
+    },
+    {
+      "id": 22,
+      "department": "Stereometria",
+      "type": "Pole powierzchni ostrosłupów",
+      "question": "Ostrosłup prawidłowy czworokątny ma krawędź podstawy o długości 6 cm i wysokość ściany bocznej 5 cm. Pole powierzchni całkowitej wynosi:",
+      "hasImage": true,
+      "imageSvg": "<svg width='140' height='140' viewBox='0 0 140 140'><polygon points='20,110 120,110 100,90 40,90' fill='#ddd' stroke='black' stroke-width='1'/><path d='M 70,10 L 20,110' stroke='black' stroke-width='1.5'/><path d='M 70,10 L 120,110' stroke='black' stroke-width='1.5'/><path d='M 70,10 L 40,90' stroke='black' stroke-width='1.5' stroke-dasharray='4,4'/><path d='M 70,10 L 100,90' stroke='black' stroke-width='1.5'/><line x1='70' y1='110' x2='70' y2='10' stroke='blue' stroke-dasharray='3,3'/><line x1='70' y1='110' x2='120' y2='110' stroke-width='1' stroke='none'/><line x1='70' y1='110' x2='95' y2='60' stroke='red' stroke-width='1'/><text x='75' y='115' font-size='14'>6</text><text x='97' y='70' fill='red' font-size='14'>5</text></svg>",
+      "options": {
+        "a": "96 cm^2",
+        "b": "60 cm^2",
+        "c": "36 cm^2",
+        "d": "156 cm^2"
+      },
+      "correctAnswer": "a",
+      "explanation": "Pole podstawy (kwadratu) Pp = 6*6 = 36 cm^2. Pole jednej ściany bocznej (trójkąta) Psb = (1/2)*6*5 = 15 cm^2. Pole powierzchni bocznej Pb = 4 * 15 = 60 cm^2. Pole całkowite Pc = Pp + Pb = 36 + 60 = 96 cm^2."
+    },
+    {
+      "id": 23,
+      "department": "Planimetria",
+      "type": "Podobieństwo trójkątów",
+      "question": "Trójkąt ABC jest podobny do trójkąta A'B'C'. Boki trójkąta ABC mają długości 3, 4, 5. Najkrótszy bok trójkąta A'B'C' ma długość 6. Obwód trójkąta A'B'C' wynosi:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "12",
+        "b": "18",
+        "c": "24",
+        "d": "30"
+      },
+      "correctAnswer": "c",
+      "explanation": "Skala podobieństwa k = 6/3 = 2. Obwód trójkąta ABC wynosi 3+4+5=12. Obwód trójkąta A'B'C' jest k razy większy, czyli 12 * 2 = 24."
+    },
+    {
+      "id": 24,
+      "department": "Zadania tekstowe",
+      "type": "Zadania z wiekiem",
+      "question": "Ojciec jest 4 razy starszy od syna. Razem mają 50 lat. Ile lat ma syn?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "8 lat",
+        "b": "10 lat",
+        "c": "12 lat",
+        "d": "15 lat"
+      },
+      "correctAnswer": "b",
+      "explanation": "Niech x = wiek syna. Wiek ojca to 4x. Równanie: x + 4x = 50, czyli 5x = 50. Stąd x = 10. Syn ma 10 lat."
+    },
+    {
+      "id": 25,
+      "department": "Wyrażenia algebraiczne",
+      "type": "Wartość liczbowa wyrażeń",
+      "question": "Wartość wyrażenia 2a^2 - 3b dla a = -1 i b = 2 wynosi:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "-4",
+        "b": "-8",
+        "c": "8",
+        "d": "4"
+      },
+      "correctAnswer": "a",
+      "explanation": "Podstawiamy wartości do wyrażenia: 2*(-1)^2 - 3*2 = 2*1 - 6 = 2 - 6 = -4."
+    },
+    {
+      "id": 26,
+      "department": "Liczby i działania",
+      "type": "Potęgi o wykładniku ujemnym",
+      "question": "Liczba (1/3)^-2 jest równa:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "9",
+        "b": "1/9",
+        "c": "-9",
+        "d": "-1/9"
+      },
+      "correctAnswer": "a",
+      "explanation": "Korzystając z własności potęg a^-n = (1/a)^n, mamy (1/3)^-2 = (3/1)^2 = 3^2 = 9."
+    },
+    {
+      "id": 27,
+      "department": "Planimetria",
+      "type": "Kąty w okręgu",
+      "question": "Kąt środkowy oparty na pewnym łuku ma miarę 80°. Jaką miarę ma kąt wpisany oparty na tym samym łuku?",
+      "hasImage": true,
+      "imageSvg": "<svg width='120' height='120' viewBox='0 0 120 120'><circle cx='60' cy='60' r='50' stroke='black' stroke-width='2' fill='none'/><path d='M 60 60 L 103.3 35' stroke='blue' stroke-width='1.5'/><path d='M 60 60 L 103.3 85' stroke='blue' stroke-width='1.5'/><path d='M 30 60 L 103.3 35' stroke='red' stroke-width='1.5'/><path d='M 30 60 L 103.3 85' stroke='red' stroke-width='1.5'/><text x='70' y='60' font-size='16' fill='blue'>80°</text><text x='35' y='60' font-size='16' fill='red'>α=?</text></svg>",
+      "options": {
+        "a": "40°",
+        "b": "80°",
+        "c": "160°",
+        "d": "20°"
+      },
+      "correctAnswer": "a",
+      "explanation": "Kąt wpisany oparty na tym samym łuku co kąt środkowy jest od niego dwa razy mniejszy. Zatem miara kąta wpisanego wynosi 80° / 2 = 40°."
+    },
+    {
+      "id": 28,
+      "department": "Równania i nierówności",
+      "type": "Równania z jedną niewiadomą",
+      "question": "Liczba 5 jest rozwiązaniem równania:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "x/5 + 1 = 2",
+        "b": "2x - 10 = 5",
+        "c": "3(x-2) = 10",
+        "d": "x+5 = 5x"
+      },
+      "correctAnswer": "a",
+      "explanation": "Sprawdzamy każdą odpowiedź, podstawiając x=5. Dla a): 5/5 + 1 = 1 + 1 = 2. Równanie jest prawdziwe."
+    },
+    {
+      "id": 29,
+      "department": "Zadania tekstowe",
+      "type": "Procenty w zadaniach tekstowych",
+      "question": "W klasie jest 30 uczniów. 60% z nich to dziewczynki. Ilu chłopców jest w tej klasie?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "12",
+        "b": "18",
+        "c": "10",
+        "d": "15"
+      },
+      "correctAnswer": "a",
+      "explanation": "Liczba dziewczynek: 0,60 * 30 = 18. Liczba chłopców: 30 - 18 = 12. Alternatywnie, chłopcy stanowią 100% - 60% = 40% klasy. 0,40 * 30 = 12."
+    },
+    {
+      "id": 30,
+      "department": "Planimetria",
+      "type": "Twierdzenie Pitagorasa",
+      "question": "Przekątna kwadratu o boku 7 cm ma długość:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "7√2 cm",
+        "b": "14 cm",
+        "c": "7√3 cm",
+        "d": "49 cm"
+      },
+      "correctAnswer": "a",
+      "explanation": "Wzór na przekątną kwadratu to d = a√2, gdzie 'a' to bok kwadratu. Zatem d = 7√2 cm."
+    },
+    {
+      "id": 31,
+      "department": "Statystyka i prawdopodobieństwo",
+      "type": "Mediana",
+      "question": "Dano zestaw liczb: 2, 8, 4, 9, 2, 5, 8. Mediana tego zestawu wynosi:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "9",
+        "b": "4",
+        "c": "5",
+        "d": "8"
+      },
+      "correctAnswer": "c",
+      "explanation": "Najpierw porządkujemy liczby rosnąco: 2, 2, 4, 5, 8, 8, 9. Mediana to wartość środkowa. W tym przypadku jest to czwarta liczba, czyli 5."
+    },
+    {
+      "id": 32,
+      "department": "Liczby i działania",
+      "type": "Zaokrąglanie liczb",
+      "question": "Liczba 3,14159265 zaokrąglona do części setnych to:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "3,1",
+        "b": "3,14",
+        "c": "3,142",
+        "d": "3,15"
+      },
+      "correctAnswer": "b",
+      "explanation": "Patrzymy na trzecią cyfrę po przecinku. Jest to 1, więc nie podnosimy cyfry części setnych. Zaokrąglenie to 3,14."
+    },
+    {
+      "id": 33,
+      "department": "Wyrażenia algebraiczne",
+      "type": "Wzory skróconego mnożenia",
+      "question": "Wyrażenie (2x + 3y)(2x - 3y) jest równe:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "4x^2 - 9y^2",
+        "b": "4x^2 + 9y^2",
+        "c": "2x^2 - 3y^2",
+        "d": "4x^2 - 12xy + 9y^2"
+      },
+      "correctAnswer": "a",
+      "explanation": "Stosujemy wzór skróconego mnożenia (a + b)(a - b) = a^2 - b^2. Dla a=2x i b=3y mamy (2x)^2 - (3y)^2 = 4x^2 - 9y^2."
+    },
+    {
+      "id": 34,
+      "department": "Planimetria",
+      "type": "Obwody figur płaskich",
+      "question": "Obwód prostokąta o bokach 5 cm i 12 cm wynosi:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "17 cm",
+        "b": "34 cm",
+        "c": "60 cm",
+        "d": "29 cm"
+      },
+      "correctAnswer": "b",
+      "explanation": "Obwód prostokąta to 2a + 2b. Obwód = 2*5 + 2*12 = 10 + 24 = 34 cm."
+    },
+    {
+      "id": 35,
+      "department": "Zadania tekstowe",
+      "type": "Prędkość, droga, czas",
+      "question": "Rowerzysta przejechał 36 km w ciągu 2 godzin. Z jaką średnią prędkością się poruszał?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "18 km/h",
+        "b": "72 km/h",
+        "c": "15 km/h",
+        "d": "20 km/h"
+      },
+      "correctAnswer": "a",
+      "explanation": "Prędkość (v) to droga (s) podzielona przez czas (t). v = 36 km / 2 h = 18 km/h."
+    },
+    {
+      "id": 36,
+      "department": "Stereometria",
+      "type": "Objętość stożka",
+      "question": "Objętość stożka o promieniu podstawy r = 3 cm i wysokości h = 10 cm wynosi:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "30π cm^3",
+        "b": "90π cm^3",
+        "c": "10π cm^3",
+        "d": "60π cm^3"
+      },
+      "correctAnswer": "a",
+      "explanation": "Wzór na objętość stożka to V = (1/3) * π * r^2 * h. V = (1/3) * π * 3^2 * 10 = (1/3) * π * 9 * 10 = 3 * 10 * π = 30π cm^3."
+    },
+    {
+      "id": 37,
+      "department": "Planimetria",
+      "type": "Kąty przyległe i wierzchołkowe",
+      "question": "Dwa kąty przyległe mają się do siebie w stosunku 1:4. Miary tych kątów to:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "30° i 120°",
+        "b": "45° i 135°",
+        "c": "36° i 144°",
+        "d": "60° i 120°"
+      },
+      "correctAnswer": "c",
+      "explanation": "Suma kątów przyległych wynosi 180°. Niech kąty mają miary x i 4x. Wtedy x + 4x = 180°, czyli 5x = 180°. Stąd x = 36°. Drugi kąt to 4 * 36° = 144°."
+    },
+    {
+      "id": 38,
+      "department": "Liczby i działania",
+      "type": "Dzielniki i wielokrotności",
+      "question": "Największy wspólny dzielnik (NWD) liczb 24 i 36 to:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "6",
+        "b": "24",
+        "c": "12",
+        "d": "4"
+      },
+      "correctAnswer": "c",
+      "explanation": "Dzielniki 24: 1, 2, 3, 4, 6, 8, 12, 24. Dzielniki 36: 1, 2, 3, 4, 6, 9, 12, 18, 36. Największym wspólnym dzielnikiem jest 12."
+    },
+    {
+      "id": 39,
+      "department": "Równania i nierówności",
+      "type": "Układy równań",
+      "question": "Za 2 batony i 3 soki zapłacono 12 zł. Za 3 takie same batony i 2 soki zapłacono 13 zł. Ile kosztuje jeden baton?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "2 zł",
+        "b": "2,50 zł",
+        "c": "3 zł",
+        "d": "3,50 zł"
+      },
+      "correctAnswer": "c",
+      "explanation": "Niech b - cena batona, s - cena soku. Układ równań: {2b + 3s = 12, 3b + 2s = 13}. Mnożąc pierwsze przez 2, drugie przez -3, otrzymujemy {4b + 6s = 24, -9b - 6s = -39}. Dodając stronami: -5b = -15, więc b = 3 zł."
+    },
+    {
+      "id": 40,
+      "department": "Statystyka i prawdopodobieństwo",
+      "type": "Prawdopodobieństwo",
+      "question": "W pudełku jest 5 kul białych i 3 kule czarne. Losujemy jedną kulę. Jakie jest prawdopodobieństwo wylosowania kuli białej?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "3/8",
+        "b": "5/3",
+        "c": "5/8",
+        "d": "1/5"
+      },
+      "correctAnswer": "c",
+      "explanation": "W sumie jest 5 + 3 = 8 kul. Kul białych jest 5. Prawdopodobieństwo wylosowania białej kuli wynosi 5/8."
+    },
+    {
+      "id": 41,
+      "department": "Planimetria",
+      "type": "Własności trójkątów",
+      "question": "Długości boków trójkąta mogą wynosić:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "2 cm, 3 cm, 6 cm",
+        "b": "5 cm, 5 cm, 10 cm",
+        "c": "7 cm, 8 cm, 14 cm",
+        "d": "1 cm, 2 cm, 3 cm"
+      },
+      "correctAnswer": "c",
+      "explanation": "W trójkącie suma długości dwóch dowolnych boków musi być większa od długości trzeciego boku. Warunek ten jest spełniony tylko dla odpowiedzi c: 7+8 > 14 (15>14), 7+14>8, 8+14>7."
+    },
+    {
+      "id": 42,
+      "department": "Liczby i działania",
+      "type": "Potęgi i pierwiastki",
+      "question": "Liczba (√5 - 2)(√5 + 2) jest równa:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "1",
+        "b": "3",
+        "c": "21",
+        "d": "5 - 4"
+      },
+      "correctAnswer": "a",
+      "explanation": "Korzystamy ze wzoru skróconego mnożenia (a-b)(a+b) = a^2 - b^2. Tutaj a=√5, b=2. Wyrażenie jest równe (√5)^2 - 2^2 = 5 - 4 = 1."
+    },
+    {
+      "id": 43,
+      "department": "Stereometria",
+      "type": "Pole powierzchni kuli",
+      "question": "Pole powierzchni kuli o promieniu r = 5 cm wynosi:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "25π cm^2",
+        "b": "50π cm^2",
+        "c": "100π cm^2",
+        "d": "500/3 π cm^3"
+      },
+      "correctAnswer": "c",
+      "explanation": "Wzór na pole powierzchni kuli to P = 4πr^2. P = 4 * π * 5^2 = 4 * π * 25 = 100π cm^2."
+    },
+    {
+      "id": 44,
+      "department": "Zadania tekstowe",
+      "type": "Układanie równań",
+      "question": "Suma dwóch liczb wynosi 20, a ich różnica 4. Iloczyn tych liczb to:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "84",
+        "b": "96",
+        "c": "100",
+        "d": "64"
+      },
+      "correctAnswer": "b",
+      "explanation": "Niech x, y to szukane liczby. {x + y = 20, x - y = 4}. Dodając stronami: 2x = 24, więc x = 12. Wtedy 12 + y = 20, więc y = 8. Iloczyn: 12 * 8 = 96."
+    },
+    {
+      "id": 45,
+      "department": "Planimetria",
+      "type": "Pola figur płaskich",
+      "question": "Pole koła o średnicy 10 cm wynosi:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "10π cm^2",
+        "b": "100π cm^2",
+        "c": "25π cm^2",
+        "d": "5π cm^2"
+      },
+      "correctAnswer": "c",
+      "explanation": "Średnica d = 10 cm, więc promień r = d/2 = 5 cm. Pole koła P = πr^2. P = π * 5^2 = 25π cm^2."
+    },
+    {
+      "id": 46,
+      "department": "Liczby i działania",
+      "type": "Porównywanie liczb",
+      "question": "Która z liczb jest największa?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "2^10",
+        "b": "4^6",
+        "c": "8^3",
+        "d": "16^2"
+      },
+      "correctAnswer": "b",
+      "explanation": "Aby porównać liczby, sprowadzamy je do tej samej podstawy, np. 2. a) 2^10; b) 4^6 = (2^2)^6 = 2^12; c) 8^3 = (2^3)^3 = 2^9; d) 16^2 = (2^4)^2 = 2^8. Największą liczbą jest 2^12, czyli 4^6."
+    },
+    {
+      "id": 47,
+      "department": "Wyrażenia algebraiczne",
+      "type": "Wyłączanie wspólnego czynnika",
+      "question": "Po wyłączeniu wspólnego czynnika przed nawias w wyrażeniu 12x^2y - 18xy^2 otrzymamy:",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "6xy(2x - 3y)",
+        "b": "6x(2x - 3y^2)",
+        "c": "6y(2x^2 - 3y)",
+        "d": "12xy(x - 1.5y)"
+      },
+      "correctAnswer": "a",
+      "explanation": "Największym wspólnym dzielnikiem dla 12 i 18 jest 6. Wspólnymi zmiennymi są x i y w najniższych potęgach, czyli xy. Wyłączamy 6xy: 6xy(2x - 3y)."
+    },
+    {
+      "id": 48,
+      "department": "Planimetria",
+      "type": "Twierdzenie Pitagorasa",
+      "question": "Wysokość trójkąta równobocznego o boku 12 cm wynosi:",
+      "hasImage": true,
+      "imageSvg": "<svg width='120' height='120' viewBox='0 0 120 120'><polygon points='60,10 10,100 110,100' stroke='black' stroke-width='2' fill='lightgray'/><line x1='60' y1='10' x2='60' y2='100' stroke='red' stroke-width='1.5' stroke-dasharray='4,4'/><text x='50' y='115' font-size='16'>12</text><text x='62' y='60' font-size='16' fill='red'>h=?</text></svg>",
+      "options": {
+        "a": "6 cm",
+        "b": "12√3 cm",
+        "c": "6√2 cm",
+        "d": "6√3 cm"
+      },
+      "correctAnswer": "d",
+      "explanation": "Wzór na wysokość w trójkącie równobocznym to h = (a√3)/2. h = (12√3)/2 = 6√3 cm."
+    },
+    {
+      "id": 49,
+      "department": "Zadania tekstowe",
+      "type": "Procenty w zadaniach tekstowych",
+      "question": "Roztwór soli o masie 2 kg zawiera 5% soli. Ile soli jest w tym roztworze?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "100 g",
+        "b": "10 g",
+        "c": "50 g",
+        "d": "200 g"
+      },
+      "correctAnswer": "a",
+      "explanation": "Masa roztworu to 2 kg = 2000 g. Masa soli to 5% z 2000 g. 0,05 * 2000 g = 100 g."
+    },
+    {
+      "id": 50,
+      "department": "Równania i nierówności",
+      "type": "Równania liniowe",
+      "question": "Która liczba jest pierwiastkiem równania (x+1)/3 = 2?",
+      "hasImage": false,
+      "imageSvg": null,
+      "options": {
+        "a": "5",
+        "b": "6",
+        "c": "7",
+        "d": "4"
+      },
+      "correctAnswer": "a",
+      "explanation": "Mnożymy obie strony równania przez 3: x + 1 = 6. Odejmujemy 1 z obu stron: x = 5."
+    }
+  ]
+}

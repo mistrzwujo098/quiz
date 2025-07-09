@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Blokuj dostęp do plików konfiguracyjnych
+Disallow: /js/config.js
+Disallow: /.htaccess
+Disallow: /api-proxy.php
+
+# Sitemap (jeśli utworzysz)
+# Sitemap: https://twojadomena.pl/sitemap.xml
