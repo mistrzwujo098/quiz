@@ -1,0 +1,26 @@
+{
+  "name": "quizmaster",
+  "version": "1.0.0",
+  "description": "QuizMaster - Generator arkuszy egzaminacyjnych z AI",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "install-all": "npm install && cd server && npm install",
+    "test": "node tests/run-tests-local.sh"
+  },
+  "keywords": [
+    "education",
+    "quiz",
+    "exam",
+    "generator",
+    "AI",
+    "Gemini"
+  ],
+  "author": "QuizMaster Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}

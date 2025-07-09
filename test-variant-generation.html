@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test generacji wariantu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/task-variant-generator.js"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Test generacji wariantu zadania</h1>
+        
+        <div class="bg-gray-800 p-6 rounded-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Oryginalne zadanie:</h2>
+            <p class="mb-2"><strong>Treść:</strong> Oblicz pole prostokąta o bokach 5 cm i 8 cm.</p>
+            <p class="mb-2"><strong>Odpowiedzi:</strong> A) 40 cm², B) 13 cm², C) 35 cm², D) 45 cm²</p>
+            <p><strong>Poprawna:</strong> A) 40 cm²</p>
+        </div>
+        
+        <button id="generateBtn" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold">
+            <i class="fas fa-magic mr-2"></i>Generuj wariant
+        </button>
+        
+        <div id="status" class="mt-6"></div>
+        <div id="result" class="mt-6"></div>
+    </div>
+
+    <script>
+        const testTask = {
+            id: 'test_1',
+            tresc: 'Oblicz pole prostokąta o bokach 5 cm i 8 cm.',
+            typ: 'zamkniete',
+            odpowiedzi: ['40 cm²', '13 cm²', '35 cm²', '45 cm²'],
+            poprawna: '40 cm²',
+            przedmiot: 'Matematyka',
+            temat: 'Geometria podstawowa',
+            poziom: 'podstawowy',
+            punkty: 1
+        };
+        
+        const generator = new TaskVariantGenerator();
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+        const generateBtn = document.getElementById('generateBtn');
+        
+        async function generateVariant() {
+            generateBtn.disabled = true;
+            statusDiv.innerHTML = '<div class="text-yellow-400"><i class="fas fa-spinner fa-spin mr-2"></i>Autoryzacja...</div>';
+            
+            try {
+                // Autoryzuj
+                const authSuccess = await generator.authenticate('test_user', 'teacher');
+                if (!authSuccess) {
+                    throw new Error('Autoryzacja nie powiodła się');
+                }
+                
+                statusDiv.innerHTML = '<div class="text-yellow-400"><i class="fas fa-spinner fa-spin mr-2"></i>Generowanie wariantu...</div>';
+                
+                // Generuj wariant
+                const result = await generator.generateVariant(testTask, { useAI: true });
+                
+                if (result.success) {
+                    statusDiv.innerHTML = '<div class="text-green-400"><i class="fas fa-check-circle mr-2"></i>Wariant wygenerowany pomyślnie!</div>';
+                    
+                    resultDiv.innerHTML = `
+                        <div class="bg-gray-800 p-6 rounded-lg">
+                            <h2 class="text-xl font-semibold mb-4">Wygenerowany wariant:</h2>
+                            <p class="mb-2"><strong>Treść:</strong> ${result.variant.tresc}</p>
+                            <p class="mb-2"><strong>Odpowiedzi:</strong></p>
+                            <ul class="list-disc list-inside mb-2">
+                                ${result.variant.odpowiedzi.map((odp, idx) => 
+                                    `<li class="${odp === result.variant.poprawna ? 'text-green-400' : ''}">
+                                        ${String.fromCharCode(65 + idx)}) ${odp}
+                                    </li>`
+                                ).join('')}
+                            </ul>
+                            <p class="mb-2"><strong>Poprawna odpowiedź:</strong> ${result.variant.poprawna}</p>
+                            ${result.variant.wyjasnienie ? `<p class="mb-2"><strong>Wyjaśnienie:</strong> ${result.variant.wyjasnienie}</p>` : ''}
+                            <p class="text-sm text-gray-400 mt-4">
+                                Użyto AI: ${result.usedAI ? 'Tak' : 'Nie'} | 
+                                Szacowany koszt: $${result.estimatedCost}
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.error);
+                }
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="text-red-400"><i class="fas fa-times-circle mr-2"></i>Błąd: ${error.message}</div>`;
+                console.error('Szczegóły błędu:', error);
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+        
+        generateBtn.addEventListener('click', generateVariant);
+        
+        // Informacja o statusie serwera
+        fetch('http://localhost:3001/api/health')
+            .then(res => res.ok ? 'Serwer proxy: ONLINE' : 'Serwer proxy: OFFLINE')
+            .then(status => {
+                const div = document.createElement('div');
+                div.className = status.includes('ONLINE') ? 'text-green-400 mb-4' : 'text-red-400 mb-4';
+                div.innerHTML = `<i class="fas fa-server mr-2"></i>${status}`;
+                document.querySelector('h1').after(div);
+            })
+            .catch(() => {
+                const div = document.createElement('div');
+                div.className = 'text-red-400 mb-4';
+                div.innerHTML = '<i class="fas fa-server mr-2"></i>Serwer proxy: NIEDOSTĘPNY';
+                document.querySelector('h1').after(div);
+            });
+    </script>
+</body>
+</html>

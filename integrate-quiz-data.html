@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integracja quiz_data.json z aplikacją</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        button.success {
+            background: #4caf50;
+        }
+        button.success:hover {
+            background: #45a049;
+        }
+        button.warning {
+            background: #ff9800;
+        }
+        button.warning:hover {
+            background: #f57c00;
+        }
+        .code-block {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Integracja quiz_data.json z aplikacją QuizMaster</h1>
+        
+        <div class="info-box">
+            <h3>ℹ️ O pliku quiz_data.json</h3>
+            <p>Plik zawiera 50 pytań egzaminacyjnych z matematyki dla klasy 8, podzielonych na różne działy tematyczne.</p>
+            <p>Każde pytanie zawiera:</p>
+            <ul>
+                <li>Treść pytania</li>
+                <li>4 opcje odpowiedzi (a, b, c, d)</li>
+                <li>Poprawną odpowiedź</li>
+                <li>Wyjaśnienie rozwiązania</li>
+                <li>Opcjonalnie: diagram SVG</li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ Uwaga</h3>
+            <p>Przed integracją zalecane jest wykonanie kopii zapasowej obecnej bazy danych.</p>
+        </div>
+
+        <div id="currentStats" class="stats"></div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <button onclick="checkCurrentDatabase()">
+                📊 Sprawdź obecną bazę
+            </button>
+            <button onclick="loadQuizData()" class="success">
+                📥 Załaduj quiz_data.json
+            </button>
+            <button onclick="convertAndIntegrate()" class="warning">
+                🔄 Konwertuj i integruj
+            </button>
+        </div>
+
+        <div id="result"></div>
+
+        <div class="info-box" style="margin-top: 30px;">
+            <h3>📝 Integracja w aplikacji głównej</h3>
+            <p>Aby zintegrować dane w index.html, dodaj:</p>
+            <div class="code-block">
+// Na początku aplikacji
+fetch('./quiz_data.json')
+    .then(response => response.json())
+    .then(quizData => {
+        // Konwersja formatu
+        const convertedTasks = convertQuizDataToTasks(quizData);
+        
+        // Zapisz do localStorage
+        const existingTasks = JSON.parse(localStorage.getItem('zadaniaDB') || '[]');
+        const allTasks = [...existingTasks, ...convertedTasks];
+        localStorage.setItem('zadaniaDB', JSON.stringify(allTasks));
+    });
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let loadedQuizData = null;
+
+        function checkCurrentDatabase() {
+            const resultDiv = document.getElementById('result');
+            const statsDiv = document.getElementById('currentStats');
+            
+            try {
+                const currentTasks = JSON.parse(localStorage.getItem('zadaniaDB') || '[]');
+                
+                statsDiv.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${currentTasks.length}</div>
+                        <div>Zadań w bazie</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${currentTasks.filter(t => t.przedmiot === 'egzamin ósmoklasisty').length}</div>
+                        <div>Egzamin 8 klasy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${currentTasks.filter(t => t.przedmiot === 'matura podstawowa').length}</div>
+                        <div>Matura podstawowa</div>
+                    </div>
+                `;
+                
+                resultDiv.innerHTML = `
+                    <div class="success-box">
+                        <p>✅ Obecna baza zawiera ${currentTasks.length} zadań</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="warning-box">
+                        <p>⚠️ Brak danych w bazie lokalnej</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadQuizData() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const response = await fetch('./quiz_data.json');
+                if (!response.ok) throw new Error('Nie można załadować pliku');
+                
+                loadedQuizData = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success-box">
+                        <h3>✅ Załadowano quiz_data.json</h3>
+                        <p>Liczba pytań: ${loadedQuizData.questions.length}</p>
+                        <p>Tytuł: ${loadedQuizData.metadata.title}</p>
+                        <p>Pytania z obrazkami: ${loadedQuizData.questions.filter(q => q.hasImage).length}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="warning-box">
+                        <h3>❌ Błąd ładowania</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function convertQuizDataToTasks(quizData) {
+            return quizData.questions.map((question, index) => ({
+                id: `quiz_data_${question.id}`,
+                przedmiot: 'egzamin ósmoklasisty',
+                temat: question.department,
+                tresc: question.question,
+                typ: 'zamkniete',
+                odpowiedzi: Object.values(question.options),
+                poprawna: question.correctAnswer.toUpperCase(),
+                punkty: 1,
+                poziom: 'podstawowy',
+                rok: '2025',
+                sesja: 'główna',
+                obrazek: question.hasImage && question.imageSvg ? question.imageSvg : null,
+                wyjaśnienie: question.explanation
+            }));
+        }
+
+        function convertAndIntegrate() {
+            const resultDiv = document.getElementById('result');
+            
+            if (!loadedQuizData) {
+                resultDiv.innerHTML = `
+                    <div class="warning-box">
+                        <p>⚠️ Najpierw załaduj plik quiz_data.json</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            try {
+                // Konwertuj dane
+                const convertedTasks = convertQuizDataToTasks(loadedQuizData);
+                
+                // Pobierz istniejące zadania
+                const existingTasks = JSON.parse(localStorage.getItem('zadaniaDB') || '[]');
+                
+                // Sprawdź duplikaty
+                const existingIds = new Set(existingTasks.map(t => t.id));
+                const newTasks = convertedTasks.filter(t => !existingIds.has(t.id));
+                
+                if (newTasks.length === 0) {
+                    resultDiv.innerHTML = `
+                        <div class="warning-box">
+                            <p>⚠️ Wszystkie zadania już istnieją w bazie</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Dodaj nowe zadania
+                const allTasks = [...existingTasks, ...newTasks];
+                localStorage.setItem('zadaniaDB', JSON.stringify(allTasks));
+                
+                resultDiv.innerHTML = `
+                    <div class="success-box">
+                        <h3>✅ Integracja zakończona!</h3>
+                        <p>Dodano ${newTasks.length} nowych zadań</p>
+                        <p>Łączna liczba zadań w bazie: ${allTasks.length}</p>
+                        <br>
+                        <a href="index.html" style="color: #2196f3; font-weight: bold;">
+                            → Przejdź do aplikacji głównej
+                        </a>
+                    </div>
+                `;
+                
+                // Odśwież statystyki
+                checkCurrentDatabase();
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="warning-box">
+                        <h3>❌ Błąd integracji</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Sprawdź bazę przy ładowaniu
+        window.onload = () => {
+            checkCurrentDatabase();
+        };
+    </script>
+</body>
+</html>

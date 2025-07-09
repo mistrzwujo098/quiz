@@ -1,0 +1,59 @@
+# Konfiguracja Netlify dla QuizMaster
+
+[build]
+  # Ponieważ nie mamy procesu budowania, po prostu publikujemy pliki
+  publish = "."
+
+[build.environment]
+  # Zmienne środowiskowe (ustaw w panelu Netlify)
+  # SUPABASE_URL = "your-supabase-url"
+  # SUPABASE_ANON_KEY = "your-supabase-anon-key"
+  # GEMINI_API_KEY = "your-gemini-api-key"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Bezpieczeństwo
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+    # CORS dla API
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+# Przekierowania
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-api-endpoint.com/api/:splat"
+  status = 200
+  force = true
+  headers = {X-From = "Netlify"}
+
+# Funkcje Edge (opcjonalne)
+[[edge_functions]]
+  function = "supabase-proxy"
+  path = "/api/supabase/*"
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

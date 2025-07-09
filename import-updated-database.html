@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import Zaktualizowanej Bazy Danych</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            display: block;
+            margin: 40px auto;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 12px;
+            display: none;
+            text-align: center;
+        }
+        .result.success {
+            background: #e6fffa;
+            color: #234e52;
+            border: 2px solid #81e6d9;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Zaktualizowana Baza Danych</h1>
+        
+        <div class="success-box">
+            <h3>✅ Pomyślnie zintegrowano quiz_data.json!</h3>
+            <p>Dodano 50 nowych zadań z egzaminu ósmoklasisty 2025.</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">50</span>
+                <span>Wszystkich zadań</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">50</span>
+                <span>Egzamin ósmoklasisty</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">0</span>
+                <span>Matura podstawowa</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">11</span>
+                <span>Zadań z obrazkami</span>
+            </div>
+        </div>
+        
+        <button id="importBtn" onclick="importTasks()">
+            📥 Importuj do aplikacji
+        </button>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const tasksToImport = [{"id":"quiz_2025_1","przedmiot":"egzamin ósmoklasisty","temat":"Liczby naturalne i całkowite","tresc":"Oblicz wartość wyrażenia: (-8) + (+15) - (-12) + (-7)","typ":"zamkniete","odpowiedzi":["12","22","2","-2"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"(-8) + 15 - (-12) + (-7) = -8 + 15 + 12 - 7 = 12"},{"id":"quiz_2025_2","przedmiot":"egzamin ósmoklasisty","temat":"Ułamki zwykłe","tresc":"Oblicz: 3/4 + 5/6 - 1/3","typ":"zamkniete","odpowiedzi":["5/4","7/6","9/12","5/6"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"Wspólny mianownik to 12: 9/12 + 10/12 - 4/12 = 15/12 = 5/4"},{"id":"quiz_2025_3","przedmiot":"egzamin ósmoklasisty","temat":"Procenty","tresc":"W sklepie cena kurtki wynosiła 240 zł. Po obniżce o 15% cena wynosi:","typ":"zamkniete","odpowiedzi":["36 zł","204 zł","225 zł","276 zł"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"240 zł - 15% z 240 zł = 240 - 36 = 204 zł"},{"id":"quiz_2025_4","przedmiot":"egzamin ósmoklasisty","temat":"Potęgi i pierwiastki","tresc":"Wartość wyrażenia 2⁴ · 3² - 5² wynosi:","typ":"zamkniete","odpowiedzi":["119","144","169","89"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"16 · 9 - 25 = 144 - 25 = 119"},{"id":"quiz_2025_5","przedmiot":"egzamin ósmoklasisty","temat":"Geometria płaska","tresc":"Pole prostokąta o wymiarach 8 cm × 6 cm wynosi:","typ":"zamkniete","odpowiedzi":["28 cm²","48 cm²","14 cm²","24 cm²"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"150\" viewBox=\"0 0 200 150\"><rect x=\"20\" y=\"30\" width=\"80\" height=\"60\" fill=\"lightblue\" stroke=\"black\" stroke-width=\"2\"/><text x=\"60\" y=\"55\" text-anchor=\"middle\" font-size=\"12\">8 cm</text><text x=\"10\" y=\"65\" text-anchor=\"middle\" font-size=\"12\">6 cm</text></svg>","wyjaśnienie":"Pole prostokąta = długość × szerokość = 8 × 6 = 48 cm²"},{"id":"quiz_2025_6","przedmiot":"egzamin ósmoklasisty","temat":"Równania","tresc":"Rozwiąż równanie: 3x - 7 = 2x + 5","typ":"zamkniete","odpowiedzi":["x = 12","x = -12","x = 2","x = -2"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"3x - 2x = 5 + 7, x = 12"},{"id":"quiz_2025_7","przedmiot":"egzamin ósmoklasisty","temat":"Statystyka","tresc":"Średnia arytmetyczna liczb: 12, 8, 15, 9, 11 wynosi:","typ":"zamkniete","odpowiedzi":["10","11","12","55"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"(12 + 8 + 15 + 9 + 11) ÷ 5 = 55 ÷ 5 = 11"},{"id":"quiz_2025_8","przedmiot":"egzamin ósmoklasisty","temat":"Kombinatoryka","tresc":"Na ile sposobów można ustawić w rzędzie 4 różne książki?","typ":"zamkniete","odpowiedzi":["12","16","24","32"],"poprawna":"C","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"4! = 4 × 3 × 2 × 1 = 24"},{"id":"quiz_2025_9","przedmiot":"egzamin ósmoklasisty","temat":"Długość okręgu i pole koła","tresc":"Długość okręgu o promieniu 6 cm wynosi w przybliżeniu (π ≈ 3,14):","typ":"zamkniete","odpowiedzi":["18,84 cm","37,68 cm","113,04 cm","12 cm"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><circle cx=\"100\" cy=\"100\" r=\"60\" fill=\"none\" stroke=\"black\" stroke-width=\"2\"/><line x1=\"100\" y1=\"100\" x2=\"160\" y2=\"100\" stroke=\"red\" stroke-width=\"2\"/><text x=\"130\" y=\"95\" text-anchor=\"middle\" font-size=\"12\">6 cm</text></svg>","wyjaśnienie":"Długość okręgu = 2πr = 2 × 3,14 × 6 = 37,68 cm"},{"id":"quiz_2025_10","przedmiot":"egzamin ósmoklasisty","temat":"Proporcjonalność","tresc":"Jeśli 3 kg jabłek kosztuje 9 zł, to 5 kg jabłek kosztuje:","typ":"zamkniete","odpowiedzi":["12 zł","15 zł","18 zł","27 zł"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"3 kg → 9 zł, więc 1 kg → 3 zł, zatem 5 kg → 15 zł"},{"id":"quiz_2025_11","przedmiot":"egzamin ósmoklasisty","temat":"Geometria przestrzenna","tresc":"Objętość sześcianu o krawędzi długości 4 cm wynosi:","typ":"zamkniete","odpowiedzi":["12 cm³","16 cm³","48 cm³","64 cm³"],"poprawna":"D","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"Objętość sześcianu = a³ = 4³ = 64 cm³"},{"id":"quiz_2025_12","przedmiot":"egzamin ósmoklasisty","temat":"Układ współrzędnych","tresc":"W układzie współrzędnych punkt A ma współrzędne (3, -2). Punkt symetryczny do A względem osi OX ma współrzędne:","typ":"zamkniete","odpowiedzi":["(-3, -2)","(3, 2)","(-3, 2)","(2, -3)"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"Symetria względem osi OX zmienia znak współrzędnej y: (3, -2) → (3, 2)"},{"id":"quiz_2025_13","przedmiot":"egzamin ósmoklasisty","temat":"Liczby rzymskie","tresc":"Liczba 247 zapisana cyframi rzymskimi to:","typ":"zamkniete","odpowiedzi":["CCXLVII","CCXXXXVII","CCXXXXXVII","CCLVII"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"247 = 200 + 40 + 7 = CC + XL + VII = CCXLVII"},{"id":"quiz_2025_14","przedmiot":"egzamin ósmoklasisty","temat":"NWD i NWW","tresc":"Największy wspólny dzielnik liczb 48 i 72 wynosi:","typ":"zamkniete","odpowiedzi":["12","18","24","36"],"poprawna":"C","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"48 = 2⁴ × 3, 72 = 2³ × 3², NWD = 2³ × 3 = 24"},{"id":"quiz_2025_15","przedmiot":"egzamin ósmoklasisty","temat":"Notacja wykładnicza","tresc":"Liczbę 0,00034 zapisaną w notacji wykładniczej to:","typ":"zamkniete","odpowiedzi":["3,4 × 10⁻⁴","34 × 10⁻⁵","3,4 × 10⁻³","0,34 × 10⁻³"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"0,00034 = 3,4 × 10⁻⁴"},{"id":"quiz_2025_16","przedmiot":"egzamin ósmoklasisty","temat":"Ułamki dziesiętne","tresc":"Oblicz: 2,5 × 0,4 + 1,8 : 0,6","typ":"zamkniete","odpowiedzi":["4","4,3","3,8","4,6"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"2,5 × 0,4 + 1,8 : 0,6 = 1 + 3 = 4"},{"id":"quiz_2025_17","przedmiot":"egzamin ósmoklasisty","temat":"Geometria płaska","tresc":"Obwód trójkąta o bokach 5 cm, 6 cm i 7 cm wynosi:","typ":"zamkniete","odpowiedzi":["15 cm","18 cm","21 cm","12 cm"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"150\" viewBox=\"0 0 200 150\"><polygon points=\"50,120 120,120 85,50\" fill=\"lightgreen\" stroke=\"black\" stroke-width=\"2\"/><text x=\"85\" y=\"130\" text-anchor=\"middle\" font-size=\"12\">7 cm</text><text x=\"35\" y=\"90\" text-anchor=\"middle\" font-size=\"12\">5 cm</text><text x=\"135\" y=\"90\" text-anchor=\"middle\" font-size=\"12\">6 cm</text></svg>","wyjaśnienie":"Obwód = suma długości boków = 5 + 6 + 7 = 18 cm"},{"id":"quiz_2025_18","przedmiot":"egzamin ósmoklasisty","temat":"Prawdopodobieństwo","tresc":"W urnie znajduje się 5 kul czerwonych i 3 kule niebieskie. Prawdopodobieństwo wylosowania kuli czerwonej wynosi:","typ":"zamkniete","odpowiedzi":["3/8","5/8","3/5","5/3"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"P = liczba kul czerwonych / liczba wszystkich kul = 5/8"},{"id":"quiz_2025_19","przedmiot":"egzamin ósmoklasisty","temat":"Wyrażenia algebraiczne","tresc":"Uprość wyrażenie: 3x + 2y - x + 4y","typ":"zamkniete","odpowiedzi":["2x + 6y","4x + 2y","3x + 6y","2x + 2y"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"3x - x + 2y + 4y = 2x + 6y"},{"id":"quiz_2025_20","przedmiot":"egzamin ósmoklasisty","temat":"Geometria płaska","tresc":"Pole koła o promieniu 5 cm wynosi w przybliżeniu (π ≈ 3,14):","typ":"zamkniete","odpowiedzi":["31,4 cm²","78,5 cm²","15,7 cm²","157 cm²"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><circle cx=\"100\" cy=\"100\" r=\"50\" fill=\"lightyellow\" stroke=\"black\" stroke-width=\"2\"/><line x1=\"100\" y1=\"100\" x2=\"150\" y2=\"100\" stroke=\"red\" stroke-width=\"2\"/><text x=\"125\" y=\"95\" text-anchor=\"middle\" font-size=\"12\">5 cm</text></svg>","wyjaśnienie":"Pole koła = πr² = 3,14 × 5² = 3,14 × 25 = 78,5 cm²"},{"id":"quiz_2025_21","przedmiot":"egzamin ósmoklasisty","temat":"Pierwiastki","tresc":"Wartość wyrażenia √64 + √25 - √16 wynosi:","typ":"zamkniete","odpowiedzi":["9","7","5","13"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"√64 + √25 - √16 = 8 + 5 - 4 = 9"},{"id":"quiz_2025_22","przedmiot":"egzamin ósmoklasisty","temat":"Procenty","tresc":"Tomek przeczytał 60% książki, co stanowi 180 stron. Ile stron ma cała książka?","typ":"zamkniete","odpowiedzi":["108 stron","240 stron","300 stron","320 stron"],"poprawna":"C","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"60% = 180 stron, więc 100% = 180 ÷ 0,6 = 300 stron"},{"id":"quiz_2025_23","przedmiot":"egzamin ósmoklasisty","temat":"Geometria przestrzenna","tresc":"Pole powierzchni prostopadłościanu o wymiarach 3 cm × 4 cm × 5 cm wynosi:","typ":"zamkniete","odpowiedzi":["60 cm²","94 cm²","47 cm²","120 cm²"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"P = 2(ab + ac + bc) = 2(3×4 + 3×5 + 4×5) = 2(12 + 15 + 20) = 94 cm²"},{"id":"quiz_2025_24","przedmiot":"egzamin ósmoklasisty","temat":"Równania","tresc":"Suma dwóch liczb wynosi 47. Jedna z nich jest o 5 większa od drugiej. Te liczby to:","typ":"zamkniete","odpowiedzi":["20 i 27","21 i 26","22 i 25","23 i 24"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"x + (x + 5) = 47, 2x = 42, x = 21, więc liczby to 21 i 26"},{"id":"quiz_2025_25","przedmiot":"egzamin ósmoklasisty","temat":"Statystyka","tresc":"Na wykresie słupkowym przedstawiono liczbę sprzedanych książek w poszczególnych miesiącach. W którym miesiącu sprzedano najwięcej książek?","typ":"zamkniete","odpowiedzi":["styczeń","luty","marzec","kwiecień"],"poprawna":"C","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"300\" height=\"200\" viewBox=\"0 0 300 200\"><rect x=\"20\" y=\"120\" width=\"40\" height=\"60\" fill=\"blue\"/><rect x=\"80\" y=\"100\" width=\"40\" height=\"80\" fill=\"blue\"/><rect x=\"140\" y=\"90\" width=\"40\" height=\"90\" fill=\"blue\"/><rect x=\"200\" y=\"110\" width=\"40\" height=\"70\" fill=\"blue\"/><text x=\"40\" y=\"195\" text-anchor=\"middle\" font-size=\"10\">Sty</text><text x=\"100\" y=\"195\" text-anchor=\"middle\" font-size=\"10\">Lut</text><text x=\"160\" y=\"195\" text-anchor=\"middle\" font-size=\"10\">Mar</text><text x=\"220\" y=\"195\" text-anchor=\"middle\" font-size=\"10\">Kwi</text></svg>","wyjaśnienie":"Najwyższy słupek odpowiada marcowi"},{"id":"quiz_2025_26","przedmiot":"egzamin ósmoklasisty","temat":"Proporcjonalność","tresc":"Jeśli 6 robotników wykona pracę w 8 dni, to 4 robotników wykona tę samą pracę w:","typ":"zamkniete","odpowiedzi":["10 dni","12 dni","16 dni","6 dni"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"6 × 8 = 48 (stała), więc 4 × x = 48, x = 12 dni"},{"id":"quiz_2025_27","przedmiot":"egzamin ósmoklasisty","temat":"Geometria płaska","tresc":"Jeśli w trójkącie dwa kąty mają miary 65° i 35°, to trzeci kąt ma miarę:","typ":"zamkniete","odpowiedzi":["80°","90°","100°","70°"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"150\" viewBox=\"0 0 200 150\"><polygon points=\"50,120 150,120 100,50\" fill=\"none\" stroke=\"black\" stroke-width=\"2\"/><text x=\"70\" y=\"110\" font-size=\"12\">65°</text><text x=\"120\" y=\"110\" font-size=\"12\">35°</text><text x=\"100\" y=\"45\" font-size=\"12\">?</text></svg>","wyjaśnienie":"Suma kątów w trójkącie = 180°, więc 180° - 65° - 35° = 80°"},{"id":"quiz_2025_28","przedmiot":"egzamin ósmoklasisty","temat":"Potęgi","tresc":"Wartość wyrażenia (-2)³ + (-3)² wynosi:","typ":"zamkniete","odpowiedzi":["1","-1","17","-17"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"(-2)³ + (-3)² = -8 + 9 = 1"},{"id":"quiz_2025_29","przedmiot":"egzamin ósmoklasisty","temat":"Ułamki","tresc":"Która z podanych nierówności jest prawdziwa?","typ":"zamkniete","odpowiedzi":["2/3 > 3/4","5/6 < 7/8","3/5 > 4/7","2/5 < 3/8"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"5/6 = 20/24, 7/8 = 21/24, więc 5/6 < 7/8"},{"id":"quiz_2025_30","przedmiot":"egzamin ósmoklasisty","temat":"Geometria przestrzenna","tresc":"Objętość walca o promieniu podstawy 3 cm i wysokości 8 cm wynosi w przybliżeniu (π ≈ 3,14):","typ":"zamkniete","odpowiedzi":["75,36 cm³","226,08 cm³","150,72 cm³","113,04 cm³"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"V = πr²h = 3,14 × 3² × 8 = 3,14 × 9 × 8 = 226,08 cm³"},{"id":"quiz_2025_31","przedmiot":"egzamin ósmoklasisty","temat":"Funkcje","tresc":"Na wykresie funkcji liniowej odczytaj wartość f(2):","typ":"zamkniete","odpowiedzi":["1","2","3","4"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><line x1=\"20\" y1=\"180\" x2=\"180\" y2=\"180\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"180\" x2=\"20\" y2=\"20\" stroke=\"black\" stroke-width=\"1\"/><line x1=\"20\" y1=\"140\" x2=\"180\" y2=\"60\" stroke=\"red\" stroke-width=\"2\"/><circle cx=\"100\" cy=\"100\" r=\"3\" fill=\"red\"/><text x=\"100\" y=\"195\" text-anchor=\"middle\" font-size=\"10\">2</text><text x=\"10\" y=\"105\" text-anchor=\"middle\" font-size=\"10\">2</text></svg>","wyjaśnienie":"Z wykresu odczytujemy, że dla x = 2, y = 2"},{"id":"quiz_2025_32","przedmiot":"egzamin ósmoklasisty","temat":"Kombinatoryka","tresc":"Ze zbioru {1, 2, 3, 4, 5} wybieramy losowo dwie różne liczby. Ile jest takich par?","typ":"zamkniete","odpowiedzi":["8","10","12","20"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"C(5,2) = 5!/(2!×3!) = 10"},{"id":"quiz_2025_33","przedmiot":"egzamin ósmoklasisty","temat":"Procenty","tresc":"Kapitał 1000 zł ulożono na rok z oprocentowaniem 5% rocznie. Po roku kapitał wraz z odsetkami wyniesie:","typ":"zamkniete","odpowiedzi":["1005 zł","1050 zł","1500 zł","1005,50 zł"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"1000 × 1,05 = 1050 zł"},{"id":"quiz_2025_34","przedmiot":"egzamin ósmoklasisty","temat":"Geometria płaska","tresc":"W trójkącie prostokątnym przyprostokątne mają długości 3 cm i 4 cm. Długość przeciwprostokątnej wynosi:","typ":"zamkniete","odpowiedzi":["7 cm","5 cm","6 cm","25 cm"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"150\" viewBox=\"0 0 200 150\"><polygon points=\"50,120 50,50 150,120\" fill=\"lightcoral\" stroke=\"black\" stroke-width=\"2\"/><text x=\"25\" y=\"90\" font-size=\"12\">3</text><text x=\"100\" y=\"135\" font-size=\"12\">4</text><text x=\"110\" y=\"80\" font-size=\"12\">?</text></svg>","wyjaśnienie":"c² = a² + b² = 3² + 4² = 9 + 16 = 25, więc c = 5 cm"},{"id":"quiz_2025_35","przedmiot":"egzamin ósmoklasisty","temat":"Wyrażenia algebraiczne","tresc":"Oblicz wartość wyrażenia 2x² - 3x + 1 dla x = 2:","typ":"zamkniete","odpowiedzi":["3","5","7","1"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"2×2² - 3×2 + 1 = 2×4 - 6 + 1 = 8 - 6 + 1 = 3"},{"id":"quiz_2025_36","przedmiot":"egzamin ósmoklasisty","temat":"Statystyka","tresc":"Mediana ciągu liczb: 3, 7, 2, 9, 5, 1, 8 wynosi:","typ":"zamkniete","odpowiedzi":["5","7","4","6"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"Uporządkowany ciąg: 1, 2, 3, 5, 7, 8, 9. Mediana to środkowy element = 5"},{"id":"quiz_2025_37","przedmiot":"egzamin ósmoklasisty","temat":"Geometria płaska","tresc":"Pole trapezu o podstawach 6 cm i 10 cm oraz wysokości 4 cm wynosi:","typ":"zamkniete","odpowiedzi":["24 cm²","32 cm²","40 cm²","16 cm²"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"120\" viewBox=\"0 0 200 120\"><polygon points=\"40,100 160,100 130,40 70,40\" fill=\"lightsteelblue\" stroke=\"black\" stroke-width=\"2\"/><text x=\"100\" y=\"30\" text-anchor=\"middle\" font-size=\"12\">6 cm</text><text x=\"100\" y=\"115\" text-anchor=\"middle\" font-size=\"12\">10 cm</text><text x=\"25\" y=\"75\" text-anchor=\"middle\" font-size=\"12\">4 cm</text></svg>","wyjaśnienie":"Pole trapezu = (a + b) × h / 2 = (6 + 10) × 4 / 2 = 32 cm²"},{"id":"quiz_2025_38","przedmiot":"egzamin ósmoklasisty","temat":"Równania","tresc":"Rozwiąż równanie: x/3 + x/6 = 1","typ":"zamkniete","odpowiedzi":["x = 2","x = 3","x = 6","x = 1"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"2x/6 + x/6 = 1, 3x/6 = 1, x/2 = 1, x = 2"},{"id":"quiz_2025_39","przedmiot":"egzamin ósmoklasisty","temat":"Rozkład na czynniki pierwsze","tresc":"Rozkład liczby 84 na czynniki pierwsze to:","typ":"zamkniete","odpowiedzi":["2² × 3 × 7","2³ × 3 × 7","2 × 3² × 7","4 × 21"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"84 = 4 × 21 = 4 × 3 × 7 = 2² × 3 × 7"},{"id":"quiz_2025_40","przedmiot":"egzamin ósmoklasisty","temat":"Prawdopodobieństwo","tresc":"Jakie jest prawdopodobieństwo wyrzucenia liczby parzystej na standardowej kostce sześciennej?","typ":"zamkniete","odpowiedzi":["1/6","1/3","1/2","2/3"],"poprawna":"C","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"Liczby parzyste na kostce: 2, 4, 6 (3 z 6), więc P = 3/6 = 1/2"},{"id":"quiz_2025_41","przedmiot":"egzamin ósmoklasisty","temat":"Geometria przestrzenna","tresc":"Przekrojem ostrosłupa przez jego wierzchołek i podstawę jest:","typ":"zamkniete","odpowiedzi":["trójkąt","czworokąt","pięciokąt","zależy od podstawy"],"poprawna":"D","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"Przekrój zależy od kształtu podstawy ostrosłupa"},{"id":"quiz_2025_42","przedmiot":"egzamin ósmoklasisty","temat":"Proporcje","tresc":"Na mapie w skali 1:50000 odległość między miastami wynosi 8 cm. Rzeczywista odległość wynosi:","typ":"zamkniete","odpowiedzi":["4 km","40 km","400 m","4000 m"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"8 cm × 50000 = 400000 cm = 4000 m = 4 km"},{"id":"quiz_2025_43","przedmiot":"egzamin ósmoklasisty","temat":"Geometria płaska","tresc":"Który punkt jest odbiciem punktu A(2, 3) względem osi OY?","typ":"zamkniete","odpowiedzi":["(-2, 3)","(2, -3)","(-2, -3)","(3, 2)"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"150\" viewBox=\"0 0 200 150\"><line x1=\"100\" y1=\"20\" x2=\"100\" y2=\"130\" stroke=\"red\" stroke-width=\"2\" stroke-dasharray=\"5,5\"/><polygon points=\"50,50 80,90 50,90\" fill=\"lightblue\" stroke=\"black\" stroke-width=\"1\"/><polygon points=\"150,50 120,90 150,90\" fill=\"lightblue\" stroke=\"black\" stroke-width=\"1\"/><text x=\"100\" y=\"15\" text-anchor=\"middle\" font-size=\"10\">oś symetrii</text></svg>","wyjaśnienie":"Symetria względem osi OY zmienia znak współrzędnej x: (2, 3) → (-2, 3)"},{"id":"quiz_2025_44","przedmiot":"egzamin ósmoklasisty","temat":"Potęgi","tresc":"Wartość wyrażenia 5³ : 5¹ × 5² wynosi:","typ":"zamkniete","odpowiedzi":["125","25","625","5"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"5³ : 5¹ × 5² = 5³⁻¹⁺² = 5⁴ = 125"},{"id":"quiz_2025_45","przedmiot":"egzamin ósmoklasisty","temat":"Statystyka","tresc":"W klasie 30 uczniów. 12 uczniów ma ocenę bardzo dobrą z matematyki. Jaki procent klasy ma bardzo dobrą ocenę?","typ":"zamkniete","odpowiedzi":["30%","40%","12%","60%"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"12/30 = 0,4 = 40%"},{"id":"quiz_2025_46","przedmiot":"egzamin ósmoklasisty","temat":"Geometria płaska","tresc":"Pole równoległoboku o podstawie 8 cm i wysokości 5 cm wynosi:","typ":"zamkniete","odpowiedzi":["13 cm²","26 cm²","40 cm²","20 cm²"],"poprawna":"C","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":"<svg width=\"200\" height=\"120\" viewBox=\"0 0 200 120\"><polygon points=\"30,90 130,90 160,40 60,40\" fill=\"lightgreen\" stroke=\"black\" stroke-width=\"2\"/><text x=\"80\" y=\"105\" text-anchor=\"middle\" font-size=\"12\">8 cm</text><text x=\"20\" y=\"70\" text-anchor=\"middle\" font-size=\"12\">5 cm</text></svg>","wyjaśnienie":"Pole równoległoboku = podstawa × wysokość = 8 × 5 = 40 cm²"},{"id":"quiz_2025_47","przedmiot":"egzamin ósmoklasisty","temat":"Funkcje liniowe","tresc":"Funkcja liniowa przechodzi przez punkty (0, 3) i (2, 7). Wzór tej funkcji to:","typ":"zamkniete","odpowiedzi":["y = 2x + 3","y = 3x + 2","y = x + 3","y = 4x + 3"],"poprawna":"A","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"a = (7-3)/(2-0) = 2, b = 3, więc y = 2x + 3"},{"id":"quiz_2025_48","przedmiot":"egzamin ósmoklasisty","temat":"Kombinatoryka","tresc":"Ania ma 3 spódnice i 4 bluzki. Na ile sposobów może się ubrać?","typ":"zamkniete","odpowiedzi":["7","12","10","24"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"3 × 4 = 12 sposobów"},{"id":"quiz_2025_49","przedmiot":"egzamin ósmoklasisty","temat":"Geometria przestrzenna","tresc":"Pole powierzchni kuli o promieniu 3 cm wynosi w przybliżeniu (π ≈ 3,14):","typ":"zamkniete","odpowiedzi":["28,26 cm²","113,04 cm²","37,68 cm²","56,52 cm²"],"poprawna":"B","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"Pole powierzchni kuli = 4πr² = 4 × 3,14 × 3² = 113,04 cm²"},{"id":"quiz_2025_50","przedmiot":"egzamin ósmoklasisty","temat":"Równania kwadratowe","tresc":"Ile rozwiązań ma równanie x² - 4 = 0?","typ":"zamkniete","odpowiedzi":["0","1","2","3"],"poprawna":"C","punkty":1,"poziom":"podstawowy","rok":"2025","sesja":"główna","obrazek":null,"wyjaśnienie":"x² = 4, więc x = 2 lub x = -2 (dwa rozwiązania)"}];
+        
+        function importTasks() {
+            const btn = document.getElementById('importBtn');
+            const resultDiv = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Importowanie...';
+            
+            setTimeout(() => {
+                try {
+                    localStorage.setItem('zadaniaDB', JSON.stringify(tasksToImport));
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Import zakończony!</h3>
+                        <p>Zaimportowano ${tasksToImport.length} zadań do aplikacji.</p>
+                        <br>
+                        <a href="index.html" style="color: #667eea; font-weight: bold; text-decoration: none; font-size: 1.1em;">
+                            → Przejdź do aplikacji
+                        </a>
+                    `;
+                    
+                    btn.innerHTML = '✅ Zaimportowano!';
+                    
+                } catch (error) {
+                    alert('Błąd: ' + error.message);
+                    btn.disabled = false;
+                    btn.innerHTML = 'Spróbuj ponownie';
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

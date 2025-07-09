@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnoza Gemini 2.5</title>
+    <script src="js/task-variant-generator.js"></script>
+</head>
+<body>
+    <h1>Diagnoza problemu z Gemini 2.5</h1>
+    <button onclick="testDirect()">Test bezpośredni</button>
+    <button onclick="testGenerator()">Test przez generator</button>
+    <pre id="log"></pre>
+    
+    <script>
+        const log = (msg, obj = null) => {
+            const pre = document.getElementById('log');
+            pre.textContent += msg + '\n';
+            if (obj) {
+                pre.textContent += JSON.stringify(obj, null, 2) + '\n';
+            }
+            pre.textContent += '---\n';
+        };
+        
+        async function testDirect() {
+            log('=== TEST BEZPOŚREDNI ===');
+            
+            try {
+                // Autoryzacja
+                const authResp = await fetch('http://localhost:3001/api/auth/session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: 'diagnose', role: 'teacher' })
+                });
+                const auth = await authResp.json();
+                log('Token:', auth.sessionToken);
+                
+                // Test różnych promptów
+                const prompts = [
+                    'Odpowiedz "TEST OK".',
+                    'Wygeneruj liczbę między 1 a 10.',
+                    'Napisz JSON: {"test": "ok"}',
+                    `Wygeneruj wariant zadania. Oryginał: "Oblicz 2+2=4". Odpowiedz w JSON: {"tresc": "nowe zadanie", "odpowiedz": "liczba"}`
+                ];
+                
+                for (const prompt of prompts) {
+                    log(`\nTestuję prompt: "${prompt}"`);
+                    
+                    const resp = await fetch('http://localhost:3001/api/gemini/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${auth.sessionToken}`
+                        },
+                        body: JSON.stringify({
+                            prompt: prompt,
+                            generationConfig: {
+                                temperature: 0.5,
+                                maxOutputTokens: 1000
+                            }
+                        })
+                    });
+                    
+                    const data = await resp.json();
+                    log('Odpowiedź:', data);
+                    
+                    if (data.candidates && data.candidates[0]) {
+                        if (data.candidates[0].content && data.candidates[0].content.parts) {
+                            log('Treść:', data.candidates[0].content.parts[0]?.text || 'BRAK TEKSTU');
+                        } else {
+                            log('BRAK CONTENT:', data.candidates[0]);
+                        }
+                        log('FinishReason:', data.candidates[0].finishReason);
+                        log('Usage:', data.usageMetadata);
+                    }
+                }
+                
+            } catch (e) {
+                log('BŁĄD:', e.message);
+            }
+        }
+        
+        async function testGenerator() {
+            log('=== TEST PRZEZ GENERATOR ===');
+            
+            const generator = new TaskVariantGenerator();
+            
+            try {
+                await generator.authenticate('gen_test', 'teacher');
+                log('Autoryzacja OK');
+                
+                const task = {
+                    id: 'test_1',
+                    tresc: 'Oblicz: 2 + 2 = ?',
+                    typ: 'zamkniete',
+                    odpowiedzi: ['4', '3', '5', '6'],
+                    poprawna: '4',
+                    przedmiot: 'Matematyka',
+                    temat: 'Arytmetyka',
+                    poziom: 'podstawowy',
+                    punkty: 1
+                };
+                
+                const result = await generator.generateVariant(task, { useAI: true });
+                log('Wynik:', result);
+                
+            } catch (e) {
+                log('BŁĄD:', e.message);
+                log('Stack:', e.stack);
+            }
+        }
+    </script>
+</body>
+</html>

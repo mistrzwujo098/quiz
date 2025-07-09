@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Test</title>
+    <script src="js/task-variant-generator.js"></script>
+</head>
+<body>
+    <h1>Test prosty</h1>
+    <button onclick="test()">Test</button>
+    <pre id="log"></pre>
+    
+    <script>
+        async function test() {
+            const log = document.getElementById('log');
+            log.textContent = '';
+            
+            try {
+                const generator = new TaskVariantGenerator();
+                log.textContent += 'Generator utworzony\n';
+                
+                // Autoryzacja
+                const authOk = await generator.authenticate('simple_test', 'teacher');
+                log.textContent += 'Autoryzacja: ' + authOk + '\n';
+                
+                // Prosty test
+                const task = {
+                    id: 'test',
+                    tresc: 'Oblicz 5 + 3',
+                    typ: 'zamkniete',
+                    odpowiedzi: ['8', '7', '9', '6'],
+                    poprawna: '8',
+                    przedmiot: 'Matematyka',
+                    temat: 'Arytmetyka',
+                    poziom: 'podstawowy',
+                    punkty: 1
+                };
+                
+                log.textContent += 'Generuję wariant...\n';
+                const result = await generator.generateVariant(task, { useAI: true });
+                log.textContent += 'Wynik:\n' + JSON.stringify(result, null, 2);
+                
+            } catch (e) {
+                log.textContent += '\nBŁĄD: ' + e.message + '\n';
+                log.textContent += 'Stack: ' + e.stack;
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>

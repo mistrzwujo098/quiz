@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Naprawa wszystkich użytkowników</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <h1>Kompleksowa naprawa użytkowników</h1>
+    
+    <button onclick="fixAllUsers()">Napraw wszystkich użytkowników</button>
+    <button onclick="showCurrentUsers()">Pokaż obecnych użytkowników</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        function fixAllUsers() {
+            // Wyczyść wszystko
+            localStorage.removeItem('users');
+            localStorage.removeItem('testDataGenerated');
+            sessionStorage.clear();
+            
+            // Odśwież stronę - to spowoduje że AuthManager stworzy użytkowników PRZED TestDataGenerator
+            window.location.href = '/';
+        }
+        
+        function showCurrentUsers() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            let html = '<h2>Obecni użytkownicy:</h2>';
+            html += '<table border="1" style="border-collapse: collapse; margin: 10px 0;">';
+            html += '<tr><th>Username</th><th>Role</th><th>ID</th><th>Category</th></tr>';
+            
+            users.forEach(user => {
+                html += `<tr>
+                    <td style="padding: 5px;">${user.username}</td>
+                    <td style="padding: 5px;">${user.role}</td>
+                    <td style="padding: 5px;">${user.id || user.userId}</td>
+                    <td style="padding: 5px;">${user.category || '-'}</td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            
+            // Sprawdź nauczycieli
+            const teachers = users.filter(u => u.role === 'teacher');
+            html += '<h3>Nauczyciele:</h3><ul>';
+            teachers.forEach(t => {
+                html += `<li>${t.username}</li>`;
+            });
+            html += '</ul>';
+            
+            const paulina = users.find(u => u.username === 'paulinaodmatematyki');
+            if (paulina) {
+                html += '<p style="color: green;">✓ Użytkownik paulinaodmatematyki ISTNIEJE</p>';
+            } else {
+                html += '<p style="color: red;">✗ Użytkownik paulinaodmatematyki NIE ISTNIEJE</p>';
+            }
+            
+            document.getElementById('result').innerHTML = html;
+        }
+        
+        // Pokaż stan przy załadowaniu
+        window.onload = function() {
+            showCurrentUsers();
+        };
+    </script>
+</body>
+</html>
