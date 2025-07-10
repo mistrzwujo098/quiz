@@ -46,8 +46,8 @@ if (window.APIClient) {
                 body: JSON.stringify({
                     prompt: prompt,
                     temperature: options.temperature || 0.7,
-                    maxTokens: options.maxTokens || 2048,
-                    model: 'gemini-2.0-flash-exp' // Wymuszenie modelu Flash
+                    maxTokens: options.maxTokens || 2048
+                    // Nie wymuszamy modelu - niech funkcja wybierze najlepszy
                 })
             });
             

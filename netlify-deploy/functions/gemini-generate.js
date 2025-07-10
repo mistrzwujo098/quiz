@@ -48,13 +48,11 @@ exports.handler = async (event, context) => {
     }
 
     // Lista modeli do wypróbowania w kolejności priorytetowej
+    // Na podstawie testów tylko gemini-2.5-flash jest dostępny
     const modelsToTry = model ? [model] : [
-      'gemini-2.5-flash-lite-preview-06-17',
-      'gemini-2.5-flash-preview-05-20',
-      'gemini-2.5-flash',
-      'gemini-2.5-pro',
-      'gemini-2.5-pro-preview-05-06',
+      'gemini-2.5-flash', // Jedyny działający model 2.5
       'gemini-2.0-flash-exp', // fallback do 2.0
+      'gemini-1.5-flash', // dodatkowy fallback
       'gemini-pro' // ostatni fallback
     ];
     

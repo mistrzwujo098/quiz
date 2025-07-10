@@ -1,13 +1,13 @@
 # 🔍 Weryfikacja połączenia z Gemini API na Netlify
 
 ## ⚡ Model AI
-Aplikacja automatycznie wybiera najlepszy dostępny model Gemini w kolejności:
-1. **Gemini 2.5 Flash Lite Preview** (najszybszy)
-2. **Gemini 2.5 Flash Preview**
-3. **Gemini 2.5 Flash**
-4. **Gemini 2.5 Pro**
-5. **Gemini 2.5 Pro Preview**
-6. Fallback: Gemini 2.0 Flash / Gemini Pro
+Aplikacja używa **Gemini 2.5 Flash** - najnowszy dostępny model z rodziny 2.5.
+
+System automatycznie wybiera model w kolejności:
+1. **Gemini 2.5 Flash** (główny model)
+2. Gemini 2.0 Flash Experimental (fallback)
+3. Gemini 1.5 Flash (fallback)
+4. Gemini Pro (ostateczny fallback)
 
 ## 📋 Lista kontrolna
 

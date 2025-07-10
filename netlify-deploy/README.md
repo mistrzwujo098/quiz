@@ -2,7 +2,7 @@
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/mistrzwujo098/quiz)
 
-**💡 Automatyczny wybór modelu Gemini 2.5** - aplikacja sama wybiera najlepszy dostępny model AI
+**💡 Używa Gemini 2.5 Flash** - najnowszy model AI z automatycznym fallbackiem
 
 ## 🚀 Funkcje
 
