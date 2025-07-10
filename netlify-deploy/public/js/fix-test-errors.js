@@ -99,6 +99,12 @@ if (window.APIClient) {
 // Globalna instancja GeminiAPI dla kompatybilności
 if (!window.GeminiAPI && window.APIClient) {
     window.GeminiAPI = window.APIClient;
+    console.log('✅ GeminiAPI = APIClient');
+}
+
+// Upewnij się że window.APIClient jest właściwie eksportowany
+if (window.APIClient && !window.APIClient.prototype) {
+    console.log('✅ APIClient jest instancją (nie klasą)');
 }
 
 console.log('✅ Fix dla błędów testowych załadowany');

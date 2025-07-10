@@ -365,10 +365,16 @@
             // Poczekaj chwilę na inicjalizację
             await new Promise(resolve => setTimeout(resolve, 100));
             
+            // Upewnij się że APIClient jest zainicjalizowany
+            if (window.APIClient && window.APIClient.initialize) {
+                await window.APIClient.initialize();
+                showResult('modules-result', 'APIClient zainicjalizowany ✓', 'success');
+            }
+            
             const aiModules = [
-                { name: 'AIGrader', global: 'aiGrader', class: 'AIGrader' },
-                { name: 'RecommendationSystem', global: 'recommendationSystem', class: 'RecommendationSystem' },
-                { name: 'StepGradingSystem', global: 'stepGrading', class: 'StepGradingSystem' }
+                { name: 'AIGrader', global: 'aiGrader', class: 'AIGrader', requiresGemini: true },
+                { name: 'RecommendationSystem', global: 'recommendationSystem', class: 'RecommendationSystem', requiresGemini: false },
+                { name: 'StepGradingSystem', global: 'stepGrading', class: 'StepGradingSystem', requiresGemini: true }
             ];
             
             resultDiv.innerHTML = '';
@@ -378,12 +384,22 @@
                     const instance = window[module.global] || (window[module.class] ? new window[module.class]() : null);
                     
                     if (instance) {
-                        // Sprawdź czy ma dostęp do Gemini API
-                        const hasGemini = instance.geminiAPI || instance.apiClient || false;
+                        // Inicjalizuj moduł jeśli ma metodę initialize
+                        if (instance.initialize && typeof instance.initialize === 'function') {
+                            await instance.initialize();
+                        }
                         
-                        showResult('modules-result', 
-                            `${module.name}: Załadowany ✓, Gemini API: ${hasGemini ? 'TAK ✓' : 'NIE ✗'}`, 
-                            hasGemini ? 'success' : 'warning');
+                        // Sprawdź czy ma dostęp do Gemini API (jeśli jest wymagane)
+                        if (module.requiresGemini) {
+                            const hasGemini = instance.geminiAPI || instance.apiClient || false;
+                            showResult('modules-result', 
+                                `${module.name}: Załadowany ✓, Gemini API: ${hasGemini ? 'TAK ✓' : 'NIE ✗'}`, 
+                                hasGemini ? 'success' : 'warning');
+                        } else {
+                            showResult('modules-result', 
+                                `${module.name}: Załadowany ✓`, 
+                                'success');
+                        }
                     } else {
                         showResult('modules-result', 
                             `${module.name}: Nie znaleziono ✗`, 
