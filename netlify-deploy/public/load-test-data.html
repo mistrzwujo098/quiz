@@ -88,6 +88,9 @@
                 <button onclick="generateTestData()" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold transition">
                     🚀 Generuj Dane Testowe
                 </button>
+                <button onclick="setupPaulinaOnly()" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold transition">
+                    👩‍🏫 Tylko Konto Pauliny
+                </button>
                 <button onclick="clearAllData()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition">
                     🗑️ Wyczyść Wszystkie Dane
                 </button>
@@ -133,6 +136,7 @@
     </div>
 
     <script src="/js/test-data-generator.js"></script>
+    <script src="/js/test-data-generator-simple.js"></script>
     <script>
         function updateProgress(message, type = 'info') {
             const progress = document.getElementById('progress');
@@ -208,6 +212,36 @@
             } catch (error) {
                 updateProgress(`Błąd: ${error.message}`, 'error');
                 console.error('Błąd generowania danych:', error);
+            }
+        }
+
+        function setupPaulinaOnly() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            const progress = document.getElementById('progress');
+            
+            statusDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            progress.innerHTML = '';
+            
+            try {
+                updateProgress('Tworzenie konta nauczyciela Pauliny...');
+                
+                const generator = new SimpleTestDataGenerator();
+                const result = generator.setupPaulina();
+                
+                if (result.success) {
+                    updateProgress('Konto utworzone pomyślnie!', 'success');
+                    updateProgress('Login: paulinaodmatematyki', 'success');
+                    updateProgress('Hasło: paulina#314159265', 'success');
+                    
+                    setTimeout(() => {
+                        alert('✅ Konto nauczyciela Pauliny zostało utworzone!\n\nLogin: paulinaodmatematyki\nHasło: paulina#314159265');
+                        location.reload();
+                    }, 2000);
+                }
+            } catch (error) {
+                updateProgress(`Błąd: ${error.message}`, 'error');
             }
         }
 

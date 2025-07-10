@@ -120,11 +120,15 @@ class TestDataGenerator {
                 
                 students.push({
                     id: `student_${id}`,
+                    userId: `student_${id}`, // dla kompatybilności
+                    username: email, // system logowania używa username, nie email
                     imie: firstName,
                     nazwisko: lastName,
                     email: email,
-                    haslo: this.hashPassword('Test123!'),
-                    rola: 'student',
+                    password: this.hashPassword('Test123!'), // AuthManager szuka 'password'
+                    haslo: this.hashPassword('Test123!'), // zachowaj dla kompatybilności
+                    role: 'student', // AuthManager używa 'role'
+                    rola: 'student', // zachowaj dla kompatybilności
                     klasa: className,
                     numerDziennika: i + 1,
                     dataUrodzenia: this.generateBirthDate(className),
@@ -153,10 +157,14 @@ class TestDataGenerator {
         students.push(
             {
                 id: 'student_demo',
+                userId: 'student_demo',
+                username: 'uczen@demo.pl',
                 imie: 'Demo',
                 nazwisko: 'Uczeń',
                 email: 'uczen@demo.pl',
+                password: this.hashPassword('demo123'),
                 haslo: this.hashPassword('demo123'),
+                role: 'student',
                 rola: 'student',
                 klasa: '8a',
                 numerDziennika: 1,
@@ -198,16 +206,21 @@ class TestDataGenerator {
      * Generuje nauczycieli
      */
     generateTeachers() {
+        // Tylko Paulina jako główny nauczyciel
         const teachers = [
             {
-                id: 'teacher_1',
-                imie: 'Janusz',
-                nazwisko: 'Kowalski',
-                email: 'j.kowalski@szkola.edu.pl',
-                haslo: this.hashPassword('Test123!'),
+                id: 'teacher_paulina',
+                userId: 'teacher_paulina',
+                username: 'paulinaodmatematyki',
+                imie: 'Paulina',
+                nazwisko: 'Kowalska',
+                email: 'paulina.kowalska@szkola.edu.pl',
+                password: this.hashPassword('paulina#314159265'),
+                haslo: this.hashPassword('paulina#314159265'),
+                role: 'teacher',
                 rola: 'teacher',
-                przedmioty: ['matematyka', 'fizyka'],
-                klasy: ['7a', '7b', '8a', '8b'],
+                przedmioty: ['matematyka', 'fizyka', 'chemia', 'informatyka'],
+                klasy: ['1a', '1b', '2a', '2b', '3a', '3b', '4a', '4b', '5a', '5b', '6a', '6b', '7a', '7b', '8a', '8b'], // wszystkie klasy
                 tytul: 'mgr',
                 telefon: '123-456-789',
                 gabinetNumer: '201',
@@ -254,10 +267,14 @@ class TestDataGenerator {
             },
             {
                 id: 'teacher_demo',
+                userId: 'teacher_demo',
+                username: 'nauczyciel@demo.pl',
                 imie: 'Demo',
                 nazwisko: 'Nauczyciel',
                 email: 'nauczyciel@demo.pl',
+                password: this.hashPassword('demo123'),
                 haslo: this.hashPassword('demo123'),
+                role: 'teacher',
                 rola: 'teacher',
                 przedmioty: ['matematyka', 'informatyka'],
                 klasy: ['1a', '2a', '3a', '4a', '5a', '6a', '7a', '8a'],

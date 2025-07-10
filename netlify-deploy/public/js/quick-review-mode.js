@@ -22,7 +22,8 @@ class QuickReviewMode {
   init() {
     this.loadReviewQueue();
     this.setupKeyboardShortcuts();
-    this.initializeUI();
+    // UI będzie inicjalizowany kiedy będzie potrzebny
+    // this.initializeUI();
   }
 
   /**

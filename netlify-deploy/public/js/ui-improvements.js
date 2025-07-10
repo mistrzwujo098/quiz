@@ -191,19 +191,19 @@ class UIImprovements {
         // Walidacja w czasie rzeczywistym
         input.addEventListener('blur', () => this.validateInput(input));
         
-        // Wizualne wskazówki
-        input.addEventListener('focus', () => {
-          this.showInputHint(input);
-        });
+        // Wizualne wskazówki - do implementacji
+        // input.addEventListener('focus', () => {
+        //   this.showInputHint(input);
+        // });
       });
 
-      // Obsługa wysyłania formularza
-      form.addEventListener('submit', (e) => {
-        if (!this.validateForm(form)) {
-          e.preventDefault();
-          this.showFormErrors(form);
-        }
-      });
+      // Obsługa wysyłania formularza - do implementacji
+      // form.addEventListener('submit', (e) => {
+      //   if (!this.validateForm(form)) {
+      //     e.preventDefault();
+      //     this.showFormErrors(form);
+      //   }
+      // });
     });
   }
 
