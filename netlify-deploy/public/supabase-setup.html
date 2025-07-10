@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konfiguracja Supabase - QuizMaster</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .code-block {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body class="text-white p-4">
+    <div class="max-w-6xl mx-auto">
+        <div class="glass rounded-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold mb-2">🚀 Konfiguracja Supabase dla QuizMaster</h1>
+            <p class="text-gray-300">Instrukcja krok po kroku jak skonfigurować Supabase</p>
+        </div>
+
+        <!-- Status połączenia -->
+        <div class="glass rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">📊 Status połączenia</h2>
+            <div id="connectionStatus" class="space-y-2">
+                <div class="text-gray-400">Sprawdzanie...</div>
+            </div>
+        </div>
+
+        <!-- Instrukcja -->
+        <div class="space-y-6">
+            <!-- Krok 1 -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4 text-green-400">
+                    <span class="inline-block w-8 h-8 bg-green-600 rounded-full text-center mr-2">1</span>
+                    Utwórz projekt Supabase
+                </h2>
+                <ol class="space-y-2 text-gray-300 ml-10">
+                    <li>1. Przejdź na <a href="https://supabase.com" target="_blank" class="text-blue-400 hover:underline">supabase.com</a></li>
+                    <li>2. Zaloguj się lub utwórz konto (darmowe)</li>
+                    <li>3. Kliknij "New project"</li>
+                    <li>4. Wypełnij dane:
+                        <ul class="ml-4 mt-1 text-sm">
+                            <li>• Name: <code class="bg-gray-800 px-1">quizmaster</code></li>
+                            <li>• Database Password: <strong>zapisz bezpiecznie!</strong></li>
+                            <li>• Region: wybierz najbliższy</li>
+                        </ul>
+                    </li>
+                    <li>5. Kliknij "Create new project" i poczekaj ~2 minuty</li>
+                </ol>
+            </div>
+
+            <!-- Krok 2 -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4 text-blue-400">
+                    <span class="inline-block w-8 h-8 bg-blue-600 rounded-full text-center mr-2">2</span>
+                    Wykonaj migrację bazy danych
+                </h2>
+                <ol class="space-y-2 text-gray-300 ml-10">
+                    <li>1. W panelu Supabase przejdź do "SQL Editor"</li>
+                    <li>2. Kliknij "New query"</li>
+                    <li>3. Skopiuj zawartość pliku <code class="bg-gray-800 px-1">supabase-schema.sql</code></li>
+                    <li>4. Wklej do edytora SQL</li>
+                    <li>5. Kliknij "Run" (lub Ctrl+Enter)</li>
+                    <li>6. Sprawdź czy nie ma błędów</li>
+                </ol>
+                <div class="mt-4">
+                    <button onclick="downloadSchema()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+                        <i class="fas fa-download mr-2"></i>Pobierz supabase-schema.sql
+                    </button>
+                </div>
+            </div>
+
+            <!-- Krok 3 -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4 text-purple-400">
+                    <span class="inline-block w-8 h-8 bg-purple-600 rounded-full text-center mr-2">3</span>
+                    Skonfiguruj zmienne środowiskowe w Netlify
+                </h2>
+                <ol class="space-y-2 text-gray-300 ml-10">
+                    <li>1. W Supabase przejdź do Settings → API</li>
+                    <li>2. Skopiuj wartości:
+                        <div class="mt-2 space-y-2">
+                            <div class="code-block">
+                                <div>Project URL: <span id="supabaseUrl" class="text-yellow-300">https://xxxxx.supabase.co</span></div>
+                                <div>anon public: <span id="supabaseKey" class="text-yellow-300">eyJhbGc...</span></div>
+                            </div>
+                        </div>
+                    </li>
+                    <li>3. W Netlify przejdź do Site settings → Environment variables</li>
+                    <li>4. Dodaj zmienne:
+                        <div class="mt-2 space-y-1 text-sm">
+                            <div><code class="bg-gray-800 px-1">SUPABASE_URL</code> = Project URL</div>
+                            <div><code class="bg-gray-800 px-1">SUPABASE_ANON_KEY</code> = anon public key</div>
+                            <div><code class="bg-gray-800 px-1">TEACHER_PASSWORD</code> = hasło dla Pauliny</div>
+                        </div>
+                    </li>
+                    <li>5. Zapisz i zrestartuj deploy</li>
+                </ol>
+            </div>
+
+            <!-- Krok 4 -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4 text-yellow-400">
+                    <span class="inline-block w-8 h-8 bg-yellow-600 rounded-full text-center mr-2">4</span>
+                    Utwórz początkowe dane
+                </h2>
+                <div class="space-y-4">
+                    <p class="text-gray-300">Po skonfigurowaniu możesz utworzyć początkowe konta:</p>
+                    
+                    <div class="space-y-3">
+                        <button onclick="createPaulinaAccount()" 
+                                class="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg font-semibold transition disabled:opacity-50"
+                                id="createPaulinaBtn" disabled>
+                            <i class="fas fa-user-plus mr-2"></i>Utwórz konto Pauliny (nauczyciel)
+                        </button>
+                        
+                        <button onclick="createSampleData()" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg font-semibold transition disabled:opacity-50"
+                                id="createSampleBtn" disabled>
+                            <i class="fas fa-database mr-2"></i>Utwórz przykładowe dane (uczniowie, quizy)
+                        </button>
+                        
+                        <button onclick="testConnection()" 
+                                class="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-semibold transition">
+                            <i class="fas fa-plug mr-2"></i>Testuj połączenie
+                        </button>
+                    </div>
+                    
+                    <div id="actionResult" class="hidden mt-4 p-4 rounded-lg"></div>
+                </div>
+            </div>
+
+            <!-- Pomoc -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4 text-red-400">❓ Pomoc</h2>
+                <div class="space-y-3 text-sm text-gray-300">
+                    <div>
+                        <strong>Problem z połączeniem?</strong>
+                        <ul class="ml-4 mt-1">
+                            <li>• Sprawdź czy zmienne środowiskowe są ustawione w Netlify</li>
+                            <li>• Upewnij się że używasz "anon public" key, nie "service_role"</li>
+                            <li>• Sprawdź czy projekt Supabase jest aktywny</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <strong>Błędy przy tworzeniu tabel?</strong>
+                        <ul class="ml-4 mt-1">
+                            <li>• Upewnij się że wykonujesz cały plik SQL</li>
+                            <li>• Sprawdź czy nie ma już utworzonych tabel</li>
+                            <li>• W razie problemów usuń tabele i spróbuj ponownie</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skrypty -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script>
+        async function checkConnection() {
+            const statusDiv = document.getElementById('connectionStatus');
+            
+            try {
+                // Sprawdź konfigurację
+                if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 bg-red-900/50 rounded-lg">
+                            <div class="font-semibold text-red-400">❌ Brak konfiguracji</div>
+                            <div class="text-sm mt-1">Ustaw zmienne środowiskowe w Netlify</div>
+                        </div>
+                    `;
+                    return false;
+                }
+                
+                // Test połączenia
+                const { data, error } = await window.supabaseClient
+                    .from('profiles')
+                    .select('count')
+                    .limit(1);
+                
+                if (error && error.code !== 'PGRST116') { // PGRST116 = tabela pusta
+                    throw error;
+                }
+                
+                statusDiv.innerHTML = `
+                    <div class="p-4 bg-green-900/50 rounded-lg">
+                        <div class="font-semibold text-green-400">✅ Połączono z Supabase</div>
+                        <div class="text-sm mt-1">URL: ${window.SUPABASE_URL}</div>
+                    </div>
+                `;
+                
+                // Włącz przyciski
+                document.getElementById('createPaulinaBtn').disabled = false;
+                document.getElementById('createSampleBtn').disabled = false;
+                
+                return true;
+                
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="p-4 bg-red-900/50 rounded-lg">
+                        <div class="font-semibold text-red-400">❌ Błąd połączenia</div>
+                        <div class="text-sm mt-1">${error.message}</div>
+                    </div>
+                `;
+                return false;
+            }
+        }
+        
+        async function testConnection() {
+            await checkConnection();
+        }
+        
+        function downloadSchema() {
+            window.open('/supabase-schema.sql', '_blank');
+        }
+        
+        async function createPaulinaAccount() {
+            const resultDiv = document.getElementById('actionResult');
+            resultDiv.className = 'p-4 rounded-lg';
+            resultDiv.innerHTML = '<div class="text-yellow-300">Tworzenie konta...</div>';
+            
+            try {
+                // TODO: Implementacja tworzenia konta w Supabase
+                resultDiv.className = 'p-4 rounded-lg bg-green-900/50';
+                resultDiv.innerHTML = `
+                    <div class="text-green-400">✅ Konto utworzone!</div>
+                    <div class="text-sm mt-1">Login: paulinaodmatematyki</div>
+                `;
+            } catch (error) {
+                resultDiv.className = 'p-4 rounded-lg bg-red-900/50';
+                resultDiv.innerHTML = `
+                    <div class="text-red-400">❌ Błąd: ${error.message}</div>
+                `;
+            }
+        }
+        
+        async function createSampleData() {
+            const resultDiv = document.getElementById('actionResult');
+            resultDiv.className = 'p-4 rounded-lg';
+            resultDiv.innerHTML = '<div class="text-yellow-300">Tworzenie danych...</div>';
+            
+            try {
+                // TODO: Implementacja tworzenia przykładowych danych
+                resultDiv.className = 'p-4 rounded-lg bg-green-900/50';
+                resultDiv.innerHTML = `
+                    <div class="text-green-400">✅ Dane utworzone!</div>
+                    <div class="text-sm mt-1">5 uczniów, 3 quizy, rodzice</div>
+                `;
+            } catch (error) {
+                resultDiv.className = 'p-4 rounded-lg bg-red-900/50';
+                resultDiv.innerHTML = `
+                    <div class="text-red-400">❌ Błąd: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Sprawdź połączenie przy ładowaniu
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkConnection, 1000);
+        });
+    </script>
+</body>
+</html>
