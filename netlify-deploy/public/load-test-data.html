@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ładowanie Danych Testowych - QuizMaster</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="glass rounded-lg p-8 mb-8">
+            <h1 class="text-3xl font-bold mb-6 text-center">🎯 Generator Danych Testowych QuizMaster</h1>
+            
+            <div class="bg-white/10 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">📋 Co zostanie wygenerowane:</h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-semibold mb-2">👥 Użytkownicy:</h3>
+                        <ul class="text-sm space-y-1">
+                            <li>• 80+ uczniów (różne klasy)</li>
+                            <li>• 10+ nauczycieli</li>
+                            <li>• 100+ rodziców</li>
+                            <li>• Konta demo dla każdej roli</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-2">📚 Zawartość:</h3>
+                        <ul class="text-sm space-y-1">
+                            <li>• 30+ quizów (różne przedmioty)</li>
+                            <li>• 50+ zadań domowych</li>
+                            <li>• 500+ wyników quizów</li>
+                            <li>• Plany lekcji dla wszystkich klas</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-2">📊 Statystyki:</h3>
+                        <ul class="text-sm space-y-1">
+                            <li>• Wyniki i oceny</li>
+                            <li>• Osiągnięcia uczniów</li>
+                            <li>• Trendy i analizy</li>
+                            <li>• Rankingi klas</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-2">💬 Komunikacja:</h3>
+                        <ul class="text-sm space-y-1">
+                            <li>• Wiadomości między użytkownikami</li>
+                            <li>• Powiadomienia systemowe</li>
+                            <li>• Wydarzenia szkolne</li>
+                            <li>• Ogłoszenia</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-yellow-500/20 rounded-lg p-4 mb-6">
+                <p class="text-sm">
+                    <strong>⚠️ Uwaga:</strong> Ta operacja zastąpi wszystkie istniejące dane w localStorage!
+                    Upewnij się, że chcesz kontynuować.
+                </p>
+            </div>
+
+            <div class="flex gap-4 justify-center">
+                <button onclick="generateTestData()" class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold transition">
+                    🚀 Generuj Dane Testowe
+                </button>
+                <button onclick="clearAllData()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition">
+                    🗑️ Wyczyść Wszystkie Dane
+                </button>
+            </div>
+        </div>
+
+        <div id="status" class="glass rounded-lg p-6 hidden">
+            <h2 class="text-xl font-semibold mb-4">📊 Status Generowania:</h2>
+            <div id="progress" class="space-y-2"></div>
+        </div>
+
+        <div id="results" class="glass rounded-lg p-6 hidden mt-6">
+            <h2 class="text-xl font-semibold mb-4">✅ Dane Wygenerowane!</h2>
+            <div id="summary" class="space-y-2 mb-6"></div>
+            
+            <div class="bg-blue-600/20 rounded-lg p-4">
+                <h3 class="font-semibold mb-2">🔐 Konta Demo:</h3>
+                <div class="grid md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <strong>Uczeń:</strong><br>
+                        Login: uczen@demo.pl<br>
+                        Hasło: demo123
+                    </div>
+                    <div>
+                        <strong>Nauczyciel:</strong><br>
+                        Login: nauczyciel@demo.pl<br>
+                        Hasło: demo123
+                    </div>
+                    <div>
+                        <strong>Rodzic:</strong><br>
+                        Login: rodzic@demo.pl<br>
+                        Hasło: demo123
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-center">
+                <a href="/" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-semibold inline-block transition">
+                    🏠 Przejdź do Aplikacji
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/test-data-generator.js"></script>
+    <script>
+        function updateProgress(message, type = 'info') {
+            const progress = document.getElementById('progress');
+            const div = document.createElement('div');
+            div.className = type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-blue-400';
+            div.innerHTML = `${type === 'success' ? '✅' : type === 'error' ? '❌' : '⏳'} ${message}`;
+            progress.appendChild(div);
+        }
+
+        async function generateTestData() {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            const progress = document.getElementById('progress');
+            
+            // Pokaż status, ukryj wyniki
+            statusDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+            progress.innerHTML = '';
+            
+            try {
+                updateProgress('Inicjalizacja generatora danych...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress('Generowanie użytkowników...');
+                const generator = new TestDataGenerator();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress('Generowanie klas i przedmiotów...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress('Generowanie quizów i zadań...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress('Generowanie wyników i statystyk...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress('Generowanie wiadomości i powiadomień...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress('Zapisywanie danych do localStorage...');
+                const result = generator.generateAndSave();
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                if (result.success) {
+                    updateProgress('Wszystkie dane zostały wygenerowane!', 'success');
+                    
+                    // Pokaż podsumowanie
+                    setTimeout(() => {
+                        resultsDiv.classList.remove('hidden');
+                        const summary = document.getElementById('summary');
+                        summary.innerHTML = `
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <strong>Użytkownicy:</strong>
+                                    <ul class="text-sm ml-4">
+                                        <li>• Uczniowie: ${result.data.users.students.length}</li>
+                                        <li>• Nauczyciele: ${result.data.users.teachers.length}</li>
+                                        <li>• Rodzice: ${result.data.users.parents.length}</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <strong>Zawartość:</strong>
+                                    <ul class="text-sm ml-4">
+                                        <li>• Quizy: ${result.data.content.quizzes.length}</li>
+                                        <li>• Zadania: ${result.data.content.tasks.length}</li>
+                                        <li>• Wyniki: ${result.data.performance.results.length}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                    }, 1000);
+                }
+            } catch (error) {
+                updateProgress(`Błąd: ${error.message}`, 'error');
+                console.error('Błąd generowania danych:', error);
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('Czy na pewno chcesz usunąć wszystkie dane? Ta operacja jest nieodwracalna!')) {
+                const keysToRemove = [
+                    'users', 'classes', 'subjects', 'schedules', 'quizzes', 
+                    'tasks', 'quizResults', 'statistics', 'messages', 
+                    'notifications', 'events', 'sampleQuestions', 'demoAccounts',
+                    'currentUser', 'quizHistory', 'achievements'
+                ];
+                
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                
+                alert('✅ Wszystkie dane zostały usunięte!');
+                location.reload();
+            }
+        }
+
+        // Sprawdź czy są już jakieś dane
+        window.addEventListener('load', () => {
+            const hasData = localStorage.getItem('users');
+            if (hasData) {
+                const users = JSON.parse(hasData);
+                console.log(`ℹ️ Znaleziono istniejące dane: ${users.length} użytkowników`);
+            }
+        });
+    </script>
+</body>
+</html>

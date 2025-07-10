@@ -1,417 +1,1262 @@
-// Generator danych testowych dla QuizMaster
+/**
+ * Generator kompleksowych danych testowych dla QuizMaster
+ * Zawiera dane dla uczniów, nauczycieli i rodziców
+ */
+
 class TestDataGenerator {
     constructor() {
-        this.studentNames = [
-            'Anna Kowalska', 'Piotr Nowak', 'Katarzyna Wiśniewska', 'Michał Wójcik',
-            'Magdalena Kowalczyk', 'Jakub Kamiński', 'Natalia Lewandowska', 'Mateusz Zieliński',
-            'Aleksandra Szymańska', 'Bartosz Woźniak', 'Julia Dąbrowska', 'Szymon Kozłowski',
-            'Wiktoria Jankowska', 'Filip Mazur', 'Zuzanna Krawczyk', 'Dominik Piotrowski',
-            'Oliwia Grabowska', 'Kacper Pawłowski', 'Maja Michalska', 'Adrian Adamczyk'
-        ];
+        this.currentDate = new Date();
+        this.schoolYear = this.currentDate.getMonth() < 7 ? 
+            `${this.currentDate.getFullYear() - 1}/${this.currentDate.getFullYear()}` : 
+            `${this.currentDate.getFullYear()}/${this.currentDate.getFullYear() + 1}`;
+    }
+
+    /**
+     * Generuje kompletny zestaw danych testowych
+     */
+    generateCompleteTestData() {
+        console.log('🎯 Generowanie kompleksowych danych testowych...');
         
-        this.categories = ['Egzamin ósmoklasisty', 'Matura podstawowa', 'Matura rozszerzona'];
-        this.subjects = ['Matematyka', 'Fizyka', 'Chemia', 'Biologia', 'Geografia'];
-        this.topics = {
-            'Matematyka': ['Geometria', 'Algebra', 'Procenty', 'Funkcje', 'Statystyka'],
-            'Fizyka': ['Mechanika', 'Termodynamika', 'Elektryczność', 'Optyka', 'Fale'],
-            'Chemia': ['Reakcje chemiczne', 'Układ okresowy', 'Związki organiczne', 'Kwasy i zasady'],
-            'Biologia': ['Komórka', 'Genetyka', 'Ekologia', 'Anatomia człowieka'],
-            'Geografia': ['Klimat', 'Ukształtowanie terenu', 'Gospodarka', 'Mapy']
+        // 1. Użytkownicy
+        const students = this.generateStudents();
+        const teachers = this.generateTeachers();
+        const parents = this.generateParents(students);
+        
+        // 2. Klasy i przedmioty
+        const classes = this.generateClasses();
+        const subjects = this.generateSubjects();
+        
+        // 3. Quizy i zadania
+        const quizzes = this.generateQuizzes(subjects);
+        const tasks = this.generateTasks(subjects);
+        
+        // 4. Wyniki i statystyki
+        const results = this.generateResults(students, quizzes);
+        const statistics = this.generateStatistics(results);
+        
+        // 5. Plany lekcji i wydarzenia
+        const schedules = this.generateSchedules(classes, subjects, teachers);
+        const events = this.generateEvents();
+        
+        // 6. Wiadomości i powiadomienia
+        const messages = this.generateMessages(teachers, parents, students);
+        const notifications = this.generateNotifications();
+        
+        return {
+            users: {
+                students,
+                teachers,
+                parents
+            },
+            academic: {
+                classes,
+                subjects,
+                schedules
+            },
+            content: {
+                quizzes,
+                tasks
+            },
+            performance: {
+                results,
+                statistics
+            },
+            communication: {
+                messages,
+                notifications,
+                events
+            }
         };
     }
 
-    // Generuj dane testowe
-    generateTestData() {
-        console.log('🎯 Generowanie danych testowych...');
+    /**
+     * Generuje uczniów
+     */
+    generateStudents() {
+        const students = [];
+        const firstNames = ['Anna', 'Jan', 'Maria', 'Piotr', 'Katarzyna', 'Michał', 'Agnieszka', 'Krzysztof', 'Barbara', 'Andrzej', 'Małgorzata', 'Tomasz', 'Ewa', 'Paweł', 'Magdalena'];
+        const lastNames = ['Nowak', 'Kowalski', 'Wiśniewski', 'Wójcik', 'Kowalczyk', 'Kamiński', 'Lewandowski', 'Zieliński', 'Szymański', 'Woźniak'];
         
-        // 1. Utwórz użytkowników
-        this.createTestUsers();
+        const classes = ['1a', '1b', '2a', '2b', '3a', '3b', '4a', '4b', '5a', '5b', '6a', '6b', '7a', '7b', '8a', '8b'];
         
-        // 2. Utwórz grupy
-        this.createTestGroups();
+        let id = 1000;
         
-        // 3. Generuj wyniki egzaminów
-        this.generateExamResults();
-        
-        // 4. Generuj osiągnięcia
-        this.generateAchievements();
-        
-        // 5. Generuj harmonogram
-        this.generateSchedule();
-        
-        // 6. Generuj wyzwania i ranking
-        this.generateCompetitionData();
-        
-        // 7. Generuj szablony arkuszy
-        this.generateExamTemplates();
-        
-        // 8. Generuj komentarze nauczyciela
-        this.generateTeacherComments();
-        
-        console.log('✅ Dane testowe wygenerowane pomyślnie!');
-    }
-
-    // 1. Tworzenie użytkowników
-    createTestUsers() {
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        
-        // Dodaj uczniów jeśli nie istnieją
-        this.studentNames.forEach((name, index) => {
-            const username = name.toLowerCase().replace(' ', '.');
-            const userId = 1000 + index;
+        // Generuj 5-8 uczniów na klasę
+        classes.forEach(className => {
+            const studentsInClass = 5 + Math.floor(Math.random() * 4);
             
-            if (!users.find(u => u.id === userId || u.username === username)) {
-                users.push({
-                    id: userId,
-                    userId: userId, // dla kompatybilności wstecznej
-                    username: username,
-                    password: CryptoJS.SHA256('haslo123').toString(),
-                    role: 'student',
-                    category: this.categories[index % 3],
-                    createdAt: new Date()
-                });
-            }
-        });
-        
-        // Dodaj nauczycieli testowych
-        const testTeachers = [
-            { username: 'jan.kowalski', name: 'Jan Kowalski', userId: 2001 },
-            { username: 'maria.nowak', name: 'Maria Nowak', userId: 2002 }
-        ];
-        
-        testTeachers.forEach(teacher => {
-            if (!users.find(u => u.id === teacher.userId || u.username === teacher.username)) {
-                users.push({
-                    id: teacher.userId,
-                    userId: teacher.userId, // dla kompatybilności wstecznej
-                    username: teacher.username,
-                    password: CryptoJS.SHA256('nauczyciel123').toString(),
-                    role: 'teacher',
-                    createdAt: new Date()
-                });
-            }
-        });
-        
-        localStorage.setItem('users', JSON.stringify(users));
-        console.log(`✓ Utworzono ${this.studentNames.length} uczniów i ${testTeachers.length} nauczycieli`);
-    }
-
-    // 2. Tworzenie grup
-    createTestGroups() {
-        const groups = [
-            { id: 1, name: 'Klasa 8A', students: [1000, 1001, 1002, 1003, 1004, 1005] },
-            { id: 2, name: 'Klasa 8B', students: [1006, 1007, 1008, 1009, 1010, 1011] },
-            { id: 3, name: 'Maturzyści podstawowi', students: [1012, 1013, 1014, 1015] },
-            { id: 4, name: 'Maturzyści rozszerzeni', students: [1016, 1017, 1018, 1019] }
-        ];
-        
-        localStorage.setItem('studentGroups', JSON.stringify(groups));
-        console.log(`✓ Utworzono ${groups.length} grup uczniów`);
-    }
-
-    // 3. Generowanie wyników egzaminów
-    generateExamResults() {
-        const results = [];
-        const tasks = JSON.parse(localStorage.getItem('zadaniaDB') || '[]');
-        
-        // Dla każdego ucznia generuj 5-10 wyników
-        for (let i = 0; i < 20; i++) {
-            const studentId = 1000 + i;
-            const studentName = this.studentNames[i];
-            const resultsCount = 5 + Math.floor(Math.random() * 6);
-            
-            for (let j = 0; j < resultsCount; j++) {
-                const date = new Date();
-                date.setDate(date.getDate() - Math.floor(Math.random() * 30)); // Ostatnie 30 dni
+            for (let i = 0; i < studentsInClass; i++) {
+                const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+                const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+                const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${id}@szkola.edu.pl`;
                 
-                // Losuj zadania
-                const questionsCount = 10 + Math.floor(Math.random() * 11);
-                const selectedTasks = this.selectRandomTasks(tasks, questionsCount);
-                const answers = {};
-                let correct = 0;
-                
-                selectedTasks.forEach(task => {
-                    // Symuluj odpowiedzi (70% szans na poprawną)
-                    const isCorrect = Math.random() < 0.7;
-                    if (task.typ === 'zamkniete' && task.odpowiedzi) {
-                        answers[task.id] = isCorrect ? task.poprawna : task.odpowiedzi[Math.floor(Math.random() * task.odpowiedzi.length)];
-                        if (isCorrect) correct++;
+                students.push({
+                    id: `student_${id}`,
+                    imie: firstName,
+                    nazwisko: lastName,
+                    email: email,
+                    haslo: 'Test123!',
+                    rola: 'student',
+                    klasa: className,
+                    numerDziennika: i + 1,
+                    dataUrodzenia: this.generateBirthDate(className),
+                    pesel: this.generatePESEL(),
+                    adres: this.generateAddress(),
+                    telefon: this.generatePhoneNumber(),
+                    aktywny: true,
+                    dataRejestracji: new Date(2024, 8, 1).toISOString(),
+                    ostatnieLogowanie: this.generateRecentDate(),
+                    zdjecie: `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random`,
+                    osiagniecia: this.generateAchievements(),
+                    statystyki: {
+                        quizyRozwiazane: Math.floor(Math.random() * 50),
+                        sredniaOcen: 3.5 + Math.random() * 1.5,
+                        punktyXP: Math.floor(Math.random() * 5000),
+                        poziom: Math.floor(Math.random() * 20) + 1,
+                        seria: Math.floor(Math.random() * 30)
                     }
                 });
                 
-                results.push({
-                    examId: Date.now() + Math.random(),
-                    examTitle: `Test z ${this.subjects[j % 5]}`,
-                    studentName: studentName,
-                    studentId: studentId,
-                    category: this.categories[i % 3],
-                    correctAnswers: correct,
-                    totalQuestions: questionsCount,
-                    earnedPoints: correct,
-                    totalPoints: questionsCount,
-                    percentage: Math.round((correct / questionsCount) * 100),
-                    completedAt: date.toISOString(),
-                    timeSpent: 600 + Math.floor(Math.random() * 1800), // 10-40 minut
-                    answers: answers,
-                    questions: selectedTasks,
-                    subject: this.subjects[j % 5]
+                id++;
+            }
+        });
+        
+        // Dodaj specjalnych uczniów testowych
+        students.push(
+            {
+                id: 'student_demo',
+                imie: 'Demo',
+                nazwisko: 'Uczeń',
+                email: 'uczen@demo.pl',
+                haslo: 'demo123',
+                rola: 'student',
+                klasa: '8a',
+                numerDziennika: 1,
+                dataUrodzenia: '2010-05-15',
+                aktywny: true,
+                statystyki: {
+                    quizyRozwiazane: 127,
+                    sredniaOcen: 4.75,
+                    punktyXP: 12500,
+                    poziom: 25,
+                    seria: 45
+                },
+                osiagniecia: ['quiz_master', 'perfect_week', 'speed_demon', 'knowledge_seeker']
+            },
+            {
+                id: 'student_test',
+                imie: 'Test',
+                nazwisko: 'Student',
+                email: 'test.student@szkola.pl',
+                haslo: 'test123',
+                rola: 'student',
+                klasa: '7b',
+                numerDziennika: 15,
+                aktywny: true,
+                statystyki: {
+                    quizyRozwiazane: 45,
+                    sredniaOcen: 3.85,
+                    punktyXP: 4200,
+                    poziom: 12,
+                    seria: 7
+                }
+            }
+        );
+        
+        return students;
+    }
+
+    /**
+     * Generuje nauczycieli
+     */
+    generateTeachers() {
+        const teachers = [
+            {
+                id: 'teacher_1',
+                imie: 'Janusz',
+                nazwisko: 'Kowalski',
+                email: 'j.kowalski@szkola.edu.pl',
+                haslo: 'Test123!',
+                rola: 'teacher',
+                przedmioty: ['matematyka', 'fizyka'],
+                klasy: ['7a', '7b', '8a', '8b'],
+                tytul: 'mgr',
+                telefon: '123-456-789',
+                gabinetNumer: '201',
+                godzinyKonsultacji: 'Wtorek 14:00-15:00, Czwartek 13:00-14:00',
+                aktywny: true,
+                uprawnienia: {
+                    tworzenieTesztow: true,
+                    ocenianie: true,
+                    zarzadzanieKlasami: true,
+                    raporty: true
+                }
+            },
+            {
+                id: 'teacher_2',
+                imie: 'Anna',
+                nazwisko: 'Nowak',
+                email: 'a.nowak@szkola.edu.pl',
+                haslo: 'Test123!',
+                rola: 'teacher',
+                przedmioty: ['język polski', 'historia'],
+                klasy: ['6a', '6b', '7a', '7b'],
+                tytul: 'mgr',
+                wychowawcaKlasy: '7a',
+                aktywny: true,
+                uprawnienia: {
+                    tworzenieTesztow: true,
+                    ocenianie: true,
+                    zarzadzanieKlasami: true,
+                    raporty: true,
+                    wychowawstwo: true
+                }
+            },
+            {
+                id: 'teacher_3',
+                imie: 'Marek',
+                nazwisko: 'Wiśniewski',
+                email: 'm.wisniewski@szkola.edu.pl',
+                haslo: 'Test123!',
+                rola: 'teacher',
+                przedmioty: ['chemia', 'biologia'],
+                klasy: ['7a', '7b', '8a', '8b'],
+                tytul: 'dr',
+                aktywny: true
+            },
+            {
+                id: 'teacher_demo',
+                imie: 'Demo',
+                nazwisko: 'Nauczyciel',
+                email: 'nauczyciel@demo.pl',
+                haslo: 'demo123',
+                rola: 'teacher',
+                przedmioty: ['matematyka', 'informatyka'],
+                klasy: ['1a', '2a', '3a', '4a', '5a', '6a', '7a', '8a'],
+                tytul: 'mgr inż.',
+                wychowawcaKlasy: '8a',
+                aktywny: true,
+                uprawnienia: {
+                    wszystkie: true
+                }
+            }
+        ];
+        
+        // Dodaj więcej nauczycieli dla różnych przedmiotów
+        const dodatkowePrzedmioty = [
+            { przedmiot: 'język angielski', imie: 'Katarzyna', nazwisko: 'Zielińska' },
+            { przedmiot: 'geografia', imie: 'Tomasz', nazwisko: 'Kamiński' },
+            { przedmiot: 'wf', imie: 'Robert', nazwisko: 'Lewandowski' },
+            { przedmiot: 'muzyka', imie: 'Ewa', nazwisko: 'Szymańska' },
+            { przedmiot: 'plastyka', imie: 'Magdalena', nazwisko: 'Woźniak' },
+            { przedmiot: 'informatyka', imie: 'Paweł', nazwisko: 'Kowalczyk' }
+        ];
+        
+        dodatkowePrzedmioty.forEach((item, index) => {
+            teachers.push({
+                id: `teacher_${index + 4}`,
+                imie: item.imie,
+                nazwisko: item.nazwisko,
+                email: `${item.imie.toLowerCase()}.${item.nazwisko.toLowerCase()}@szkola.edu.pl`,
+                haslo: 'Test123!',
+                rola: 'teacher',
+                przedmioty: [item.przedmiot],
+                klasy: this.generateRandomClasses(),
+                tytul: 'mgr',
+                aktywny: true
+            });
+        });
+        
+        return teachers;
+    }
+
+    /**
+     * Generuje rodziców
+     */
+    generateParents(students) {
+        const parents = [];
+        
+        // Dla każdego ucznia generuj 1-2 rodziców
+        students.forEach((student, index) => {
+            if (Math.random() > 0.1) { // 90% uczniów ma rodziców w systemie
+                // Pierwszy rodzic (matka)
+                parents.push({
+                    id: `parent_${index * 2 + 1}`,
+                    imie: this.generateParentName(student.imie, 'female'),
+                    nazwisko: student.nazwisko,
+                    email: `rodzic.${student.nazwisko.toLowerCase()}${index}@gmail.com`,
+                    haslo: 'Test123!',
+                    rola: 'parent',
+                    dzieci: [student.id],
+                    telefon: this.generatePhoneNumber(),
+                    aktywny: true,
+                    powiadomienia: {
+                        email: true,
+                        sms: false,
+                        push: true,
+                        oOcenach: true,
+                        oNieobecnosciach: true,
+                        oZadaniach: true,
+                        oWydarzeniach: true
+                    }
+                });
+                
+                // Drugi rodzic (ojciec) - 70% szans
+                if (Math.random() > 0.3) {
+                    parents.push({
+                        id: `parent_${index * 2 + 2}`,
+                        imie: this.generateParentName(student.imie, 'male'),
+                        nazwisko: student.nazwisko,
+                        email: `tata.${student.nazwisko.toLowerCase()}${index}@gmail.com`,
+                        haslo: 'Test123!',
+                        rola: 'parent',
+                        dzieci: [student.id],
+                        telefon: this.generatePhoneNumber(),
+                        aktywny: true
+                    });
+                }
+            }
+        });
+        
+        // Dodaj rodziców testowych
+        parents.push(
+            {
+                id: 'parent_demo',
+                imie: 'Demo',
+                nazwisko: 'Rodzic',
+                email: 'rodzic@demo.pl',
+                haslo: 'demo123',
+                rola: 'parent',
+                dzieci: ['student_demo', 'student_1001'], // Ma dwoje dzieci
+                telefon: '600-700-800',
+                aktywny: true,
+                powiadomienia: {
+                    wszystkie: true
+                }
+            }
+        );
+        
+        return parents;
+    }
+
+    /**
+     * Generuje klasy
+     */
+    generateClasses() {
+        const classes = [];
+        const poziomy = [1, 2, 3, 4, 5, 6, 7, 8];
+        const oddzialy = ['a', 'b'];
+        
+        poziomy.forEach(poziom => {
+            oddzialy.forEach(oddzial => {
+                classes.push({
+                    id: `class_${poziom}${oddzial}`,
+                    nazwa: `${poziom}${oddzial}`,
+                    poziom: poziom,
+                    oddzial: oddzial,
+                    rokSzkolny: this.schoolYear,
+                    wychowawca: null, // Będzie przypisany z nauczycieli
+                    liczbaUczniow: 0, // Będzie obliczona
+                    salaDomyslna: `${poziom}0${oddzialy.indexOf(oddzial) + 1}`,
+                    profil: poziom >= 7 ? (oddzial === 'a' ? 'matematyczno-fizyczny' : 'humanistyczny') : 'ogólny'
+                });
+            });
+        });
+        
+        return classes;
+    }
+
+    /**
+     * Generuje przedmioty
+     */
+    generateSubjects() {
+        return [
+            { id: 'mat', nazwa: 'Matematyka', skrot: 'MAT', kategoria: 'ścisłe' },
+            { id: 'pol', nazwa: 'Język polski', skrot: 'POL', kategoria: 'humanistyczne' },
+            { id: 'ang', nazwa: 'Język angielski', skrot: 'ANG', kategoria: 'języki' },
+            { id: 'his', nazwa: 'Historia', skrot: 'HIS', kategoria: 'humanistyczne' },
+            { id: 'geo', nazwa: 'Geografia', skrot: 'GEO', kategoria: 'przyrodnicze' },
+            { id: 'bio', nazwa: 'Biologia', skrot: 'BIO', kategoria: 'przyrodnicze' },
+            { id: 'che', nazwa: 'Chemia', skrot: 'CHE', kategoria: 'ścisłe' },
+            { id: 'fiz', nazwa: 'Fizyka', skrot: 'FIZ', kategoria: 'ścisłe' },
+            { id: 'inf', nazwa: 'Informatyka', skrot: 'INF', kategoria: 'ścisłe' },
+            { id: 'wf', nazwa: 'Wychowanie fizyczne', skrot: 'WF', kategoria: 'inne' },
+            { id: 'muz', nazwa: 'Muzyka', skrot: 'MUZ', kategoria: 'artystyczne' },
+            { id: 'pla', nazwa: 'Plastyka', skrot: 'PLA', kategoria: 'artystyczne' }
+        ];
+    }
+
+    /**
+     * Generuje quizy
+     */
+    generateQuizzes(subjects) {
+        const quizzes = [];
+        let quizId = 1;
+        
+        // Przykładowe quizy dla każdego przedmiotu
+        const quizTemplates = {
+            mat: [
+                { temat: 'Działania na ułamkach', poziom: 6, trudnosc: 'średnia' },
+                { temat: 'Równania liniowe', poziom: 7, trudnosc: 'średnia' },
+                { temat: 'Funkcje kwadratowe', poziom: 8, trudnosc: 'trudna' },
+                { temat: 'Geometria - pola figur', poziom: 7, trudnosc: 'łatwa' },
+                { temat: 'Procenty i proporcje', poziom: 6, trudnosc: 'średnia' }
+            ],
+            pol: [
+                { temat: 'Części mowy', poziom: 5, trudnosc: 'łatwa' },
+                { temat: 'Lektury - Pan Tadeusz', poziom: 8, trudnosc: 'trudna' },
+                { temat: 'Ortografia', poziom: 6, trudnosc: 'średnia' },
+                { temat: 'Środki stylistyczne', poziom: 7, trudnosc: 'średnia' },
+                { temat: 'Gramatyka - zdania złożone', poziom: 7, trudnosc: 'trudna' }
+            ],
+            ang: [
+                { temat: 'Present Simple vs Continuous', poziom: 6, trudnosc: 'średnia' },
+                { temat: 'Irregular Verbs', poziom: 7, trudnosc: 'łatwa' },
+                { temat: 'Conditionals', poziom: 8, trudnosc: 'trudna' },
+                { temat: 'Vocabulary - Daily Routines', poziom: 5, trudnosc: 'łatwa' }
+            ],
+            bio: [
+                { temat: 'Budowa komórki', poziom: 7, trudnosc: 'średnia' },
+                { temat: 'Układ krwionośny', poziom: 8, trudnosc: 'trudna' },
+                { temat: 'Fotosynteza', poziom: 6, trudnosc: 'średnia' },
+                { temat: 'Ewolucja', poziom: 8, trudnosc: 'trudna' }
+            ],
+            fiz: [
+                { temat: 'Ruch i siły', poziom: 7, trudnosc: 'średnia' },
+                { temat: 'Prąd elektryczny', poziom: 8, trudnosc: 'trudna' },
+                { temat: 'Dźwięk i fale', poziom: 7, trudnosc: 'średnia' }
+            ]
+        };
+        
+        // Generuj quizy dla każdego przedmiotu
+        Object.keys(quizTemplates).forEach(subjectId => {
+            const templates = quizTemplates[subjectId];
+            
+            templates.forEach(template => {
+                const quiz = {
+                    id: `quiz_${quizId++}`,
+                    nazwa: template.temat,
+                    przedmiot: subjectId,
+                    temat: template.temat,
+                    poziom: template.poziom,
+                    klasa: `${template.poziom}a`,
+                    trudnosc: template.trudnosc,
+                    czasTrwania: template.trudnosc === 'łatwa' ? 15 : template.trudnosc === 'średnia' ? 30 : 45,
+                    punkty: template.trudnosc === 'łatwa' ? 20 : template.trudnosc === 'średnia' ? 30 : 40,
+                    nauczyciel: `teacher_${Math.floor(Math.random() * 3) + 1}`,
+                    dataUtworzenia: this.generatePastDate(30),
+                    dataAktywacji: this.generatePastDate(20),
+                    dataZakonczenia: this.generateFutureDate(10),
+                    aktywny: Math.random() > 0.3,
+                    pytania: this.generateQuestions(template.temat, template.trudnosc),
+                    statystyki: {
+                        liczbaRozwiazan: Math.floor(Math.random() * 50),
+                        sredniaOcen: 3 + Math.random() * 2,
+                        sredniCzas: Math.floor(Math.random() * 20) + 10
+                    }
+                };
+                
+                quizzes.push(quiz);
+            });
+        });
+        
+        // Dodaj specjalny quiz demo
+        quizzes.push({
+            id: 'quiz_demo',
+            nazwa: 'Quiz Demonstracyjny - Matematyka',
+            przedmiot: 'mat',
+            temat: 'Różne działy matematyki',
+            poziom: 7,
+            klasa: '7a',
+            trudnosc: 'średnia',
+            czasTrwania: 30,
+            punkty: 50,
+            nauczyciel: 'teacher_demo',
+            aktywny: true,
+            pytania: [
+                {
+                    id: 'q1',
+                    tresc: 'Oblicz: 3/4 + 2/3',
+                    typ: 'jednokrotny',
+                    punkty: 5,
+                    odpowiedzi: [
+                        { id: 'a', tresc: '17/12', poprawna: true },
+                        { id: 'b', tresc: '5/7', poprawna: false },
+                        { id: 'c', tresc: '1', poprawna: false },
+                        { id: 'd', tresc: '5/12', poprawna: false }
+                    ]
+                },
+                {
+                    id: 'q2',
+                    tresc: 'Rozwiąż równanie: 2x + 5 = 13',
+                    typ: 'otwarte',
+                    punkty: 10,
+                    odpowiedzWzorcowa: 'x = 4',
+                    kryteriaOceniania: ['Odjęcie 5 od obu stron', 'Podzielenie przez 2', 'Poprawny wynik']
+                },
+                {
+                    id: 'q3',
+                    tresc: 'Które z poniższych liczb są liczbami pierwszymi?',
+                    typ: 'wielokrotny',
+                    punkty: 8,
+                    odpowiedzi: [
+                        { id: 'a', tresc: '17', poprawna: true },
+                        { id: 'b', tresc: '21', poprawna: false },
+                        { id: 'c', tresc: '29', poprawna: true },
+                        { id: 'd', tresc: '35', poprawna: false }
+                    ]
+                }
+            ]
+        });
+        
+        return quizzes;
+    }
+
+    /**
+     * Generuje zadania domowe
+     */
+    generateTasks(subjects) {
+        const tasks = [];
+        let taskId = 1;
+        
+        const taskTypes = [
+            'Zadanie domowe',
+            'Projekt',
+            'Praca klasowa',
+            'Kartkówka',
+            'Referat',
+            'Prezentacja'
+        ];
+        
+        // Generuj 3-5 zadań dla każdego przedmiotu
+        subjects.forEach(subject => {
+            const taskCount = 3 + Math.floor(Math.random() * 3);
+            
+            for (let i = 0; i < taskCount; i++) {
+                const taskType = taskTypes[Math.floor(Math.random() * taskTypes.length)];
+                const daysOffset = Math.floor(Math.random() * 14) - 7; // -7 do +7 dni
+                
+                tasks.push({
+                    id: `task_${taskId++}`,
+                    nazwa: `${taskType} - ${subject.nazwa}`,
+                    typ: taskType,
+                    przedmiot: subject.id,
+                    opis: this.generateTaskDescription(subject.nazwa, taskType),
+                    dataZadania: this.generateDateOffset(daysOffset - 7),
+                    terminOddania: this.generateDateOffset(daysOffset),
+                    punkty: taskType === 'Praca klasowa' ? 100 : taskType === 'Projekt' ? 50 : 20,
+                    nauczyciel: `teacher_${Math.floor(Math.random() * 3) + 1}`,
+                    klasa: `${Math.floor(Math.random() * 8) + 1}a`,
+                    zalaczniki: Math.random() > 0.7 ? ['materialy.pdf'] : [],
+                    wymagania: this.generateTaskRequirements(taskType)
                 });
             }
-        }
+        });
         
-        // Sortuj według daty
-        results.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-        
-        localStorage.setItem('examResults', JSON.stringify(results));
-        console.log(`✓ Wygenerowano ${results.length} wyników egzaminów`);
+        return tasks;
     }
 
-    // 4. Generowanie osiągnięć
-    generateAchievements() {
-        // Dla każdego ucznia wygeneruj postępy
-        for (let i = 0; i < 20; i++) {
-            const studentId = 1000 + i;
-            const progress = {
-                totalTasks: 20 + Math.floor(Math.random() * 80),
-                perfectScores: Math.floor(Math.random() * 10),
-                averageScore: 60 + Math.floor(Math.random() * 30),
-                dailyStreak: Math.floor(Math.random() * 15),
-                lastActivityDate: new Date().toDateString(),
-                subjectTasks: {
-                    'Matematyka': 5 + Math.floor(Math.random() * 20),
-                    'Fizyka': 5 + Math.floor(Math.random() * 20),
-                    'Chemia': 5 + Math.floor(Math.random() * 15)
-                },
-                tasksWithoutHints: Math.floor(Math.random() * 15),
-                weeklyScores: [],
-                totalPoints: 100 + Math.floor(Math.random() * 400)
+    /**
+     * Generuje wyniki quizów
+     */
+    generateResults(students, quizzes) {
+        const results = [];
+        let resultId = 1;
+        
+        students.forEach(student => {
+            // Każdy uczeń rozwiązał 30-70% quizów
+            const solvedQuizzes = quizzes.filter(() => Math.random() > 0.5);
+            
+            solvedQuizzes.forEach(quiz => {
+                const percentageScore = 50 + Math.random() * 50; // 50-100%
+                const points = Math.floor((percentageScore / 100) * quiz.punkty);
+                const timeSpent = Math.floor(quiz.czasTrwania * (0.5 + Math.random() * 0.8));
+                
+                results.push({
+                    id: `result_${resultId++}`,
+                    studentId: student.id,
+                    quizId: quiz.id,
+                    przedmiot: quiz.przedmiot,
+                    dataRozpoczecia: this.generatePastDate(20),
+                    dataZakonczenia: this.generatePastDate(20),
+                    czasTrwania: timeSpent,
+                    punktyZdobyte: points,
+                    punktyMax: quiz.punkty,
+                    procent: Math.round(percentageScore),
+                    ocena: this.calculateGrade(percentageScore),
+                    odpowiedzi: this.generateAnswers(quiz.pytania, percentageScore),
+                    liczbaPoprawnych: Math.floor(quiz.pytania.length * percentageScore / 100),
+                    liczbaBlednych: Math.ceil(quiz.pytania.length * (100 - percentageScore) / 100),
+                    status: 'zakończony'
+                });
+            });
+        });
+        
+        return results;
+    }
+
+    /**
+     * Generuje statystyki
+     */
+    generateStatistics(results) {
+        const stats = {
+            global: {
+                totalQuizzes: results.length,
+                averageScore: results.reduce((sum, r) => sum + r.procent, 0) / results.length,
+                totalPoints: results.reduce((sum, r) => sum + r.punktyZdobyte, 0),
+                totalTime: results.reduce((sum, r) => sum + r.czasTrwania, 0)
+            },
+            bySubject: {},
+            byStudent: {},
+            byClass: {},
+            trends: this.generateTrends()
+        };
+        
+        // Statystyki per przedmiot
+        const subjects = [...new Set(results.map(r => r.przedmiot))];
+        subjects.forEach(subject => {
+            const subjectResults = results.filter(r => r.przedmiot === subject);
+            stats.bySubject[subject] = {
+                count: subjectResults.length,
+                average: subjectResults.reduce((sum, r) => sum + r.procent, 0) / subjectResults.length,
+                bestScore: Math.max(...subjectResults.map(r => r.procent)),
+                worstScore: Math.min(...subjectResults.map(r => r.procent))
+            };
+        });
+        
+        return stats;
+    }
+
+    /**
+     * Generuje plany lekcji
+     */
+    generateSchedules(classes, subjects, teachers) {
+        const schedules = [];
+        const days = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek'];
+        const hours = [
+            { nr: 1, start: '8:00', end: '8:45' },
+            { nr: 2, start: '8:50', end: '9:35' },
+            { nr: 3, start: '9:45', end: '10:30' },
+            { nr: 4, start: '10:40', end: '11:25' },
+            { nr: 5, start: '11:35', end: '12:20' },
+            { nr: 6, start: '12:30', end: '13:15' },
+            { nr: 7, start: '13:25', end: '14:10' },
+            { nr: 8, start: '14:20', end: '15:05' }
+        ];
+        
+        classes.forEach(cls => {
+            const classSchedule = {
+                klasa: cls.nazwa,
+                rokSzkolny: this.schoolYear,
+                plan: {}
             };
             
-            localStorage.setItem(`userProgress_${studentId}`, JSON.stringify(progress));
-        }
-        
-        console.log('✓ Wygenerowano postępy i osiągnięcia dla uczniów');
-    }
-
-    // 5. Generowanie harmonogramu
-    generateSchedule() {
-        const scheduler = new ExamScheduler();
-        const today = new Date();
-        
-        // Generuj wydarzenia na najbliższe 30 dni
-        const events = [
-            { title: 'Sprawdzian z matematyki - geometria', type: 'exam', daysFromNow: 3, subject: 'Matematyka' },
-            { title: 'Kartkówka z fizyki - ruch', type: 'quiz', daysFromNow: 5, subject: 'Fizyka' },
-            { title: 'Egzamin próbny', type: 'exam', daysFromNow: 7, subject: 'Matematyka' },
-            { title: 'Test z chemii', type: 'exam', daysFromNow: 10, subject: 'Chemia' },
-            { title: 'Zadanie domowe - funkcje', type: 'homework', daysFromNow: 2, subject: 'Matematyka' },
-            { title: 'Projekt z biologii', type: 'homework', daysFromNow: 14, subject: 'Biologia' }
-        ];
-        
-        events.forEach(event => {
-            const date = new Date(today);
-            date.setDate(date.getDate() + event.daysFromNow);
+            days.forEach(day => {
+                classSchedule.plan[day] = [];
+                
+                // 5-8 lekcji dziennie
+                const lessonsCount = 5 + Math.floor(Math.random() * 4);
+                
+                for (let i = 0; i < lessonsCount; i++) {
+                    const subject = subjects[Math.floor(Math.random() * subjects.length)];
+                    const teacher = teachers.find(t => t.przedmioty && t.przedmioty.includes(subject.nazwa.toLowerCase()));
+                    
+                    classSchedule.plan[day].push({
+                        godzina: hours[i],
+                        przedmiot: subject.nazwa,
+                        nauczyciel: teacher ? `${teacher.imie} ${teacher.nazwisko}` : 'TBD',
+                        sala: `${Math.floor(Math.random() * 3) + 1}0${Math.floor(Math.random() * 9) + 1}`
+                    });
+                }
+            });
             
-            scheduler.addEvent({
-                title: event.title,
-                type: event.type,
-                date: date.toISOString().split('T')[0],
-                time: '09:00',
-                duration: event.type === 'exam' ? 90 : 45,
-                subject: event.subject,
-                targetGroups: [1, 2], // Klasy 8A i 8B
-                createdBy: 'paulinaodmatematyki',
-                reminders: [24, 48] // Przypomnienia 24h i 48h przed
-            });
+            schedules.push(classSchedule);
         });
         
-        console.log(`✓ Wygenerowano ${events.length} wydarzeń w harmonogramie`);
+        return schedules;
     }
 
-    // 6. Generowanie danych rywalizacji
-    generateCompetitionData() {
-        const competitionSystem = new CompetitionSystem();
-        
-        // Generuj punkty rankingowe
-        const examResults = JSON.parse(localStorage.getItem('examResults') || '[]');
-        examResults.forEach(result => {
-            competitionSystem.updateLeaderboard(
-                result.studentId,
-                result.studentName,
-                result
-            );
-        });
-        
-        // Generuj wyzwania
-        const challenges = [
-            { challenger: 1000, opponent: 1001, subject: 'Matematyka' },
-            { challenger: 1002, opponent: 1003, subject: 'Fizyka' },
-            { challenger: 1004, opponent: 1005, subject: 'Chemia' }
-        ];
-        
-        challenges.forEach(ch => {
-            competitionSystem.createChallenge({
-                challengerId: ch.challenger,
-                challengerName: this.studentNames[ch.challenger - 1000],
-                opponentId: ch.opponent,
-                opponentName: this.studentNames[ch.opponent - 1000],
-                subject: ch.subject,
-                questionsCount: 10,
-                timeLimit: 15
-            });
-        });
-        
-        // Generuj turniej
-        competitionSystem.createTournament({
-            name: 'Turniej Matematyczny',
-            description: 'Miesięczny turniej z matematyki dla klas 8',
-            subject: 'Matematyka',
-            maxParticipants: 16,
-            startDate: new Date().toISOString(),
-            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            createdBy: 'paulinaodmatematyki'
-        });
-        
-        console.log('✓ Wygenerowano dane rywalizacji i rankingów');
-    }
-
-    // 7. Generowanie szablonów arkuszy
-    generateExamTemplates() {
-        const templatesBank = new ExamTemplatesBank();
-        const tasks = JSON.parse(localStorage.getItem('zadaniaDB') || '[]');
-        
-        const templates = [
+    /**
+     * Generuje wydarzenia
+     */
+    generateEvents() {
+        return [
             {
-                name: 'Test geometria podstawowa',
-                description: 'Podstawowe zadania z geometrii dla klasy 8',
-                subject: 'Matematyka',
-                level: 'podstawowy',
-                tags: ['geometria', 'klasa8', 'podstawy']
+                id: 'event_1',
+                nazwa: 'Wywiadówka - klasy 7-8',
+                typ: 'wywiadówka',
+                data: this.generateFutureDate(7),
+                godzina: '17:00',
+                miejsce: 'Aula szkolna',
+                opis: 'Spotkanie z rodzicami uczniów klas 7-8',
+                obowiazkowe: true,
+                uczestnicyTyp: 'rodzice',
+                klasy: ['7a', '7b', '8a', '8b']
             },
             {
-                name: 'Sprawdzian funkcje',
-                description: 'Funkcje liniowe i kwadratowe',
-                subject: 'Matematyka',
-                level: 'średni',
-                tags: ['funkcje', 'algebra', 'matura']
+                id: 'event_2',
+                nazwa: 'Dzień Otwarty Szkoły',
+                typ: 'wydarzenie',
+                data: this.generateFutureDate(14),
+                godzina: '10:00',
+                miejsce: 'Cała szkoła',
+                opis: 'Prezentacja oferty edukacyjnej dla przyszłych uczniów',
+                obowiazkowe: false
             },
             {
-                name: 'Test mechanika',
-                description: 'Ruch, siły, energia',
-                subject: 'Fizyka',
-                level: 'podstawowy',
-                tags: ['mechanika', 'fizyka', 'podstawy']
+                id: 'event_3',
+                nazwa: 'Konkurs Matematyczny',
+                typ: 'konkurs',
+                data: this.generateFutureDate(21),
+                godzina: '12:00',
+                miejsce: 'Sala 301',
+                opis: 'Szkolny etap konkursu matematycznego',
+                obowiazkowe: false,
+                przedmiot: 'matematyka'
+            },
+            {
+                id: 'event_4',
+                nazwa: 'Wycieczka do muzeum',
+                typ: 'wycieczka',
+                data: this.generateFutureDate(10),
+                godzina: '8:00',
+                miejsce: 'Muzeum Narodowe',
+                opis: 'Wycieczka edukacyjna dla klas 6',
+                klasy: ['6a', '6b'],
+                koszt: 25
+            },
+            {
+                id: 'event_5',
+                nazwa: 'Próbny egzamin ósmoklasisty',
+                typ: 'egzamin',
+                data: this.generateFutureDate(30),
+                godzina: '9:00',
+                miejsce: 'Sale egzaminacyjne',
+                opis: 'Próbny egzamin z matematyki',
+                obowiazkowe: true,
+                klasy: ['8a', '8b']
             }
         ];
+    }
+
+    /**
+     * Generuje wiadomości
+     */
+    generateMessages(teachers, parents, students) {
+        const messages = [];
+        let msgId = 1;
         
-        templates.forEach(template => {
-            const selectedTasks = this.selectRandomTasks(tasks, 15);
-            templatesBank.saveAsTemplate(
-                {
-                    title: template.name,
-                    timeLimit: 45,
-                    questions: selectedTasks,
-                    targetCategories: ['Egzamin ósmoklasisty', 'Matura podstawowa']
-                },
-                {
-                    ...template,
-                    createdBy: 'paulinaodmatematyki'
+        // Wiadomości od nauczycieli do rodziców
+        for (let i = 0; i < 10; i++) {
+            const teacher = teachers[Math.floor(Math.random() * teachers.length)];
+            const parent = parents[Math.floor(Math.random() * parents.length)];
+            
+            messages.push({
+                id: `msg_${msgId++}`,
+                nadawca: teacher.id,
+                nadawcaTyp: 'teacher',
+                odbiorca: parent.id,
+                odbiorcaTyp: 'parent',
+                temat: this.generateMessageSubject('teacher-parent'),
+                tresc: this.generateMessageContent('teacher-parent'),
+                data: this.generatePastDate(7),
+                przeczytana: Math.random() > 0.3,
+                wazna: Math.random() > 0.8,
+                kategoria: 'informacja'
+            });
+        }
+        
+        // Wiadomości od rodziców do nauczycieli
+        for (let i = 0; i < 5; i++) {
+            const parent = parents[Math.floor(Math.random() * parents.length)];
+            const teacher = teachers[Math.floor(Math.random() * teachers.length)];
+            
+            messages.push({
+                id: `msg_${msgId++}`,
+                nadawca: parent.id,
+                nadawcaTyp: 'parent',
+                odbiorca: teacher.id,
+                odbiorcaTyp: 'teacher',
+                temat: this.generateMessageSubject('parent-teacher'),
+                tresc: this.generateMessageContent('parent-teacher'),
+                data: this.generatePastDate(5),
+                przeczytana: Math.random() > 0.2,
+                odpowiedz: Math.random() > 0.5
+            });
+        }
+        
+        // Ogłoszenia systemowe
+        messages.push(
+            {
+                id: `msg_${msgId++}`,
+                nadawca: 'system',
+                nadawcaTyp: 'system',
+                odbiorca: 'all',
+                odbiorcaTyp: 'broadcast',
+                temat: 'Witamy w nowym roku szkolnym!',
+                tresc: 'Drodzy uczniowie, rodzice i nauczyciele! Witamy w nowym roku szkolnym. Życzymy owocnej nauki!',
+                data: new Date(2024, 8, 1).toISOString(),
+                przeczytana: true,
+                kategoria: 'ogłoszenie'
+            },
+            {
+                id: `msg_${msgId++}`,
+                nadawca: 'system',
+                nadawcaTyp: 'system',
+                odbiorca: 'teachers',
+                odbiorcaTyp: 'group',
+                temat: 'Przypomnienie o wypełnieniu planów nauczania',
+                tresc: 'Prosimy o przesłanie planów nauczania do końca września.',
+                data: this.generatePastDate(3),
+                przeczytana: false,
+                wazna: true,
+                kategoria: 'przypomnienie'
+            }
+        );
+        
+        return messages;
+    }
+
+    /**
+     * Generuje powiadomienia
+     */
+    generateNotifications() {
+        const notifications = [];
+        let notifId = 1;
+        
+        const notificationTypes = [
+            { typ: 'nowy_quiz', ikona: 'quiz', kolor: 'blue', tytul: 'Nowy quiz dostępny' },
+            { typ: 'wynik_quizu', ikona: 'check', kolor: 'green', tytul: 'Wynik quizu' },
+            { typ: 'zadanie_domowe', ikona: 'task', kolor: 'yellow', tytul: 'Nowe zadanie domowe' },
+            { typ: 'ocena', ikona: 'grade', kolor: 'purple', tytul: 'Nowa ocena' },
+            { typ: 'wiadomosc', ikona: 'message', kolor: 'indigo', tytul: 'Nowa wiadomość' },
+            { typ: 'wydarzenie', ikona: 'event', kolor: 'pink', tytul: 'Nadchodzące wydarzenie' },
+            { typ: 'nieobecnosc', ikona: 'warning', kolor: 'red', tytul: 'Nieobecność' },
+            { typ: 'osiagniecie', ikona: 'trophy', kolor: 'gold', tytul: 'Nowe osiągnięcie!' }
+        ];
+        
+        // Generuj 20-30 powiadomień
+        for (let i = 0; i < 25; i++) {
+            const notifType = notificationTypes[Math.floor(Math.random() * notificationTypes.length)];
+            
+            notifications.push({
+                id: `notif_${notifId++}`,
+                typ: notifType.typ,
+                tytul: notifType.tytul,
+                tresc: this.generateNotificationContent(notifType.typ),
+                data: this.generatePastDate(14),
+                przeczytane: Math.random() > 0.4,
+                ikona: notifType.ikona,
+                kolor: notifType.kolor,
+                link: this.generateNotificationLink(notifType.typ),
+                uzytkownik: `student_${1000 + Math.floor(Math.random() * 20)}`
+            });
+        }
+        
+        return notifications;
+    }
+
+    // Funkcje pomocnicze
+
+    generateBirthDate(className) {
+        const classLevel = parseInt(className);
+        const currentYear = new Date().getFullYear();
+        const birthYear = currentYear - 6 - classLevel;
+        const month = Math.floor(Math.random() * 12);
+        const day = Math.floor(Math.random() * 28) + 1;
+        return new Date(birthYear, month, day).toISOString().split('T')[0];
+    }
+
+    generatePESEL() {
+        // Uproszczona generacja PESEL (nie jest prawdziwa)
+        return `0${Math.floor(Math.random() * 9)}${Math.floor(100000000 + Math.random() * 900000000)}`;
+    }
+
+    generateAddress() {
+        const streets = ['Główna', 'Szkolna', 'Parkowa', 'Słoneczna', 'Kwiatowa', 'Leśna'];
+        const cities = ['Warszawa', 'Kraków', 'Wrocław', 'Poznań', 'Gdańsk'];
+        
+        return {
+            ulica: `ul. ${streets[Math.floor(Math.random() * streets.length)]} ${Math.floor(Math.random() * 100) + 1}`,
+            kodPocztowy: `${Math.floor(10 + Math.random() * 90)}-${Math.floor(100 + Math.random() * 900)}`,
+            miasto: cities[Math.floor(Math.random() * cities.length)]
+        };
+    }
+
+    generatePhoneNumber() {
+        return `${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}-${Math.floor(100 + Math.random() * 900)}`;
+    }
+
+    generateRecentDate() {
+        const daysAgo = Math.floor(Math.random() * 7);
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+        return date.toISOString();
+    }
+
+    generatePastDate(maxDaysAgo) {
+        const daysAgo = Math.floor(Math.random() * maxDaysAgo);
+        const date = new Date();
+        date.setDate(date.getDate() - daysAgo);
+        return date.toISOString();
+    }
+
+    generateFutureDate(maxDaysAhead) {
+        const daysAhead = Math.floor(Math.random() * maxDaysAhead);
+        const date = new Date();
+        date.setDate(date.getDate() + daysAhead);
+        return date.toISOString();
+    }
+
+    generateDateOffset(daysOffset) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysOffset);
+        return date.toISOString();
+    }
+
+    generateAchievements() {
+        const allAchievements = [
+            'first_quiz', 'perfect_score', 'speed_demon', 'quiz_master',
+            'streak_week', 'streak_month', 'early_bird', 'night_owl',
+            'perfectionist', 'persistent', 'helper', 'explorer'
+        ];
+        
+        const count = Math.floor(Math.random() * 5);
+        const achievements = [];
+        
+        for (let i = 0; i < count; i++) {
+            const achievement = allAchievements[Math.floor(Math.random() * allAchievements.length)];
+            if (!achievements.includes(achievement)) {
+                achievements.push(achievement);
+            }
+        }
+        
+        return achievements;
+    }
+
+    generateParentName(childName, gender) {
+        const femaleNames = ['Anna', 'Maria', 'Katarzyna', 'Małgorzata', 'Agnieszka', 'Barbara', 'Ewa'];
+        const maleNames = ['Jan', 'Andrzej', 'Piotr', 'Krzysztof', 'Tomasz', 'Paweł', 'Marek'];
+        
+        return gender === 'female' ? 
+            femaleNames[Math.floor(Math.random() * femaleNames.length)] :
+            maleNames[Math.floor(Math.random() * maleNames.length)];
+    }
+
+    generateRandomClasses() {
+        const allClasses = ['1a', '1b', '2a', '2b', '3a', '3b', '4a', '4b', '5a', '5b', '6a', '6b', '7a', '7b', '8a', '8b'];
+        const count = 4 + Math.floor(Math.random() * 5);
+        const selected = [];
+        
+        for (let i = 0; i < count; i++) {
+            const cls = allClasses[Math.floor(Math.random() * allClasses.length)];
+            if (!selected.includes(cls)) {
+                selected.push(cls);
+            }
+        }
+        
+        return selected;
+    }
+
+    generateQuestions(topic, difficulty) {
+        const questionCount = difficulty === 'łatwa' ? 5 : difficulty === 'średnia' ? 8 : 10;
+        const questions = [];
+        
+        for (let i = 0; i < questionCount; i++) {
+            const types = ['jednokrotny', 'wielokrotny', 'prawda-falsz'];
+            if (difficulty !== 'łatwa') types.push('otwarte');
+            
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            questions.push({
+                id: `q${i + 1}`,
+                tresc: `Pytanie ${i + 1} dotyczące: ${topic}`,
+                typ: type,
+                punkty: type === 'otwarte' ? 5 : 2,
+                odpowiedzi: type === 'otwarte' ? null : this.generateAnswerOptions(type)
+            });
+        }
+        
+        return questions;
+    }
+
+    generateAnswerOptions(type) {
+        if (type === 'prawda-falsz') {
+            return [
+                { id: 'a', tresc: 'Prawda', poprawna: Math.random() > 0.5 },
+                { id: 'b', tresc: 'Fałsz', poprawna: false }
+            ];
+        }
+        
+        const options = [];
+        const correctCount = type === 'wielokrotny' ? 2 : 1;
+        
+        for (let i = 0; i < 4; i++) {
+            options.push({
+                id: String.fromCharCode(97 + i),
+                tresc: `Odpowiedź ${String.fromCharCode(65 + i)}`,
+                poprawna: i < correctCount
+            });
+        }
+        
+        // Przemieszaj
+        return options.sort(() => Math.random() - 0.5);
+    }
+
+    generateAnswers(questions, percentageCorrect) {
+        const answers = {};
+        
+        questions.forEach((question, index) => {
+            const isCorrect = Math.random() * 100 < percentageCorrect;
+            
+            if (question.typ === 'otwarte') {
+                answers[question.id] = isCorrect ? 'Poprawna odpowiedź' : 'Błędna odpowiedź';
+            } else {
+                const correctAnswers = question.odpowiedzi.filter(a => a.poprawna).map(a => a.id);
+                if (isCorrect) {
+                    answers[question.id] = question.typ === 'jednokrotny' ? correctAnswers[0] : correctAnswers;
+                } else {
+                    const wrongAnswers = question.odpowiedzi.filter(a => !a.poprawna).map(a => a.id);
+                    answers[question.id] = question.typ === 'jednokrotny' ? 
+                        wrongAnswers[0] : 
+                        [wrongAnswers[0]];
                 }
-            );
+            }
         });
         
-        // Udostępnij pierwszy szablon
-        const savedTemplates = templatesBank.loadTemplates();
-        if (savedTemplates.length > 0) {
-            templatesBank.shareTemplate(savedTemplates[0].id, 'paulinaodmatematyki');
+        return answers;
+    }
+
+    calculateGrade(percentage) {
+        if (percentage >= 95) return '6';
+        if (percentage >= 85) return '5';
+        if (percentage >= 70) return '4';
+        if (percentage >= 55) return '3';
+        if (percentage >= 40) return '2';
+        return '1';
+    }
+
+    generateTaskDescription(subject, type) {
+        const descriptions = {
+            'Zadanie domowe': `Rozwiąż zadania z podręcznika ${subject} ze stron 45-48`,
+            'Projekt': `Przygotuj projekt na temat wybranego zagadnienia z ${subject}`,
+            'Praca klasowa': `Praca klasowa obejmująca materiał z ostatniego działu`,
+            'Kartkówka': `Krótki sprawdzian z ostatnich trzech lekcji`,
+            'Referat': `Przygotuj referat na wybrany temat związany z ${subject}`,
+            'Prezentacja': `Stwórz prezentację multimedialną (10-15 slajdów)`
+        };
+        
+        return descriptions[type] || 'Zadanie do wykonania';
+    }
+
+    generateTaskRequirements(type) {
+        const requirements = {
+            'Projekt': ['Minimum 5 stron', 'Bibliografia', 'Ilustracje'],
+            'Prezentacja': ['10-15 slajdów', 'Źródła', 'Czas: 10 minut'],
+            'Referat': ['2-3 strony A4', 'Wstęp i zakończenie', 'Przypisy']
+        };
+        
+        return requirements[type] || [];
+    }
+
+    generateTrends() {
+        const trends = [];
+        const lastDays = 30;
+        
+        for (let i = 0; i < lastDays; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - (lastDays - i));
+            
+            trends.push({
+                date: date.toISOString().split('T')[0],
+                quizzesSolved: Math.floor(Math.random() * 20),
+                averageScore: 60 + Math.random() * 30,
+                activeUsers: 50 + Math.floor(Math.random() * 100)
+            });
         }
         
-        console.log(`✓ Wygenerowano ${templates.length} szablonów arkuszy`);
+        return trends;
     }
 
-    // 8. Generowanie komentarzy nauczyciela
-    generateTeacherComments() {
-        const comments = {};
-        const results = JSON.parse(localStorage.getItem('examResults') || '[]');
+    generateMessageSubject(type) {
+        const subjects = {
+            'teacher-parent': [
+                'Postępy w nauce',
+                'Zachowanie ucznia',
+                'Nieobecności',
+                'Zaproszenie na konsultacje',
+                'Informacja o sprawdzianie'
+            ],
+            'parent-teacher': [
+                'Usprawiedliwienie nieobecności',
+                'Prośba o konsultacje',
+                'Pytanie o zadanie domowe',
+                'Informacja o chorobie dziecka',
+                'Prośba o dodatkowe materiały'
+            ]
+        };
         
-        const sampleComments = [
-            'Świetna praca! Widać postępy w rozwiązywaniu zadań.',
-            'Zwróć uwagę na zadania z geometrii - warto je poćwiczyć.',
-            'Bardzo dobry wynik. Tak trzymaj!',
-            'Popracuj nad zadaniami z procentów.',
-            'Widać systematyczną pracę. Gratulacje!',
-            'Spróbuj rozwiązywać zadania wolniej i dokładniej.',
-            'Dobry wynik, ale można lepiej. Ćwicz dalej!',
-            'Brawo! Doskonale opanowany materiał.',
-            'Skup się na zadaniach tekstowych.',
-            'Świetnie radzisz sobie z algebrą!'
+        const typeSubjects = subjects[type] || ['Wiadomość'];
+        return typeSubjects[Math.floor(Math.random() * typeSubjects.length)];
+    }
+
+    generateMessageContent(type) {
+        const contents = {
+            'teacher-parent': 'Szanowni Państwo, chciałbym poinformować o postępach Państwa dziecka w nauce. Ogólnie wyniki są zadowalające, choć widzę przestrzeń do poprawy w...',
+            'parent-teacher': 'Dzień dobry, zwracam się z prośbą o informację dotyczącą ostatniego zadania domowego. Moje dziecko nie jest pewne czy dobrze zrozumiało polecenie...'
+        };
+        
+        return contents[type] || 'Treść wiadomości';
+    }
+
+    generateNotificationContent(type) {
+        const contents = {
+            'nowy_quiz': 'Nauczyciel dodał nowy quiz z matematyki',
+            'wynik_quizu': 'Twój wynik: 85% - Świetna robota!',
+            'zadanie_domowe': 'Nowe zadanie z języka polskiego - termin: za 3 dni',
+            'ocena': 'Otrzymałeś ocenę 5 z kartkówki',
+            'wiadomosc': 'Masz nową wiadomość od wychowawcy',
+            'wydarzenie': 'Przypomnienie: Jutro wywiadówka o 17:00',
+            'nieobecnosc': 'Twoja nieobecność została odnotowana',
+            'osiagniecie': 'Zdobyłeś odznakę "Mistrz Quizów"!'
+        };
+        
+        return contents[type] || 'Nowe powiadomienie';
+    }
+
+    generateNotificationLink(type) {
+        const links = {
+            'nowy_quiz': '/quiz/start',
+            'wynik_quizu': '/results',
+            'zadanie_domowe': '/tasks',
+            'ocena': '/grades',
+            'wiadomosc': '/messages',
+            'wydarzenie': '/calendar',
+            'nieobecnosc': '/attendance',
+            'osiagniecie': '/achievements'
+        };
+        
+        return links[type] || '#';
+    }
+
+    /**
+     * Zapisuje dane do localStorage
+     */
+    saveToLocalStorage(data) {
+        // Zapisz użytkowników
+        const allUsers = [
+            ...data.users.students,
+            ...data.users.teachers,
+            ...data.users.parents
         ];
+        localStorage.setItem('users', JSON.stringify(allUsers));
         
-        // Dodaj komentarze do 30% wyników
-        results.slice(0, Math.floor(results.length * 0.3)).forEach((result, index) => {
-            const key = `${result.studentId}_${result.examId}_${result.completedAt}`;
-            comments[key] = sampleComments[index % sampleComments.length];
-        });
+        // Zapisz dane akademickie
+        localStorage.setItem('classes', JSON.stringify(data.academic.classes));
+        localStorage.setItem('subjects', JSON.stringify(data.academic.subjects));
+        localStorage.setItem('schedules', JSON.stringify(data.academic.schedules));
         
-        localStorage.setItem('examComments', JSON.stringify(comments));
-        console.log(`✓ Wygenerowano ${Object.keys(comments).length} komentarzy nauczyciela`);
-    }
-
-    // Pomocnicze funkcje
-    selectRandomTasks(tasks, count) {
-        const shuffled = [...tasks].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, Math.min(count, tasks.length));
-    }
-
-    // Wyczyść wszystkie dane testowe
-    clearTestData() {
-        const keysToRemove = [
-            'examResults',
-            'studentGroups',
-            'examScheduleEvents',
-            'competitionLeaderboards',
-            'competitionChallenges',
-            'competitionTournaments',
-            'examTemplates',
-            'sharedExamTemplates',
-            'examComments'
+        // Zapisz quizy i zadania
+        localStorage.setItem('quizzes', JSON.stringify(data.content.quizzes));
+        localStorage.setItem('tasks', JSON.stringify(data.content.tasks));
+        
+        // Zapisz wyniki
+        localStorage.setItem('quizResults', JSON.stringify(data.performance.results));
+        localStorage.setItem('statistics', JSON.stringify(data.performance.statistics));
+        
+        // Zapisz komunikację
+        localStorage.setItem('messages', JSON.stringify(data.communication.messages));
+        localStorage.setItem('notifications', JSON.stringify(data.communication.notifications));
+        localStorage.setItem('events', JSON.stringify(data.communication.events));
+        
+        // Zapisz przykładowe pytania dla quizów
+        const sampleQuestions = [
+            {
+                id: 1,
+                przedmiot: "matematyka",
+                temat: "Ułamki zwykłe",
+                poziom: 6,
+                tresc: "Oblicz: 3/4 + 2/3",
+                typ: "otwarte",
+                punkty: 2,
+                odpowiedz: "17/12 lub 1 5/12"
+            },
+            {
+                id: 2,
+                przedmiot: "matematyka",
+                temat: "Równania",
+                poziom: 7,
+                tresc: "Rozwiąż równanie: 2x + 5 = 13",
+                typ: "otwarte",
+                punkty: 3,
+                odpowiedz: "x = 4"
+            },
+            {
+                id: 3,
+                przedmiot: "polski",
+                temat: "Części mowy",
+                poziom: 5,
+                tresc: "Wskaż wszystkie rzeczowniki w zdaniu: 'Piękny pies biegnie szybko przez zielony park.'",
+                typ: "wielokrotny",
+                punkty: 2,
+                opcje: ["piękny", "pies", "biegnie", "szybko", "przez", "zielony", "park"],
+                poprawne: ["pies", "park"]
+            }
         ];
+        localStorage.setItem('sampleQuestions', JSON.stringify(sampleQuestions));
         
-        // Usuń klucze główne
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        console.log('✅ Dane testowe zapisane do localStorage');
+        console.log('📊 Statystyki:');
+        console.log(`- Uczniowie: ${data.users.students.length}`);
+        console.log(`- Nauczyciele: ${data.users.teachers.length}`);
+        console.log(`- Rodzice: ${data.users.parents.length}`);
+        console.log(`- Quizy: ${data.content.quizzes.length}`);
+        console.log(`- Wyniki: ${data.performance.results.length}`);
+    }
+
+    /**
+     * Główna funkcja generująca i zapisująca dane
+     */
+    generateAndSave() {
+        const data = this.generateCompleteTestData();
+        this.saveToLocalStorage(data);
         
-        // Usuń klucze per użytkownik
-        for (let i = 0; i < 20; i++) {
-            const studentId = 1000 + i;
-            localStorage.removeItem(`userProgress_${studentId}`);
-            localStorage.removeItem(`userAchievements_${studentId}`);
-            localStorage.removeItem(`recommendation_progress_${studentId}`);
-        }
+        // Utwórz przykładowe konta demo
+        const demoAccounts = {
+            student: {
+                login: 'uczen@demo.pl',
+                haslo: 'demo123',
+                rola: 'Uczeń'
+            },
+            teacher: {
+                login: 'nauczyciel@demo.pl',
+                haslo: 'demo123',
+                rola: 'Nauczyciel'
+            },
+            parent: {
+                login: 'rodzic@demo.pl',
+                haslo: 'demo123',
+                rola: 'Rodzic'
+            }
+        };
         
-        // Usuń testowych użytkowników
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const filteredUsers = users.filter(u => u.userId < 1000 || u.userId > 2999);
-        localStorage.setItem('users', JSON.stringify(filteredUsers));
+        localStorage.setItem('demoAccounts', JSON.stringify(demoAccounts));
         
-        console.log('✓ Dane testowe zostały wyczyszczone');
+        return {
+            success: true,
+            data: data,
+            demoAccounts: demoAccounts
+        };
     }
 }
 
-// Eksportuj jako globalną
+// Eksportuj jako globalną klasę
 window.TestDataGenerator = TestDataGenerator;
 
-// Automatycznie wygeneruj dane przy ładowaniu
-document.addEventListener('DOMContentLoaded', () => {
-    const generator = new TestDataGenerator();
-    
-    // Sprawdź czy dane testowe już istnieją
-    const hasTestData = localStorage.getItem('testDataGenerated');
-    
-    if (!hasTestData) {
-        console.log('🚀 Pierwsz uruchomienie - generowanie danych testowych...');
-        generator.generateTestData();
-        localStorage.setItem('testDataGenerated', 'true');
-    } else {
-        console.log('ℹ️ Dane testowe już istnieją. Użyj TestDataGenerator.clearTestData() aby wyczyścić.');
-    }
-});
+// Automatycznie generuj dane przy ładowaniu
+if (typeof window !== 'undefined') {
+    window.addEventListener('load', () => {
+        console.log('🚀 Generator danych testowych gotowy!');
+        console.log('Użyj: new TestDataGenerator().generateAndSave() aby wygenerować dane');
+    });
+}
