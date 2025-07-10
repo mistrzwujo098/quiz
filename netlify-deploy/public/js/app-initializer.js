@@ -1,173 +1,215 @@
 /**
- * System inicjalizacji aplikacji QuizMaster
- * Pobiera dane z Netlify Functions i inicjalizuje localStorage
+ * App Initializer dla QuizMaster
+ * Zarządza właściwą kolejnością inicjalizacji komponentów
  */
 
 class AppInitializer {
     constructor() {
         this.initialized = false;
-        this.initPromise = null;
+        this.initSteps = [];
     }
 
     /**
-     * Inicjalizuje aplikację
+     * Główna funkcja inicjalizacji
      */
     async initialize() {
-        // Zapobiegaj wielokrotnej inicjalizacji
-        if (this.initPromise) {
-            return this.initPromise;
-        }
+        console.log('🚀 Rozpoczynam inicjalizację aplikacji...');
 
-        this.initPromise = this._doInitialize();
-        return this.initPromise;
-    }
-
-    async _doInitialize() {
-        console.log('🚀 Inicjalizacja QuizMaster...');
-        
         try {
-            // Sprawdź czy mamy już dane
-            const hasUsers = localStorage.getItem('users');
-            const initVersion = localStorage.getItem('initVersion');
-            const currentVersion = '2.0'; // Zwiększ aby wymusić reinicjalizację
-            
-            if (hasUsers && initVersion === currentVersion) {
-                console.log('✅ Dane już zainicjalizowane (wersja ' + currentVersion + ')');
-                this.initialized = true;
-                return true;
-            }
+            // 1. Poczekaj na załadowanie DOM
+            await this.waitForDOM();
 
-            console.log('📥 Pobieranie domyślnych danych...');
-            
-            // Pobierz dane z Netlify Function
-            const response = await fetch('/.netlify/functions/default-data');
-            
-            if (!response.ok) {
-                throw new Error('Nie można pobrać danych: ' + response.statusText);
-            }
+            // 2. Załaduj konfigurację Supabase
+            await this.loadSupabaseConfig();
 
-            const result = await response.json();
-            
-            if (result.success && result.data) {
-                // Zapisz dane do localStorage
-                localStorage.setItem('users', JSON.stringify(result.data.users));
-                localStorage.setItem('quizzes', JSON.stringify(result.data.quizzes));
-                localStorage.setItem('initVersion', currentVersion);
-                
-                console.log('✅ Dane załadowane pomyślnie!');
-                console.log(`📊 Statystyki:
-- Użytkownicy: ${result.info.totalUsers}
-  - Nauczyciele: ${result.info.teachers}
-  - Uczniowie: ${result.info.students}  
-  - Rodzice: ${result.info.parents}
-- Quizy: ${result.info.quizzes}`);
-                
-                this.initialized = true;
-                return true;
-            }
-            
-            throw new Error('Nieprawidłowa odpowiedź serwera');
-            
+            // 3. Inicjalizuj Data Adapter
+            await this.initializeDataAdapter();
+
+            // 4. Sprawdź autoryzację
+            await this.checkAuthentication();
+
+            // 5. Załaduj początkowe dane
+            await this.loadInitialData();
+
+            // 6. Inicjalizuj komponenty UI
+            await this.initializeUIComponents();
+
+            this.initialized = true;
+            console.log('✅ Aplikacja zainicjalizowana pomyślnie!');
+
+            // Wywołaj event
+            window.dispatchEvent(new CustomEvent('appInitialized', {
+                detail: { success: true }
+            }));
+
         } catch (error) {
             console.error('❌ Błąd inicjalizacji:', error);
-            
-            // Fallback - użyj lokalnych danych awaryjnych
-            console.log('⚠️ Używam lokalnych danych awaryjnych...');
-            this.initializeFallbackData();
-            
-            return false;
+            this.showInitError(error);
+
+            window.dispatchEvent(new CustomEvent('appInitialized', {
+                detail: { success: false, error }
+            }));
         }
     }
 
     /**
-     * Inicjalizacja awaryjna z minimalnym zestawem danych
+     * Czekaj na załadowanie DOM
      */
-    initializeFallbackData() {
-        const fallbackUsers = [
-            {
-                id: 'teacher_paulina',
-                userId: 'teacher_paulina',
-                username: 'paulinaodmatematyki',
-                password: this.hashPassword('paulina#314159265'),
-                role: 'teacher',
-                fullName: 'Paulina Kowalska',
-                createdAt: new Date().toISOString()
+    async waitForDOM() {
+        if (document.readyState === 'loading') {
+            await new Promise(resolve => {
+                document.addEventListener('DOMContentLoaded', resolve);
+            });
+        }
+    }
+
+    /**
+     * Załaduj konfigurację Supabase
+     */
+    async loadSupabaseConfig() {
+        console.log('📦 Ładowanie konfiguracji Supabase...');
+
+        // Poczekaj aż funkcja loadSupabaseConfig będzie dostępna
+        let attempts = 0;
+        while (!window.loadSupabaseConfig && attempts < 20) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+
+        if (window.loadSupabaseConfig) {
+            const loaded = await window.loadSupabaseConfig();
+            if (!loaded) {
+                console.warn('⚠️ Supabase niedostępny - używam trybu offline');
             }
-        ];
-        
-        localStorage.setItem('users', JSON.stringify(fallbackUsers));
-        localStorage.setItem('initVersion', '2.0');
-        
-        console.log('✅ Dane awaryjne załadowane');
+        }
     }
 
     /**
-     * Hashuje hasło
+     * Inicjalizuj Data Adapter
      */
-    hashPassword(password) {
-        if (typeof CryptoJS !== 'undefined') {
-            return CryptoJS.SHA256(password).toString();
+    async initializeDataAdapter() {
+        console.log('🔌 Inicjalizacja Data Adapter...');
+
+        // Poczekaj na dataAdapter
+        let attempts = 0;
+        while (!window.dataAdapter && attempts < 20) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
         }
-        // Prosty fallback
-        let hash = 0;
-        for (let i = 0; i < password.length; i++) {
-            const char = password.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
+
+        if (window.dataAdapter) {
+            const mode = await window.dataAdapter.initialize();
+            console.log(`📊 Data Adapter zainicjalizowany w trybie: ${mode}`);
+        } else {
+            throw new Error('Data Adapter niedostępny');
         }
-        return Math.abs(hash).toString(16).padStart(64, '0');
     }
 
     /**
-     * Pokazuje informacje o dostępnych kontach
+     * Sprawdź autoryzację
      */
-    showAvailableAccounts() {
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
+    async checkAuthentication() {
+        const currentUser = window.dataAdapter?.getCurrentUser();
         
-        console.log('📋 Dostępne konta:');
-        console.log('================');
-        
-        // Nauczyciele
-        const teachers = users.filter(u => u.role === 'teacher');
-        if (teachers.length > 0) {
-            console.log('👩‍🏫 NAUCZYCIELE:');
-            teachers.forEach(t => {
-                console.log(`  • ${t.username} (${t.fullName || t.imie + ' ' + t.nazwisko})`);
-            });
+        if (currentUser) {
+            console.log(`👤 Zalogowany jako: ${currentUser.username} (${currentUser.role})`);
+        } else {
+            console.log('👤 Użytkownik niezalogowany');
         }
-        
-        // Uczniowie
-        const students = users.filter(u => u.role === 'student');
-        if (students.length > 0) {
-            console.log('\n👥 UCZNIOWIE (hasło: uczen123):');
-            students.forEach(s => {
-                console.log(`  • ${s.username} (${s.fullName || s.imie + ' ' + s.nazwisko}) - klasa ${s.klasa}`);
-            });
-        }
-        
-        // Rodzice
-        const parents = users.filter(u => u.role === 'parent');
-        if (parents.length > 0) {
-            console.log('\n👨‍👩‍👧 RODZICE (hasło: rodzic123):');
-            parents.forEach(p => {
-                console.log(`  • ${p.username} (${p.fullName || p.imie + ' ' + p.nazwisko})`);
-            });
-        }
-        
-        console.log('\n💡 Wskazówka: Aby zobaczyć to ponownie, wpisz w konsoli:');
-        console.log('   appInitializer.showAvailableAccounts()');
     }
 
     /**
-     * Wymusza ponowną inicjalizację
+     * Załaduj początkowe dane
      */
-    async forceReinitialize() {
-        console.log('🔄 Wymuszanie reinicjalizacji...');
-        localStorage.removeItem('initVersion');
-        this.initialized = false;
-        this.initPromise = null;
-        await this.initialize();
-        location.reload();
+    async loadInitialData() {
+        console.log('📚 Ładowanie początkowych danych...');
+
+        // Sprawdź czy są dane w localStorage
+        const hasLocalData = localStorage.getItem('users') || localStorage.getItem('quizzes');
+        
+        if (!hasLocalData && !window.dataAdapter?.isUsingSupabase()) {
+            console.log('🔄 Brak danych - ładuję domyślne...');
+            
+            try {
+                // Spróbuj pobrać dane z Netlify Function
+                const response = await fetch('/.netlify/functions/default-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'getDefaultData' })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Zapisz do localStorage
+                    if (data.users) {
+                        localStorage.setItem('users', JSON.stringify(data.users));
+                    }
+                    if (data.quizzes) {
+                        localStorage.setItem('quizzes', JSON.stringify(data.quizzes));
+                    }
+                    
+                    console.log('✅ Załadowano domyślne dane');
+                }
+            } catch (error) {
+                console.warn('⚠️ Nie można załadować domyślnych danych:', error);
+            }
+        }
+    }
+
+    /**
+     * Inicjalizuj komponenty UI
+     */
+    async initializeUIComponents() {
+        console.log('🎨 Inicjalizacja komponentów UI...');
+
+        // Poczekaj na React
+        let attempts = 0;
+        while ((!window.React || !window.ReactDOM) && attempts < 20) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+
+        // Wywołaj event że UI jest gotowe
+        window.dispatchEvent(new CustomEvent('uiReady'));
+    }
+
+    /**
+     * Pokaż błąd inicjalizacji
+     */
+    showInitError(error) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #dc2626;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            z-index: 9999;
+            max-width: 400px;
+            text-align: center;
+        `;
+        
+        errorDiv.innerHTML = `
+            <h3 style="margin: 0 0 10px 0;">⚠️ Błąd inicjalizacji</h3>
+            <p style="margin: 0;">${error.message}</p>
+            <button onclick="location.reload()" style="
+                margin-top: 15px;
+                padding: 8px 16px;
+                background: white;
+                color: #dc2626;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: bold;
+            ">Odśwież stronę</button>
+        `;
+        
+        document.body.appendChild(errorDiv);
     }
 }
 
@@ -175,18 +217,16 @@ class AppInitializer {
 window.appInitializer = new AppInitializer();
 
 // Automatyczna inicjalizacja
-if (typeof window !== 'undefined') {
-    // Czekaj na załadowanie DOM i CryptoJS
-    window.addEventListener('DOMContentLoaded', async () => {
-        // Daj chwilę na załadowanie innych skryptów
-        setTimeout(async () => {
-            await window.appInitializer.initialize();
-            
-            // Pokaż dostępne konta w konsoli
-            if (!sessionStorage.getItem('accountsShown')) {
-                window.appInitializer.showAvailableAccounts();
-                sessionStorage.setItem('accountsShown', 'true');
-            }
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Daj czas na załadowanie innych skryptów
+        setTimeout(() => {
+            window.appInitializer.initialize();
         }, 100);
     });
+} else {
+    // DOM już załadowany
+    setTimeout(() => {
+        window.appInitializer.initialize();
+    }, 100);
 }
