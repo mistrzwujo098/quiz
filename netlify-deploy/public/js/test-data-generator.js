@@ -12,6 +12,34 @@ class TestDataGenerator {
     }
 
     /**
+     * Hashuje hasło używając SHA256
+     */
+    hashPassword(password) {
+        // Prosta implementacja SHA256 - dla kompatybilności z systemem logowania
+        if (typeof CryptoJS !== 'undefined') {
+            return CryptoJS.SHA256(password).toString();
+        }
+        
+        // Jeśli CryptoJS nie jest załadowany, spróbuj go załadować
+        if (!window.cryptoJSLoaded) {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
+            document.head.appendChild(script);
+            window.cryptoJSLoaded = true;
+            console.warn('Ładowanie CryptoJS... Wygeneruj dane ponownie za chwilę.');
+        }
+        
+        // Tymczasowy fallback - prosta funkcja hashująca
+        let hash = 0;
+        for (let i = 0; i < password.length; i++) {
+            const char = password.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(16).padStart(64, '0');
+    }
+
+    /**
      * Generuje kompletny zestaw danych testowych
      */
     generateCompleteTestData() {
@@ -95,7 +123,7 @@ class TestDataGenerator {
                     imie: firstName,
                     nazwisko: lastName,
                     email: email,
-                    haslo: 'Test123!',
+                    haslo: this.hashPassword('Test123!'),
                     rola: 'student',
                     klasa: className,
                     numerDziennika: i + 1,
@@ -128,7 +156,7 @@ class TestDataGenerator {
                 imie: 'Demo',
                 nazwisko: 'Uczeń',
                 email: 'uczen@demo.pl',
-                haslo: 'demo123',
+                haslo: this.hashPassword('demo123'),
                 rola: 'student',
                 klasa: '8a',
                 numerDziennika: 1,
@@ -148,7 +176,7 @@ class TestDataGenerator {
                 imie: 'Test',
                 nazwisko: 'Student',
                 email: 'test.student@szkola.pl',
-                haslo: 'test123',
+                haslo: this.hashPassword('test123'),
                 rola: 'student',
                 klasa: '7b',
                 numerDziennika: 15,
@@ -176,7 +204,7 @@ class TestDataGenerator {
                 imie: 'Janusz',
                 nazwisko: 'Kowalski',
                 email: 'j.kowalski@szkola.edu.pl',
-                haslo: 'Test123!',
+                haslo: this.hashPassword('Test123!'),
                 rola: 'teacher',
                 przedmioty: ['matematyka', 'fizyka'],
                 klasy: ['7a', '7b', '8a', '8b'],
@@ -197,7 +225,7 @@ class TestDataGenerator {
                 imie: 'Anna',
                 nazwisko: 'Nowak',
                 email: 'a.nowak@szkola.edu.pl',
-                haslo: 'Test123!',
+                haslo: this.hashPassword('Test123!'),
                 rola: 'teacher',
                 przedmioty: ['język polski', 'historia'],
                 klasy: ['6a', '6b', '7a', '7b'],
@@ -217,7 +245,7 @@ class TestDataGenerator {
                 imie: 'Marek',
                 nazwisko: 'Wiśniewski',
                 email: 'm.wisniewski@szkola.edu.pl',
-                haslo: 'Test123!',
+                haslo: this.hashPassword('Test123!'),
                 rola: 'teacher',
                 przedmioty: ['chemia', 'biologia'],
                 klasy: ['7a', '7b', '8a', '8b'],
@@ -229,7 +257,7 @@ class TestDataGenerator {
                 imie: 'Demo',
                 nazwisko: 'Nauczyciel',
                 email: 'nauczyciel@demo.pl',
-                haslo: 'demo123',
+                haslo: this.hashPassword('demo123'),
                 rola: 'teacher',
                 przedmioty: ['matematyka', 'informatyka'],
                 klasy: ['1a', '2a', '3a', '4a', '5a', '6a', '7a', '8a'],
@@ -258,7 +286,7 @@ class TestDataGenerator {
                 imie: item.imie,
                 nazwisko: item.nazwisko,
                 email: `${item.imie.toLowerCase()}.${item.nazwisko.toLowerCase()}@szkola.edu.pl`,
-                haslo: 'Test123!',
+                haslo: this.hashPassword('Test123!'),
                 rola: 'teacher',
                 przedmioty: [item.przedmiot],
                 klasy: this.generateRandomClasses(),
@@ -285,7 +313,7 @@ class TestDataGenerator {
                     imie: this.generateParentName(student.imie, 'female'),
                     nazwisko: student.nazwisko,
                     email: `rodzic.${student.nazwisko.toLowerCase()}${index}@gmail.com`,
-                    haslo: 'Test123!',
+                    haslo: this.hashPassword('Test123!'),
                     rola: 'parent',
                     dzieci: [student.id],
                     telefon: this.generatePhoneNumber(),
@@ -325,7 +353,7 @@ class TestDataGenerator {
                 imie: 'Demo',
                 nazwisko: 'Rodzic',
                 email: 'rodzic@demo.pl',
-                haslo: 'demo123',
+                haslo: this.hashPassword('demo123'),
                 rola: 'parent',
                 dzieci: ['student_demo', 'student_1001'], // Ma dwoje dzieci
                 telefon: '600-700-800',
@@ -1143,6 +1171,11 @@ class TestDataGenerator {
      * Zapisuje dane do localStorage
      */
     saveToLocalStorage(data) {
+        // Dodaj specjalne konta demo jeśli nie istnieją
+        const demoStudent = data.users.students.find(s => s.email === 'uczen@demo.pl');
+        const demoTeacher = data.users.teachers.find(t => t.email === 'nauczyciel@demo.pl');
+        const demoParent = data.users.parents.find(p => p.email === 'rodzic@demo.pl');
+        
         // Zapisz użytkowników
         const allUsers = [
             ...data.users.students,
