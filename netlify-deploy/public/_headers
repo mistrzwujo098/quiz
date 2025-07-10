@@ -1,0 +1,26 @@
+# Cache busting for critical files
+/js/init-enhanced.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+/js/navigation-integration.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+/js/ui-improvements.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+# HTML files - never cache
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+# Other JS files - short cache
+/js/*
+  Cache-Control: public, max-age=300, must-revalidate
+EOF < /dev/null
