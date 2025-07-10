@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dodawanie Zadań Otwartych - QuizMaster</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="text-white p-4">
+    <div class="max-w-6xl mx-auto">
+        <div class="glass rounded-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold mb-2">📝 Dodawanie Zadań Otwartych</h1>
+            <p class="text-gray-200">Prosty sposób na tworzenie zadań z pełną funkcjonalnością oceniania AI</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Formularz dodawania -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Nowe zadanie</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Nazwa quizu/testu</label>
+                        <input type="text" id="quizName" placeholder="np. Test z matematyki - Funkcje" 
+                               class="w-full px-4 py-2 bg-white/20 rounded-lg text-white placeholder-gray-300">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Przedmiot</label>
+                            <select id="subject" class="w-full px-4 py-2 bg-white/20 rounded-lg text-white">
+                                <option value="matematyka">Matematyka</option>
+                                <option value="fizyka">Fizyka</option>
+                                <option value="chemia">Chemia</option>
+                                <option value="biologia">Biologia</option>
+                                <option value="informatyka">Informatyka</option>
+                                <option value="polski">Język polski</option>
+                                <option value="historia">Historia</option>
+                                <option value="geografia">Geografia</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Klasa</label>
+                            <select id="classLevel" class="w-full px-4 py-2 bg-white/20 rounded-lg text-white">
+                                <option value="6a">6a</option>
+                                <option value="6b">6b</option>
+                                <option value="7a">7a</option>
+                                <option value="7b">7b</option>
+                                <option value="8a">8a</option>
+                                <option value="8b">8b</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr class="border-white/20 my-4">
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Treść zadania</label>
+                        <textarea id="questionText" rows="4" 
+                                  placeholder="Wpisz treść zadania..." 
+                                  class="w-full px-4 py-2 bg-white/20 rounded-lg text-white placeholder-gray-300"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Liczba punktów</label>
+                        <input type="number" id="points" value="10" min="1" max="100"
+                               class="w-full px-4 py-2 bg-white/20 rounded-lg text-white">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Wzorcowa odpowiedź</label>
+                        <textarea id="modelAnswer" rows="3" 
+                                  placeholder="Podaj wzorcową odpowiedź..." 
+                                  class="w-full px-4 py-2 bg-white/20 rounded-lg text-white placeholder-gray-300"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Kryteria oceniania (po jednym w linii)</label>
+                        <textarea id="criteria" rows="4" 
+                                  placeholder="- Zastosowanie odpowiedniego wzoru&#10;- Poprawne obliczenia&#10;- Właściwa jednostka&#10;- Czytelny zapis" 
+                                  class="w-full px-4 py-2 bg-white/20 rounded-lg text-white placeholder-gray-300"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Wskazówki dla AI (opcjonalne)</label>
+                        <textarea id="aiHints" rows="2" 
+                                  placeholder="np. Zwróć uwagę na jednostki, zaokrąglij do 2 miejsc po przecinku" 
+                                  class="w-full px-4 py-2 bg-white/20 rounded-lg text-white placeholder-gray-300"></textarea>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="addQuestion()" 
+                                class="flex-1 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition">
+                            <i class="fas fa-plus mr-2"></i>Dodaj zadanie
+                        </button>
+                        <button onclick="clearForm()" 
+                                class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg font-semibold transition">
+                            <i class="fas fa-eraser mr-2"></i>Wyczyść
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Podgląd i lista zadań -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Podgląd zadań</h2>
+                
+                <div id="questionsList" class="space-y-4 max-h-96 overflow-y-auto">
+                    <p class="text-gray-300 text-center py-8">Brak zadań. Dodaj pierwsze zadanie.</p>
+                </div>
+
+                <div class="mt-6 space-y-3">
+                    <button onclick="saveQuiz()" 
+                            class="w-full bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg font-semibold transition disabled:opacity-50"
+                            id="saveButton" disabled>
+                        <i class="fas fa-save mr-2"></i>Zapisz quiz
+                    </button>
+                    
+                    <button onclick="exportQuestions()" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg font-semibold transition disabled:opacity-50"
+                            id="exportButton" disabled>
+                        <i class="fas fa-download mr-2"></i>Eksportuj jako JSON
+                    </button>
+
+                    <button onclick="loadExample()" 
+                            class="w-full bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-lightbulb mr-2"></i>Załaduj przykład
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instrukcja -->
+        <div class="glass rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">📖 Jak dodawać zadania otwarte?</h2>
+            <div class="grid md:grid-cols-2 gap-6 text-sm">
+                <div>
+                    <h3 class="font-semibold mb-2 text-yellow-300">1. Podstawowe informacje</h3>
+                    <ul class="space-y-1 text-gray-200">
+                        <li>• <strong>Nazwa quizu</strong> - tytuł całego testu</li>
+                        <li>• <strong>Przedmiot i klasa</strong> - do kategoryzacji</li>
+                        <li>• <strong>Treść zadania</strong> - dokładne polecenie dla ucznia</li>
+                        <li>• <strong>Punkty</strong> - maksymalna liczba punktów</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2 text-yellow-300">2. Ocenianie przez AI</h3>
+                    <ul class="space-y-1 text-gray-200">
+                        <li>• <strong>Wzorcowa odpowiedź</strong> - przykład poprawnego rozwiązania</li>
+                        <li>• <strong>Kryteria</strong> - co AI ma sprawdzać (każde w nowej linii)</li>
+                        <li>• <strong>Wskazówki</strong> - dodatkowe instrukcje dla AI</li>
+                        <li>• AI automatycznie oceni odpowiedzi uczniów</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-white/10 rounded-lg">
+                <h3 class="font-semibold mb-2 text-green-300">💡 Wskazówki:</h3>
+                <ul class="text-sm space-y-1 text-gray-200">
+                    <li>✓ Pisz jasne, jednoznaczne polecenia</li>
+                    <li>✓ Podaj wszystkie ważne kryteria oceniania</li>
+                    <li>✓ Dla zadań matematycznych uwzględnij różne metody rozwiązania</li>
+                    <li>✓ Określ dokładność obliczeń (np. "do 2 miejsc po przecinku")</li>
+                    <li>✓ Możesz dodać wiele zadań do jednego quizu</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentQuizId = null;
+
+        function addQuestion() {
+            const questionText = document.getElementById('questionText').value.trim();
+            const points = parseInt(document.getElementById('points').value);
+            const modelAnswer = document.getElementById('modelAnswer').value.trim();
+            const criteria = document.getElementById('criteria').value.trim();
+            
+            if (!questionText || !modelAnswer || !criteria) {
+                alert('Wypełnij wszystkie wymagane pola!');
+                return;
+            }
+
+            const question = {
+                id: `q_${Date.now()}`,
+                tresc: questionText,
+                typ: 'otwarte',
+                punkty: points,
+                odpowiedzWzorcowa: modelAnswer,
+                kryteriaOceniania: criteria.split('\n').filter(c => c.trim()),
+                wskazowkiAI: document.getElementById('aiHints').value.trim() || null
+            };
+
+            questions.push(question);
+            updateQuestionsList();
+            clearQuestionForm();
+        }
+
+        function updateQuestionsList() {
+            const list = document.getElementById('questionsList');
+            const saveBtn = document.getElementById('saveButton');
+            const exportBtn = document.getElementById('exportButton');
+
+            if (questions.length === 0) {
+                list.innerHTML = '<p class="text-gray-300 text-center py-8">Brak zadań. Dodaj pierwsze zadanie.</p>';
+                saveBtn.disabled = true;
+                exportBtn.disabled = true;
+                return;
+            }
+
+            saveBtn.disabled = false;
+            exportBtn.disabled = false;
+
+            list.innerHTML = questions.map((q, index) => `
+                <div class="bg-white/10 rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold">Zadanie ${index + 1} (${q.punkty} pkt)</h4>
+                        <button onclick="removeQuestion(${index})" 
+                                class="text-red-400 hover:text-red-300">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <p class="text-sm mb-2">${q.tresc}</p>
+                    <div class="text-xs text-gray-300">
+                        <p><strong>Wzorcowa odpowiedź:</strong> ${q.odpowiedzWzorcowa}</p>
+                        <p><strong>Kryteria:</strong> ${q.kryteriaOceniania.join(', ')}</p>
+                        ${q.wskazowkiAI ? `<p><strong>Wskazówki AI:</strong> ${q.wskazowkiAI}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeQuestion(index) {
+            questions.splice(index, 1);
+            updateQuestionsList();
+        }
+
+        function clearQuestionForm() {
+            document.getElementById('questionText').value = '';
+            document.getElementById('modelAnswer').value = '';
+            document.getElementById('criteria').value = '';
+            document.getElementById('aiHints').value = '';
+        }
+
+        function clearForm() {
+            clearQuestionForm();
+            document.getElementById('quizName').value = '';
+            questions = [];
+            updateQuestionsList();
+        }
+
+        function saveQuiz() {
+            const quizName = document.getElementById('quizName').value.trim();
+            if (!quizName) {
+                alert('Podaj nazwę quizu!');
+                return;
+            }
+
+            const quiz = {
+                id: `quiz_${Date.now()}`,
+                nazwa: quizName,
+                przedmiot: document.getElementById('subject').value,
+                klasa: document.getElementById('classLevel').value,
+                nauczyciel: 'teacher_paulina',
+                czasTrwania: Math.max(questions.length * 5, 20),
+                punkty: questions.reduce((sum, q) => sum + q.punkty, 0),
+                aktywny: true,
+                dataUtworzenia: new Date().toISOString(),
+                pytania: questions
+            };
+
+            // Zapisz do localStorage
+            const quizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+            quizzes.push(quiz);
+            localStorage.setItem('quizzes', JSON.stringify(quizzes));
+
+            alert(`✅ Quiz "${quizName}" został zapisany!\n\nZawiera ${questions.length} zadań za łącznie ${quiz.punkty} punktów.`);
+            
+            // Wyczyść formularz
+            clearForm();
+        }
+
+        function exportQuestions() {
+            const quizName = document.getElementById('quizName').value.trim() || 'quiz_export';
+            const data = {
+                nazwa: quizName,
+                przedmiot: document.getElementById('subject').value,
+                klasa: document.getElementById('classLevel').value,
+                pytania: questions,
+                exportDate: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${quizName.replace(/\s+/g, '_')}_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadExample() {
+            document.getElementById('quizName').value = 'Test z matematyki - Równania kwadratowe';
+            document.getElementById('subject').value = 'matematyka';
+            document.getElementById('classLevel').value = '8a';
+            
+            // Przykładowe zadanie 1
+            document.getElementById('questionText').value = 'Rozwiąż równanie: 2x² - 5x - 3 = 0';
+            document.getElementById('points').value = '12';
+            document.getElementById('modelAnswer').value = 'x₁ = 3, x₂ = -0,5';
+            document.getElementById('criteria').value = `- Zastosowanie wzoru na deltę lub rozkładu na czynniki
+- Poprawne obliczenie delty: Δ = 25 + 24 = 49
+- Obliczenie pierwiastków
+- Podanie obu rozwiązań
+- Poprawność obliczeń`;
+            document.getElementById('aiHints').value = 'Akceptuj różne metody rozwiązania. Zwróć uwagę na dokładność obliczeń.';
+            
+            addQuestion();
+            
+            // Przykładowe zadanie 2
+            document.getElementById('questionText').value = 'Dla jakich wartości parametru k równanie x² + kx + 9 = 0 ma dokładnie jedno rozwiązanie?';
+            document.getElementById('points').value = '15';
+            document.getElementById('modelAnswer').value = 'k = 6 lub k = -6';
+            document.getElementById('criteria').value = `- Warunek na jedno rozwiązanie: Δ = 0
+- Obliczenie delty: Δ = k² - 36
+- Rozwiązanie równania k² - 36 = 0
+- Podanie obu wartości parametru k
+- Uzasadnienie odpowiedzi`;
+            document.getElementById('aiHints').value = 'Sprawdź czy uczeń rozumie, że jedno rozwiązanie oznacza deltę równą zero.';
+            
+            addQuestion();
+        }
+    </script>
+</body>
+</html>
