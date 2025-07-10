@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test lokalny - Konto Pauliny</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">🔐 Test lokalny konta Pauliny</h1>
+        
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">1. Utwórz konto Pauliny lokalnie</h2>
+            <button onclick="createPaulinaLocally()" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded">
+                Utwórz konto Pauliny
+            </button>
+            <div id="create-result" class="mt-4 text-sm"></div>
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">2. Test logowania</h2>
+            <div class="space-y-2 mb-4">
+                <input type="text" id="username" placeholder="Username" value="paulinaodmatematyki" 
+                       class="bg-gray-700 text-white px-4 py-2 rounded w-full">
+                <input type="password" id="password" placeholder="Password" value="paulina#314159265"
+                       class="bg-gray-700 text-white px-4 py-2 rounded w-full">
+            </div>
+            <button onclick="testLogin()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">
+                Test logowania
+            </button>
+            <div id="login-result" class="mt-4 text-sm"></div>
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">3. Debug info</h2>
+            <button onclick="showDebugInfo()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded mb-4">
+                Pokaż debug info
+            </button>
+            <div id="debug-info" class="text-sm font-mono overflow-auto max-h-96"></div>
+        </div>
+    </div>
+    
+    <script>
+        function createPaulinaLocally() {
+            const resultDiv = document.getElementById('create-result');
+            
+            try {
+                // Pobierz użytkowników
+                let users = JSON.parse(localStorage.getItem('users') || '[]');
+                
+                // Usuń stare konto Pauliny
+                users = users.filter(u => u.username !== 'paulinaodmatematyki');
+                
+                // Hash hasła
+                const passwordHash = CryptoJS.SHA256('paulina#314159265').toString();
+                
+                // Utwórz nowe konto
+                const paulina = {
+                    id: 'teacher_paulina',
+                    userId: 'teacher_paulina',
+                    username: 'paulinaodmatematyki',
+                    password: passwordHash,
+                    role: 'teacher',
+                    fullName: 'Paulina Kowalska',
+                    createdAt: new Date().toISOString()
+                };
+                
+                users.push(paulina);
+                localStorage.setItem('users', JSON.stringify(users));
+                
+                resultDiv.innerHTML = `
+                    <div class="text-green-400">✅ Konto utworzone!</div>
+                    <div class="mt-2">Username: ${paulina.username}</div>
+                    <div>Password hash: ${passwordHash.substring(0, 20)}...</div>
+                    <div class="text-xs text-gray-400 mt-2">Hasło: paulina#314159265</div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="text-red-400">❌ Błąd: ${error.message}</div>`;
+            }
+        }
+        
+        function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('login-result');
+            
+            if (!username || !password) {
+                resultDiv.innerHTML = '<div class="text-red-400">Wypełnij wszystkie pola!</div>';
+                return;
+            }
+            
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const hashedPassword = CryptoJS.SHA256(password).toString();
+                
+                console.log('Szukam użytkownika:', username);
+                console.log('Hash hasła:', hashedPassword);
+                
+                const user = users.find(u => u.username === username);
+                
+                if (!user) {
+                    resultDiv.innerHTML = `
+                        <div class="text-red-400">❌ Użytkownik nie istnieje</div>
+                        <div class="text-xs mt-2">Dostępni użytkownicy: ${users.map(u => u.username).join(', ')}</div>
+                    `;
+                    return;
+                }
+                
+                console.log('Znaleziony użytkownik:', user);
+                
+                if (user.password === hashedPassword) {
+                    resultDiv.innerHTML = `
+                        <div class="text-green-400">✅ Logowanie udane!</div>
+                        <div class="mt-2">User ID: ${user.id || user.userId}</div>
+                        <div>Role: ${user.role}</div>
+                        <div>Full Name: ${user.fullName || 'N/A'}</div>
+                    `;
+                    
+                    // Zapisz sesję
+                    const session = {
+                        userId: user.id || user.userId,
+                        username: user.username,
+                        role: user.role,
+                        loginTime: new Date()
+                    };
+                    sessionStorage.setItem('currentUser', JSON.stringify(session));
+                    
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="text-red-400">❌ Nieprawidłowe hasło</div>
+                        <div class="text-xs mt-2">Expected: ${user.password}</div>
+                        <div class="text-xs">Got: ${hashedPassword}</div>
+                        <div class="text-xs">Match: ${user.password === hashedPassword}</div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="text-red-400">❌ Błąd: ${error.message}</div>`;
+                console.error('Login error:', error);
+            }
+        }
+        
+        function showDebugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            
+            try {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const teachers = users.filter(u => u.role === 'teacher');
+                const paulina = users.find(u => u.username === 'paulinaodmatematyki');
+                
+                const testHash = CryptoJS.SHA256('paulina#314159265').toString();
+                
+                debugDiv.innerHTML = `
+                    <div class="mb-4">
+                        <h3 class="font-bold text-yellow-400">Test hashowania:</h3>
+                        <div>Input: paulina#314159265</div>
+                        <div>Hash: ${testHash}</div>
+                        <div>Length: ${testHash.length} chars</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="font-bold text-yellow-400">Nauczyciele (${teachers.length}):</h3>
+                        ${teachers.map(t => `
+                            <div class="mb-2 p-2 bg-gray-700 rounded">
+                                <div>Username: ${t.username}</div>
+                                <div>ID: ${t.id || t.userId}</div>
+                                <div>Password: ${t.password}</div>
+                                <div>Role: ${t.role}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="font-bold text-yellow-400">Konto Pauliny:</h3>
+                        ${paulina ? `
+                            <pre class="bg-gray-700 p-2 rounded overflow-x-auto">
+${JSON.stringify(paulina, null, 2)}
+                            </pre>
+                        ` : '<div class="text-red-400">Nie znaleziono!</div>'}
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-bold text-yellow-400">localStorage keys:</h3>
+                        <div>${Object.keys(localStorage).join(', ')}</div>
+                    </div>
+                `;
+            } catch (error) {
+                debugDiv.innerHTML = `<div class="text-red-400">❌ Błąd: ${error.message}</div>`;
+            }
+        }
+        
+        // Pokaż debug info przy ładowaniu
+        window.addEventListener('load', () => {
+            showDebugInfo();
+        });
+    </script>
+</body>
+</html>
