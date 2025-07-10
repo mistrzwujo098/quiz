@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Gemini API - QuizMaster</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #3a3a3a;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .success {
+            background: #1e4620;
+            border: 1px solid #2d6a2f;
+            color: #90ee90;
+        }
+        .error {
+            background: #4a1e1e;
+            border: 1px solid #6a2d2d;
+            color: #ff6b6b;
+        }
+        .warning {
+            background: #4a3e1e;
+            border: 1px solid #6a5d2d;
+            color: #ffb347;
+        }
+        .info {
+            background: #1e2a4a;
+            border: 1px solid #2d3a6a;
+            color: #87ceeb;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #3a3a3a;
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        h2 {
+            color: #87ceeb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test połączenia z Gemini API</h1>
+    
+    <div class="test-section">
+        <h2>1. Test Health Endpoint</h2>
+        <button onclick="testHealthEndpoint()">Sprawdź Health</button>
+        <div id="health-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test inicjalizacji API Client</h2>
+        <button onclick="testAPIClient()">Test API Client</button>
+        <div id="api-client-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Test rzeczywistego zapytania do Gemini</h2>
+        <button onclick="testGeminiGenerate()">Test Generate</button>
+        <div id="gemini-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Test AI Grader</h2>
+        <button onclick="testAIGrader()">Test AI Grader</button>
+        <div id="grader-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Sprawdź wszystkie moduły AI</h2>
+        <button onclick="testAllAIModules()">Test wszystkich modułów</button>
+        <div id="modules-result"></div>
+    </div>
+
+    <script>
+        // Pomocnicza funkcja do wyświetlania wyników
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString('pl-PL');
+            element.innerHTML += `
+                <div class="status ${type}">
+                    <strong>[${timestamp}]</strong> ${message}
+                </div>
+            `;
+        }
+
+        // 1. Test Health Endpoint
+        async function testHealthEndpoint() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<div class="loader"></div> Sprawdzanie...';
+            
+            try {
+                // Test lokalnego health
+                const localResponse = await fetch('/.netlify/functions/health');
+                const localData = await localResponse.json();
+                
+                resultDiv.innerHTML = '';
+                showResult('health-result', `Status: ${localData.status}`, 'success');
+                showResult('health-result', `API skonfigurowane: ${localData.api_configured ? 'TAK ✓' : 'NIE ✗'}`, 
+                          localData.api_configured ? 'success' : 'error');
+                showResult('health-result', `Metoda konfiguracji: ${localData.config_method}`, 'info');
+                showResult('health-result', `Środowisko: ${localData.environment}`, 'info');
+                showResult('health-result', `Node.js: ${localData.node_version}`, 'info');
+                
+                if (!localData.api_configured) {
+                    showResult('health-result', 
+                        '⚠️ GEMINI_API_KEY nie jest ustawiony w zmiennych środowiskowych Netlify!', 
+                        'error');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = '';
+                showResult('health-result', `Błąd: ${error.message}`, 'error');
+            }
+        }
+
+        // 2. Test API Client
+        async function testAPIClient() {
+            const resultDiv = document.getElementById('api-client-result');
+            resultDiv.innerHTML = '<div class="loader"></div> Ładowanie skryptów...';
+            
+            try {
+                // Załaduj API Client
+                if (!window.APIClient) {
+                    const script = document.createElement('script');
+                    script.src = '/js/api-client.js';
+                    document.head.appendChild(script);
+                    
+                    await new Promise(resolve => {
+                        script.onload = resolve;
+                        script.onerror = () => reject(new Error('Nie można załadować api-client.js'));
+                    });
+                }
+                
+                resultDiv.innerHTML = '';
+                showResult('api-client-result', 'APIClient załadowany ✓', 'success');
+                
+                // Sprawdź konfigurację
+                const apiUrl = window.APIClient?.apiUrl || 'Nie znaleziono';
+                showResult('api-client-result', `API URL: ${apiUrl}`, 'info');
+                
+                // Test health przez APIClient
+                if (window.APIClient && window.APIClient.checkHealth) {
+                    const health = await window.APIClient.checkHealth();
+                    showResult('api-client-result', 
+                        `Health check przez APIClient: ${health.healthy ? 'OK ✓' : 'BŁĄD ✗'}`, 
+                        health.healthy ? 'success' : 'error');
+                    
+                    if (health.details) {
+                        showResult('api-client-result', 
+                            `<pre>${JSON.stringify(health.details, null, 2)}</pre>`, 
+                            'info');
+                    }
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = '';
+                showResult('api-client-result', `Błąd: ${error.message}`, 'error');
+            }
+        }
+
+        // 3. Test rzeczywistego zapytania
+        async function testGeminiGenerate() {
+            const resultDiv = document.getElementById('gemini-result');
+            resultDiv.innerHTML = '<div class="loader"></div> Wysyłanie zapytania testowego...';
+            
+            try {
+                const testPrompt = "Odpowiedz krótko: Jaka jest stolica Polski?";
+                
+                // Bezpośrednie wywołanie endpoint
+                const response = await fetch('/.netlify/functions/gemini-generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: testPrompt,
+                        temperature: 0.7,
+                        maxTokens: 100
+                    })
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = '';
+                
+                if (response.ok) {
+                    showResult('gemini-result', 'Połączenie z Gemini API działa! ✓', 'success');
+                    
+                    // Wyświetl odpowiedź
+                    if (data.candidates && data.candidates[0]) {
+                        const answer = data.candidates[0].content.parts[0].text;
+                        showResult('gemini-result', `Odpowiedź AI: "${answer}"`, 'info');
+                    }
+                } else {
+                    showResult('gemini-result', `Błąd API: ${response.status}`, 'error');
+                    showResult('gemini-result', `<pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                    
+                    if (data.message && data.message.includes('API key not configured')) {
+                        showResult('gemini-result', 
+                            '⚠️ Klucz API nie jest skonfigurowany w Netlify!', 
+                            'error');
+                    }
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = '';
+                showResult('gemini-result', `Błąd połączenia: ${error.message}`, 'error');
+            }
+        }
+
+        // 4. Test AI Grader
+        async function testAIGrader() {
+            const resultDiv = document.getElementById('grader-result');
+            resultDiv.innerHTML = '<div class="loader"></div> Ładowanie AI Grader...';
+            
+            try {
+                // Załaduj potrzebne moduły
+                const scriptsToLoad = [
+                    '/js/step-grading-system.js',
+                    '/js/cke-parser-system.js',
+                    '/js/ai-grader.js'
+                ];
+                
+                for (const scriptSrc of scriptsToLoad) {
+                    if (!document.querySelector(`script[src="${scriptSrc}"]`)) {
+                        const script = document.createElement('script');
+                        script.src = scriptSrc;
+                        document.head.appendChild(script);
+                        await new Promise(resolve => {
+                            script.onload = resolve;
+                            script.onerror = () => reject(new Error(`Nie można załadować ${scriptSrc}`));
+                        });
+                    }
+                }
+                
+                resultDiv.innerHTML = '';
+                showResult('grader-result', 'Moduły AI Grader załadowane ✓', 'success');
+                
+                // Sprawdź inicjalizację
+                if (window.AIGrader) {
+                    const grader = new window.AIGrader();
+                    await grader.initialize();
+                    
+                    showResult('grader-result', 'AI Grader zainicjalizowany ✓', 'success');
+                    showResult('grader-result', 
+                        `Gemini API dostępne: ${grader.geminiAPI ? 'TAK ✓' : 'NIE ✗'}`, 
+                        grader.geminiAPI ? 'success' : 'error');
+                    
+                    // Test prostego oceniania
+                    if (grader.geminiAPI) {
+                        const testTask = {
+                            id: 'test-1',
+                            tresc: 'Podaj stolicę Polski',
+                            typ: 'otwarte',
+                            punkty: 1,
+                            przedmiot: 'geografia'
+                        };
+                        
+                        const result = await grader.gradeAnswer(
+                            testTask, 
+                            'Warszawa',
+                            { useCache: false }
+                        );
+                        
+                        showResult('grader-result', 
+                            `Test oceniania: ${result.success ? 'SUKCES ✓' : 'BŁĄD ✗'}`, 
+                            result.success ? 'success' : 'error');
+                        
+                        if (result.success) {
+                            showResult('grader-result', 
+                                `Punkty: ${result.points}/${result.maxPoints}`, 
+                                'info');
+                        }
+                    }
+                } else {
+                    showResult('grader-result', 'window.AIGrader nie jest dostępny!', 'error');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = '';
+                showResult('grader-result', `Błąd: ${error.message}`, 'error');
+            }
+        }
+
+        // 5. Test wszystkich modułów AI
+        async function testAllAIModules() {
+            const resultDiv = document.getElementById('modules-result');
+            resultDiv.innerHTML = '<div class="loader"></div> Sprawdzanie modułów...';
+            
+            const aiModules = [
+                { name: 'AIGrader', global: 'aiGrader', class: 'AIGrader' },
+                { name: 'RecommendationSystem', global: 'recommendationSystem', class: 'RecommendationSystem' },
+                { name: 'StepGradingSystem', global: 'stepGrading', class: 'StepGradingSystem' }
+            ];
+            
+            resultDiv.innerHTML = '';
+            
+            for (const module of aiModules) {
+                try {
+                    const instance = window[module.global] || (window[module.class] ? new window[module.class]() : null);
+                    
+                    if (instance) {
+                        // Sprawdź czy ma dostęp do Gemini API
+                        const hasGemini = instance.geminiAPI || instance.apiClient || false;
+                        
+                        showResult('modules-result', 
+                            `${module.name}: Załadowany ✓, Gemini API: ${hasGemini ? 'TAK ✓' : 'NIE ✗'}`, 
+                            hasGemini ? 'success' : 'warning');
+                    } else {
+                        showResult('modules-result', 
+                            `${module.name}: Nie znaleziono ✗`, 
+                            'error');
+                    }
+                } catch (error) {
+                    showResult('modules-result', 
+                        `${module.name}: Błąd - ${error.message}`, 
+                        'error');
+                }
+            }
+            
+            // Sprawdź QuizMaster.modules
+            if (window.QuizMaster && window.QuizMaster.modules) {
+                showResult('modules-result', 
+                    `<pre>QuizMaster.modules:\n${JSON.stringify(Object.keys(window.QuizMaster.modules), null, 2)}</pre>`, 
+                    'info');
+            }
+        }
+
+        // Automatyczne uruchomienie testu health przy załadowaniu
+        window.addEventListener('load', () => {
+            setTimeout(testHealthEndpoint, 500);
+        });
+    </script>
+</body>
+</html>

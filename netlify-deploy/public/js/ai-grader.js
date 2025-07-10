@@ -15,6 +15,15 @@ class AIGrader {
     async initialize() {
         if (this.initialized) return;
         
+        // Inicjalizacja Gemini API
+        if (window.GeminiAPI) {
+            this.geminiAPI = window.GeminiAPI;
+        } else if (window.APIClient) {
+            this.geminiAPI = window.APIClient;
+        } else {
+            console.warn('Gemini API nie jest dostępne - funkcje AI będą ograniczone');
+        }
+        
         // Inicjalizacja modułów
         await this.ckeParser.initialize();
         
