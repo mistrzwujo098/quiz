@@ -223,8 +223,8 @@ class UIImprovements {
     `;
     document.body.appendChild(loader);
 
-    // Skeleton screens
-    this.createSkeletonScreens();
+    // Skeleton screens zostaną dodane później jeśli będą potrzebne
+    // this.createSkeletonScreens();
   }
 
   /**

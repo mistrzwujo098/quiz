@@ -47,35 +47,56 @@ class CKEParserSystem {
     async parseOfficialExam(examPdfFile, answerKeyPdfFile, options = {}) {
         await this.initialize();
         
+        // Użyj nowego parsera Gemini jeśli API jest dostępne
+        if (this.geminiAPI || window.APIClient) {
+            try {
+                console.log('🚀 Używam parsera Gemini AI...');
+                
+                // Załaduj parser Gemini jeśli nie istnieje
+                if (!window.CKEParserGemini) {
+                    const script = document.createElement('script');
+                    script.src = '/js/cke-parser-gemini.js';
+                    document.head.appendChild(script);
+                    await new Promise(resolve => script.onload = resolve);
+                }
+                
+                const geminiParser = new window.CKEParserGemini();
+                const result = await geminiParser.parseWithGemini(examPdfFile, answerKeyPdfFile);
+                
+                if (result.success) {
+                    console.log(`✅ Gemini sparsował ${result.tasks.length} zadań`);
+                    return result;
+                }
+            } catch (error) {
+                console.error('Błąd parsera Gemini, używam klasycznego:', error);
+            }
+        }
+        
+        // Fallback do klasycznego parsowania
         const config = {
-            subject: options.subject || 'auto-detect', // matematyka, polski, etc.
-            examType: options.examType || 'auto-detect', // ósmoklasisty, matura
-            useOCR: options.useOCR !== false,
-            extractImages: options.extractImages !== false,
-            extractFormulas: options.extractFormulas !== false,
+            subject: options.subject || 'auto-detect',
+            examType: options.examType || 'auto-detect',
+            useOCR: false, // Wyłącz OCR dla prostszego parsowania
+            extractImages: false,
+            extractFormulas: false,
             ...options
         };
 
         try {
-            // 1. Ekstrakcja zawartości z PDF
-            console.log('📄 Ekstraktuję zawartość arkusza...');
-            const examContent = await this.extractEnhancedPdfContent(examPdfFile, config);
+            // Prosta ekstrakcja tekstu
+            console.log('📄 Ekstraktuję tekst z arkusza (tryb klasyczny)...');
+            const examText = await this.extractSimpleText(examPdfFile);
             
-            console.log('📋 Ekstraktuję klucz odpowiedzi...');
-            const answerContent = await this.extractEnhancedPdfContent(answerKeyPdfFile, {
-                ...config,
-                isAnswerKey: true
-            });
+            let answerText = '';
+            if (answerKeyPdfFile) {
+                console.log('📋 Ekstraktuję tekst z klucza odpowiedzi...');
+                answerText = await this.extractSimpleText(answerKeyPdfFile);
+            }
 
-            // 2. Analiza AI - rozpoznanie struktury
-            console.log('🤖 Analizuję strukturę arkusza...');
-            const structuredData = await this.analyzeExamStructure(examContent, answerContent, config);
+            // Prosta analiza
+            console.log('📝 Analizuję zadania...');
+            const tasks = this.simpleTaskExtraction(examText, answerText);
 
-            // 3. Przetworzenie zadań
-            console.log('✏️ Przetwarzam zadania...');
-            const tasks = await this.processExtractedTasks(structuredData, examContent);
-
-            // 4. Walidacja i poprawa jakości
             console.log('✅ Walidacja wyników...');
             const validatedTasks = await this.validateAndEnhanceTasks(tasks);
 
@@ -83,9 +104,9 @@ class CKEParserSystem {
                 success: true,
                 tasks: validatedTasks,
                 metadata: {
-                    subject: structuredData.subject,
-                    examType: structuredData.examType,
-                    year: structuredData.year,
+                    subject: 'nieznany',
+                    examType: 'nieznany',
+                    year: new Date().getFullYear(),
                     totalPoints: validatedTasks.reduce((sum, t) => sum + t.punkty, 0),
                     taskCount: validatedTasks.length
                 }
@@ -99,6 +120,92 @@ class CKEParserSystem {
                 tasks: []
             };
         }
+    }
+
+    /**
+     * Prosta ekstrakcja tekstu z PDF
+     */
+    async extractSimpleText(pdfFile) {
+        if (typeof pdfjsLib === 'undefined') {
+            throw new Error('Biblioteka pdf.js nie jest załadowana');
+        }
+
+        const arrayBuffer = await pdfFile.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n\n';
+        }
+
+        return fullText;
+    }
+
+    /**
+     * Prosta ekstrakcja zadań
+     */
+    simpleTaskExtraction(examText, answerText) {
+        const tasks = [];
+        const lines = examText.split('\n');
+        
+        // Wzorce zadań
+        const taskPatterns = [
+            /Zadanie\s*(\d+)\.?\s*\((\d+)\s*p/i,
+            /(\d+)\.\s*\((\d+)\s*p/i,
+            /Zadanie\s*(\d+)/i
+        ];
+
+        let currentTask = null;
+        let taskContent = [];
+
+        lines.forEach((line) => {
+            let taskMatch = null;
+            
+            for (const pattern of taskPatterns) {
+                taskMatch = line.match(pattern);
+                if (taskMatch) break;
+            }
+
+            if (taskMatch) {
+                // Zapisz poprzednie zadanie
+                if (currentTask && taskContent.length > 0) {
+                    tasks.push({
+                        id: `cke_nieznany_${new Date().getFullYear()}_${currentTask.number}`,
+                        tresc: taskContent.join('\n').trim(),
+                        typ: 'otwarte',
+                        punkty: currentTask.points || 1,
+                        kategoria: 'Nieprzypisane',
+                        poziom: 'średni'
+                    });
+                }
+
+                // Nowe zadanie
+                currentTask = {
+                    number: parseInt(taskMatch[1]),
+                    points: taskMatch[2] ? parseInt(taskMatch[2]) : 1
+                };
+                taskContent = [line];
+            } else if (currentTask) {
+                taskContent.push(line);
+            }
+        });
+
+        // Ostatnie zadanie
+        if (currentTask && taskContent.length > 0) {
+            tasks.push({
+                id: `cke_nieznany_${new Date().getFullYear()}_${currentTask.number}`,
+                tresc: taskContent.join('\n').trim(),
+                typ: 'otwarte',
+                punkty: currentTask.points || 1,
+                kategoria: 'Nieprzypisane',
+                poziom: 'średni'
+            });
+        }
+
+        return tasks;
     }
 
     /**

@@ -23,6 +23,22 @@ class ExtendedGamificationSystem {
   }
 
   /**
+   * Sprawdza status Season Pass
+   */
+  checkSeasonPass() {
+    const savedSeasonPass = localStorage.getItem('seasonPass');
+    if (savedSeasonPass) {
+      this.seasonPass = JSON.parse(savedSeasonPass);
+      // Sprawdź czy season pass jest nadal aktywny
+      const endDate = new Date(this.seasonPass.endDate);
+      if (endDate < new Date()) {
+        this.seasonPass = null;
+        localStorage.removeItem('seasonPass');
+      }
+    }
+  }
+
+  /**
    * System poziomów i doświadczenia
    */
   calculateLevel(xp) {

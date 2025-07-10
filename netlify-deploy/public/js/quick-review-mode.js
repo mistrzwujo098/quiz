@@ -49,7 +49,16 @@ class QuickReviewMode {
 
     results.forEach(result => {
       if (result.answers) {
-        result.answers.forEach((answer, index) => {
+        // Obsłuż zarówno tablice jak i obiekty
+        const answersArray = Array.isArray(result.answers) 
+          ? result.answers 
+          : Object.entries(result.answers || {}).map(([questionId, answer]) => ({
+              questionId,
+              userAnswer: answer,
+              correct: result.questions && result.questions.find(q => q.id === questionId)?.poprawna === answer
+            }));
+        
+        answersArray.forEach((answer, index) => {
           if (!answer.correct && answer.questionId) {
             const question = this.getQuestionById(answer.questionId);
             if (question) {
@@ -57,7 +66,7 @@ class QuickReviewMode {
                 ...question,
                 lastAttempt: result.completedAt,
                 userAnswer: answer.userAnswer,
-                correctAnswer: answer.correctAnswer,
+                correctAnswer: answer.correctAnswer || question.poprawna,
                 priority: 'high',
                 source: 'mistake'
               });

@@ -12,6 +12,34 @@ class CKEImportUI {
     }
 
     /**
+     * Statyczna metoda do powrotu do edycji
+     */
+    static backToEdit() {
+        // Znajdź kroki wizard
+        const steps = document.querySelectorAll('.wizard-step');
+        
+        // Ukryj krok 3 (podgląd)
+        const step3 = document.getElementById('step-3');
+        if (step3) step3.classList.remove('active');
+        
+        // Pokaż krok 2 (przetwarzanie)
+        const step2 = document.getElementById('step-2');
+        if (step2) step2.classList.add('active');
+        
+        // Przywróć możliwość edycji
+        const editButtons = document.querySelectorAll('.task-actions button');
+        editButtons.forEach(btn => btn.disabled = false);
+        
+        // Ukryj przyciski nawigacji kroku 3
+        const navButtons = document.querySelector('.wizard-navigation');
+        if (navButtons) {
+            navButtons.style.display = 'none';
+        }
+        
+        console.log('Powrót do edycji zadań');
+    }
+
+    /**
      * Renderowanie interfejsu importu
      */
     render() {
