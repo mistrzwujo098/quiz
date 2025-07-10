@@ -20,6 +20,10 @@ class AIGrader {
             this.geminiAPI = window.GeminiAPI;
         } else if (window.APIClient) {
             this.geminiAPI = window.APIClient;
+            // Upewnij się, że APIClient jest zainicjalizowany
+            if (this.geminiAPI.initialize) {
+                await this.geminiAPI.initialize();
+            }
         } else {
             console.warn('Gemini API nie jest dostępne - funkcje AI będą ograniczone');
         }
@@ -1009,3 +1013,6 @@ class AIGrader {
 
 // Eksport jako globalna klasa
 window.AIGrader = AIGrader;
+
+// Utwórz globalną instancję
+window.aiGrader = new AIGrader();

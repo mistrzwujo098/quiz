@@ -442,4 +442,8 @@ class RecommendationSystem {
 }
 
 // Eksportuj jako globalną
+// Eksportuj klasę
 window.RecommendationSystem = RecommendationSystem;
+
+// Utwórz globalną instancję
+window.recommendationSystem = new RecommendationSystem();

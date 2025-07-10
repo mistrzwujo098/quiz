@@ -14,6 +14,10 @@ class StepGradingSystem {
             this.geminiAPI = window.GeminiAPI;
         } else if (window.APIClient) {
             this.geminiAPI = window.APIClient;
+            // Inicjalizacja APIClient jeśli potrzebna
+            if (this.geminiAPI.initialize && !this.geminiAPI.initialized) {
+                this.geminiAPI.initialize().catch(console.error);
+            }
         }
     }
 
@@ -769,3 +773,6 @@ class StepGradingSystem {
 
 // Eksport klasy
 window.StepGradingSystem = StepGradingSystem;
+
+// Utwórz globalną instancję
+window.stepGrading = new StepGradingSystem();
