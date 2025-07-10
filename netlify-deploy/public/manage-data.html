@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zarządzanie danymi - QuizMaster</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="text-white p-4">
+    <div class="max-w-6xl mx-auto">
+        <div class="glass rounded-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold mb-2">🗄️ Zarządzanie danymi QuizMaster</h1>
+            <p class="text-gray-200">Panel administracyjny do zarządzania użytkownikami i danymi</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <!-- Status danych -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">📊 Status danych</h2>
+                <div id="dataStatus" class="space-y-2 text-sm">
+                    <div class="text-gray-300">Ładowanie...</div>
+                </div>
+                
+                <div class="mt-6 space-y-3">
+                    <button onclick="loadDefaultData()" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-download mr-2"></i>Załaduj domyślne dane z serwera
+                    </button>
+                    
+                    <button onclick="forceReinitialize()" 
+                            class="w-full bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-sync mr-2"></i>Wymuś reinicjalizację
+                    </button>
+                    
+                    <button onclick="clearAllData()" 
+                            class="w-full bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition">
+                        <i class="fas fa-trash mr-2"></i>Usuń wszystkie dane
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lista użytkowników -->
+            <div class="glass rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">👥 Użytkownicy</h2>
+                <div class="mb-4">
+                    <select id="userFilter" onchange="updateUsersList()" 
+                            class="w-full px-4 py-2 bg-white/20 rounded-lg text-white">
+                        <option value="all">Wszyscy użytkownicy</option>
+                        <option value="teacher">Nauczyciele</option>
+                        <option value="student">Uczniowie</option>
+                        <option value="parent">Rodzice</option>
+                    </select>
+                </div>
+                <div id="usersList" class="space-y-2 max-h-96 overflow-y-auto">
+                    <div class="text-gray-300">Ładowanie...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Konta testowe -->
+        <div class="glass rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">🔐 Konta testowe</h2>
+            <div class="grid md:grid-cols-3 gap-6 text-sm">
+                <div class="bg-white/10 rounded-lg p-4">
+                    <h3 class="font-semibold text-yellow-300 mb-2">Nauczyciel</h3>
+                    <p><strong>Login:</strong> paulinaodmatematyki</p>
+                    <p><strong>Hasło:</strong> [z Netlify env lub paulina#314159265]</p>
+                </div>
+                <div class="bg-white/10 rounded-lg p-4">
+                    <h3 class="font-semibold text-blue-300 mb-2">Przykładowy uczeń</h3>
+                    <p><strong>Login:</strong> anna.nowak</p>
+                    <p><strong>Hasło:</strong> uczen123</p>
+                    <p class="text-xs text-gray-300 mt-1">Klasa 8a</p>
+                </div>
+                <div class="bg-white/10 rounded-lg p-4">
+                    <h3 class="font-semibold text-green-300 mb-2">Przykładowy rodzic</h3>
+                    <p><strong>Login:</strong> rodzic.nowak.matka</p>
+                    <p><strong>Hasło:</strong> rodzic123</p>
+                    <p class="text-xs text-gray-300 mt-1">Rodzic Anny Nowak</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Konsola debug -->
+        <div class="glass rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold mb-4">🔧 Konsola debug</h2>
+            <div class="space-y-3">
+                <button onclick="showDebugInfo()" 
+                        class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-semibold transition">
+                    <i class="fas fa-bug mr-2"></i>Pokaż debug info
+                </button>
+                <div id="debugConsole" class="bg-black/30 rounded-lg p-4 font-mono text-xs overflow-auto max-h-64 hidden">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funkcje pomocnicze
+        function updateDataStatus() {
+            const statusDiv = document.getElementById('dataStatus');
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const quizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+            const initVersion = localStorage.getItem('initVersion');
+            
+            const teachers = users.filter(u => u.role === 'teacher');
+            const students = users.filter(u => u.role === 'student');
+            const parents = users.filter(u => u.role === 'parent');
+            
+            statusDiv.innerHTML = `
+                <div class="p-3 bg-white/10 rounded-lg">
+                    <div class="flex justify-between mb-1">
+                        <span>Wersja inicjalizacji:</span>
+                        <span class="font-bold">${initVersion || 'Brak'}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Nauczyciele:</span>
+                        <span class="font-bold text-yellow-300">${teachers.length}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Uczniowie:</span>
+                        <span class="font-bold text-blue-300">${students.length}</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Rodzice:</span>
+                        <span class="font-bold text-green-300">${parents.length}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Quizy:</span>
+                        <span class="font-bold text-purple-300">${quizzes.length}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateUsersList() {
+            const filter = document.getElementById('userFilter').value;
+            const listDiv = document.getElementById('usersList');
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            let filteredUsers = users;
+            if (filter !== 'all') {
+                filteredUsers = users.filter(u => u.role === filter);
+            }
+            
+            if (filteredUsers.length === 0) {
+                listDiv.innerHTML = '<div class="text-gray-300 text-center py-4">Brak użytkowników</div>';
+                return;
+            }
+            
+            listDiv.innerHTML = filteredUsers.map(user => `
+                <div class="bg-white/10 rounded-lg p-3 text-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-semibold">${user.fullName || user.imie + ' ' + user.nazwisko || user.username}</div>
+                            <div class="text-xs text-gray-300">
+                                <span class="mr-2">@${user.username}</span>
+                                <span class="px-2 py-1 bg-white/20 rounded">
+                                    ${user.role === 'teacher' ? '👩‍🏫' : user.role === 'student' ? '👥' : '👨‍👩‍👧'} 
+                                    ${user.role}
+                                </span>
+                                ${user.klasa ? `<span class="ml-2">Klasa: ${user.klasa}</span>` : ''}
+                            </div>
+                        </div>
+                        <button onclick="removeUser('${user.id}')" 
+                                class="text-red-400 hover:text-red-300 text-xs">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadDefaultData() {
+            if (!confirm('Czy na pewno chcesz załadować domyślne dane? To nadpisze obecne dane!')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/.netlify/functions/default-data');
+                if (!response.ok) throw new Error('Błąd pobierania danych');
+                
+                const result = await response.json();
+                if (result.success && result.data) {
+                    localStorage.setItem('users', JSON.stringify(result.data.users));
+                    localStorage.setItem('quizzes', JSON.stringify(result.data.quizzes));
+                    localStorage.setItem('initVersion', '2.0');
+                    
+                    alert('✅ Dane załadowane pomyślnie!');
+                    updateDataStatus();
+                    updateUsersList();
+                }
+            } catch (error) {
+                alert('❌ Błąd: ' + error.message);
+            }
+        }
+
+        function forceReinitialize() {
+            if (confirm('Czy na pewno chcesz wymusić reinicjalizację?')) {
+                localStorage.removeItem('initVersion');
+                alert('✅ Reinicjalizacja zostanie wykonana przy następnym odświeżeniu strony');
+                location.reload();
+            }
+        }
+
+        function clearAllData() {
+            if (!confirm('Czy na pewno chcesz usunąć WSZYSTKIE dane? Ta operacja jest nieodwracalna!')) {
+                return;
+            }
+            
+            if (!confirm('Czy jesteś ABSOLUTNIE pewien? Wszystkie dane zostaną usunięte!')) {
+                return;
+            }
+            
+            const keysToRemove = [
+                'users', 'quizzes', 'quizResults', 'classes', 'subjects',
+                'initVersion', 'currentUser', 'examResults', 'dataInitialized'
+            ];
+            
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            sessionStorage.clear();
+            
+            alert('🗑️ Wszystkie dane zostały usunięte');
+            location.reload();
+        }
+
+        function removeUser(userId) {
+            if (!confirm('Czy na pewno chcesz usunąć tego użytkownika?')) {
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const filteredUsers = users.filter(u => u.id !== userId);
+            localStorage.setItem('users', JSON.stringify(filteredUsers));
+            
+            updateDataStatus();
+            updateUsersList();
+        }
+
+        function showDebugInfo() {
+            const consoleDiv = document.getElementById('debugConsole');
+            consoleDiv.classList.toggle('hidden');
+            
+            if (!consoleDiv.classList.contains('hidden')) {
+                const debugInfo = {
+                    localStorage: {
+                        users: JSON.parse(localStorage.getItem('users') || '[]').length + ' użytkowników',
+                        quizzes: JSON.parse(localStorage.getItem('quizzes') || '[]').length + ' quizów',
+                        initVersion: localStorage.getItem('initVersion'),
+                        totalSize: new Blob(Object.values(localStorage)).size + ' bytes'
+                    },
+                    sessionStorage: {
+                        currentUser: sessionStorage.getItem('currentUser') ? 'Zalogowany' : 'Niezalogowany',
+                        accountsShown: sessionStorage.getItem('accountsShown')
+                    },
+                    browser: {
+                        userAgent: navigator.userAgent,
+                        language: navigator.language,
+                        online: navigator.onLine
+                    }
+                };
+                
+                consoleDiv.innerHTML = `<pre>${JSON.stringify(debugInfo, null, 2)}</pre>`;
+            }
+        }
+
+        // Inicjalizacja
+        window.addEventListener('DOMContentLoaded', () => {
+            updateDataStatus();
+            updateUsersList();
+        });
+    </script>
+</body>
+</html>
