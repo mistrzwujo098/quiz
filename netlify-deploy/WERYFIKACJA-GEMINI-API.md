@@ -1,7 +1,13 @@
 # 🔍 Weryfikacja połączenia z Gemini API na Netlify
 
 ## ⚡ Model AI
-Aplikacja używa **Gemini 2.0 Flash** - najnowszy, szybki model do analizy dokumentów CKE.
+Aplikacja automatycznie wybiera najlepszy dostępny model Gemini w kolejności:
+1. **Gemini 2.5 Flash Lite Preview** (najszybszy)
+2. **Gemini 2.5 Flash Preview**
+3. **Gemini 2.5 Flash**
+4. **Gemini 2.5 Pro**
+5. **Gemini 2.5 Pro Preview**
+6. Fallback: Gemini 2.0 Flash / Gemini Pro
 
 ## 📋 Lista kontrolna
 
@@ -26,7 +32,12 @@ Aplikacja używa **Gemini 2.0 Flash** - najnowszy, szybki model do analizy dokum
 
 ### 2. **Test online**
 
-#### A. Użyj strony testowej:
+#### A. Test modeli Gemini 2.5:
+1. Otwórz: `https://twoja-nazwa.netlify.app/test-gemini-models.html`
+2. Kliknij "Rozpocznij test wszystkich modeli"
+3. System automatycznie znajdzie najlepszy dostępny model
+
+#### B. Test ogólny API:
 1. Otwórz: `https://twoja-nazwa.netlify.app/test-gemini-api.html`
 2. Kliknij kolejno wszystkie przyciski testowe
 3. Sprawdź wyniki

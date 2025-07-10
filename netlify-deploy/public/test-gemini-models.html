@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test modeli Gemini 2.5 - QuizMaster</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+        .model-test {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #3a3a3a;
+        }
+        .model-name {
+            font-weight: bold;
+            color: #87ceeb;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #1e4620;
+            border: 1px solid #2d6a2f;
+            color: #90ee90;
+        }
+        .error {
+            background: #4a1e1e;
+            border: 1px solid #6a2d2d;
+            color: #ff6b6b;
+        }
+        .pending {
+            background: #4a3e1e;
+            border: 1px solid #6a5d2d;
+            color: #ffb347;
+        }
+        .winner {
+            background: #1e4a3e;
+            border: 2px solid #2d6a5f;
+            color: #90ffee;
+            font-weight: bold;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h1 {
+            color: #4CAF50;
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test modeli Gemini 2.5</h1>
+    
+    <p>Ten test sprawdzi dostępność modeli Gemini 2.5 w kolejności priorytetowej.</p>
+    
+    <button id="startTest" onclick="testAllModels()">Rozpocznij test wszystkich modeli</button>
+    
+    <div id="results"></div>
+    
+    <div id="winner" class="winner" style="display: none;"></div>
+
+    <script>
+        const models = [
+            'gemini-2.5-flash-lite-preview-06-17',
+            'gemini-2.5-flash-preview-05-20',
+            'gemini-2.5-flash',
+            'gemini-2.5-pro',
+            'gemini-2.5-pro-preview-05-06'
+        ];
+        
+        let workingModel = null;
+        
+        async function testModel(modelName) {
+            const modelDiv = document.createElement('div');
+            modelDiv.className = 'model-test';
+            modelDiv.innerHTML = `
+                <div class="model-name">${modelName}</div>
+                <div class="status pending">
+                    <span class="loader"></span> Testowanie...
+                </div>
+            `;
+            document.getElementById('results').appendChild(modelDiv);
+            
+            const statusDiv = modelDiv.querySelector('.status');
+            
+            try {
+                const startTime = Date.now();
+                
+                const response = await fetch('/.netlify/functions/gemini-generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: 'Odpowiedz jednym słowem: Jaka jest stolica Polski?',
+                        model: modelName,
+                        temperature: 0.1,
+                        maxTokens: 20
+                    })
+                });
+                
+                const responseTime = Date.now() - startTime;
+                const data = await response.json();
+                
+                if (response.ok && data.candidates && data.candidates[0]) {
+                    const answer = data.candidates[0].content.parts[0].text;
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `
+                        ✅ DZIAŁA! Czas odpowiedzi: ${responseTime}ms<br>
+                        Odpowiedź: "${answer.trim()}"
+                    `;
+                    
+                    // Zapisz pierwszy działający model
+                    if (!workingModel) {
+                        workingModel = modelName;
+                        showWinner(modelName, responseTime);
+                    }
+                    
+                    return true;
+                } else {
+                    const errorMsg = data.error || data.message || 'Nieznany błąd';
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = `
+                        ❌ Nie działa<br>
+                        Błąd: ${errorMsg}<br>
+                        Status: ${response.status}
+                    `;
+                    
+                    if (data.error && data.error.details) {
+                        statusDiv.innerHTML += `<pre>${JSON.stringify(data.error.details, null, 2)}</pre>`;
+                    }
+                    
+                    return false;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `
+                    ❌ Błąd połączenia<br>
+                    ${error.message}
+                `;
+                return false;
+            }
+        }
+        
+        async function testAllModels() {
+            const button = document.getElementById('startTest');
+            button.disabled = true;
+            button.textContent = 'Testowanie w toku...';
+            
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('winner').style.display = 'none';
+            workingModel = null;
+            
+            // Test sekwencyjny - zatrzymujemy się przy pierwszym działającym
+            for (const model of models) {
+                const works = await testModel(model);
+                if (works) {
+                    break; // Znaleźliśmy działający model
+                }
+                await new Promise(resolve => setTimeout(resolve, 500)); // Krótka przerwa
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Rozpocznij test wszystkich modeli';
+            
+            if (!workingModel) {
+                document.getElementById('winner').innerHTML = `
+                    <h2>❌ Żaden model nie działa!</h2>
+                    <p>Sprawdź czy klucz API jest poprawnie skonfigurowany w Netlify.</p>
+                `;
+                document.getElementById('winner').style.display = 'block';
+            }
+        }
+        
+        function showWinner(modelName, responseTime) {
+            const winnerDiv = document.getElementById('winner');
+            winnerDiv.innerHTML = `
+                <h2>🎉 Znaleziono działający model!</h2>
+                <p><strong>Model:</strong> ${modelName}</p>
+                <p><strong>Czas odpowiedzi:</strong> ${responseTime}ms</p>
+                <p>Ten model zostanie ustawiony jako domyślny w aplikacji.</p>
+                <button onclick="updateDefaultModel('${modelName}')">
+                    Zaktualizuj konfigurację
+                </button>
+            `;
+            winnerDiv.style.display = 'block';
+        }
+        
+        async function updateDefaultModel(modelName) {
+            alert(`Model ${modelName} zostanie ustawiony jako domyślny.\n\nZaktualizuj plik gemini-generate.js linię 51:\nconst selectedModel = model || '${modelName}';`);
+            
+            // Skopiuj nazwę modelu do schowka
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(modelName);
+                alert('Nazwa modelu skopiowana do schowka!');
+            }
+        }
+        
+        // Test pojedynczego modelu po kliknięciu
+        document.getElementById('results').addEventListener('click', async (e) => {
+            const modelTest = e.target.closest('.model-test');
+            if (modelTest && e.target.classList.contains('model-name')) {
+                const modelName = e.target.textContent;
+                modelTest.remove();
+                await testModel(modelName);
+            }
+        });
+    </script>
+</body>
+</html>

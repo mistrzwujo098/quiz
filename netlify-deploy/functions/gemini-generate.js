@@ -47,59 +47,108 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Wywołaj Gemini API - domyślnie używamy modelu gemini-2.0-flash-exp
-    const selectedModel = model || 'gemini-2.0-flash-exp';
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature,
-            maxOutputTokens: maxTokens,
-            topK,
-            topP
-          },
-          safetySettings: safetySettings || [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_NONE"
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH",
-              threshold: "BLOCK_NONE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_NONE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_NONE"
-            }
-          ]
-        })
+    // Lista modeli do wypróbowania w kolejności priorytetowej
+    const modelsToTry = model ? [model] : [
+      'gemini-2.5-flash-lite-preview-06-17',
+      'gemini-2.5-flash-preview-05-20',
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+      'gemini-2.5-pro-preview-05-06',
+      'gemini-2.0-flash-exp', // fallback do 2.0
+      'gemini-pro' // ostatni fallback
+    ];
+    
+    let lastError = null;
+    let successResponse = null;
+    let usedModel = null;
+    
+    // Próbuj modele po kolei
+    for (const modelName of modelsToTry) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{ text: prompt }]
+              }],
+              generationConfig: {
+                temperature,
+                maxOutputTokens: maxTokens,
+                topK,
+                topP
+              },
+              safetySettings: safetySettings || [
+                {
+                  category: "HARM_CATEGORY_HARASSMENT",
+                  threshold: "BLOCK_NONE"
+                },
+                {
+                  category: "HARM_CATEGORY_HATE_SPEECH",
+                  threshold: "BLOCK_NONE"
+                },
+                {
+                  category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                  threshold: "BLOCK_NONE"
+                },
+                {
+                  category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                  threshold: "BLOCK_NONE"
+                }
+              ]
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Sukces! Dodaj informację o użytym modelu
+          data._usedModel = modelName;
+          successResponse = data;
+          usedModel = modelName;
+          console.log(`Successfully used model: ${modelName}`);
+          break; // Znaleźliśmy działający model
+        } else {
+          // Model nie działa, zapisz błąd i próbuj następny
+          lastError = {
+            model: modelName,
+            status: response.status,
+            error: data
+          };
+          console.log(`Model ${modelName} failed with status ${response.status}`);
+        }
+      } catch (error) {
+        // Błąd sieci lub inny, próbuj następny model
+        lastError = {
+          model: modelName,
+          error: error.message
+        };
+        console.log(`Model ${modelName} error: ${error.message}`);
       }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
+    }
+    
+    // Jeśli znaleźliśmy działający model
+    if (successResponse) {
       return {
-        statusCode: response.status,
+        statusCode: 200,
         headers,
-        body: JSON.stringify(data)
+        body: JSON.stringify(successResponse)
       };
     }
-
+    
+    // Żaden model nie zadziałał
     return {
-      statusCode: 200,
+      statusCode: 503,
       headers,
-      body: JSON.stringify(data)
+      body: JSON.stringify({
+        error: 'All models failed',
+        message: 'None of the Gemini models responded successfully',
+        triedModels: modelsToTry,
+        lastError: lastError
+      })
     };
 
   } catch (error) {
