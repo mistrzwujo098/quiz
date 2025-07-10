@@ -2,6 +2,8 @@
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/mistrzwujo098/quiz)
 
+**💡 Używa Gemini 2.0 Flash** - najnowszy model AI do analizy arkuszy CKE
+
 ## 🚀 Funkcje
 
 - ✅ Import arkuszy CKE z AI

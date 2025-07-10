@@ -25,7 +25,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { prompt, temperature = 0.7, maxTokens = 2048, topK = 40, topP = 0.95, safetySettings } = JSON.parse(event.body);
+    const { prompt, temperature = 0.7, maxTokens = 2048, topK = 40, topP = 0.95, safetySettings, model } = JSON.parse(event.body);
 
     if (!prompt) {
       return {
@@ -47,9 +47,10 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Wywołaj Gemini API
+    // Wywołaj Gemini API - domyślnie używamy modelu gemini-2.0-flash-exp
+    const selectedModel = model || 'gemini-2.0-flash-exp';
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

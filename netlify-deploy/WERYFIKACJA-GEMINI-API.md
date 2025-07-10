@@ -1,5 +1,8 @@
 # 🔍 Weryfikacja połączenia z Gemini API na Netlify
 
+## ⚡ Model AI
+Aplikacja używa **Gemini 2.0 Flash** - najnowszy, szybki model do analizy dokumentów CKE.
+
 ## 📋 Lista kontrolna
 
 ### 1. **Sprawdzenie konfiguracji Netlify**

@@ -87,6 +87,8 @@
             color: #87ceeb;
         }
     </style>
+    <!-- Załaduj skrypt naprawczy jako pierwszy -->
+    <script src="/js/fix-test-errors.js"></script>
 </head>
 <body>
     <h1>🧪 Test połączenia z Gemini API</h1>
@@ -264,10 +266,11 @@
             resultDiv.innerHTML = '<div class="loader"></div> Ładowanie AI Grader...';
             
             try {
-                // Załaduj potrzebne moduły
+                // Załaduj potrzebne moduły - najpierw zależności
                 const scriptsToLoad = [
-                    '/js/step-grading-system.js',
+                    '/js/api-client.js',
                     '/js/cke-parser-system.js',
+                    '/js/step-grading-system.js',
                     '/js/ai-grader.js'
                 ];
                 
