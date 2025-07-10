@@ -34,39 +34,65 @@ if (typeof StepGradingSystem === 'undefined') {
 
 // Upewnij się, że APIClient używa właściwego endpointu
 if (window.APIClient) {
-    const originalGenerateContent = window.APIClient.prototype.generateContent;
-    window.APIClient.prototype.generateContent = async function(prompt, options = {}) {
-        // Przekieruj na bezpośrednie wywołanie jeśli to Netlify
-        if (window.location.hostname.includes('netlify')) {
-            const response = await fetch('/.netlify/functions/gemini-generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    prompt: prompt,
-                    temperature: options.temperature || 0.7,
-                    maxTokens: options.maxTokens || 2048
-                    // Nie wymuszamy modelu - niech funkcja wybierze najlepszy
-                })
-            });
+    // APIClient to już instancja, nie klasa
+    const originalGenerateContent = window.APIClient.generateContent;
+    window.APIClient.generateContent = async function(prompt, options = {}) {
+        console.log('=== APIClient.generateContent called ===');
+        console.log('Prompt:', prompt.substring(0, 100) + '...');
+        try {
+            // Najpierw spróbuj oryginalnej metody
+            const result = await originalGenerateContent.call(this, prompt, options);
+            console.log('API response format:', typeof result, result);
+            return result;
+        } catch (error) {
+            console.error('Original API call failed:', error);
             
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status}`);
+            // Jeśli to Netlify, spróbuj bezpośredniego wywołania
+            if (window.location.hostname.includes('netlify')) {
+                try {
+                    const response = await fetch('/.netlify/functions/gemini-generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            prompt: prompt,
+                            temperature: options.temperature || 0.7,
+                            maxTokens: options.maxTokens || 2048
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('Netlify function error:', errorData);
+                        throw new Error(`API Error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Netlify function response:', data);
+                    
+                    // Zwróć w formacie zgodnym z APIClient
+                    if (data.candidates && data.candidates[0]) {
+                        const text = data.candidates[0].content.parts[0].text;
+                        console.log('Returning formatted response:', { text: text });
+                        return { text: text, raw: data };
+                    }
+                    
+                    // Jeśli data ma już właściwość text
+                    if (data.text) {
+                        console.log('Response already has text property:', data);
+                        return data;
+                    }
+                    
+                    throw new Error('No response from API');
+                } catch (fallbackError) {
+                    console.error('Fallback API call also failed:', fallbackError);
+                    throw fallbackError;
+                }
             }
             
-            const data = await response.json();
-            
-            // Zwróć sam tekst odpowiedzi
-            if (data.candidates && data.candidates[0]) {
-                return data.candidates[0].content.parts[0].text;
-            }
-            
-            throw new Error('No response from API');
+            throw error;
         }
-        
-        // W przeciwnym razie użyj oryginalnej metody
-        return originalGenerateContent.call(this, prompt, options);
     };
 }
 

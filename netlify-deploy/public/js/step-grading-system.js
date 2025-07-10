@@ -87,7 +87,9 @@ class StepGradingSystem {
             
             try {
                 const response = await this.geminiAPI.generateContent(prompt);
-                return JSON.parse(response);
+                // APIClient zwraca obiekt z właściwością text
+                const responseText = typeof response === 'string' ? response : response.text;
+                return JSON.parse(responseText);
             } catch (error) {
                 console.error('Błąd generowania planu:', error);
                 return this.createFallbackPlan(task);
@@ -171,7 +173,9 @@ class StepGradingSystem {
         
         try {
             const response = await this.geminiAPI.generateContent(prompt);
-            return JSON.parse(response);
+            // APIClient zwraca obiekt z właściwością text
+            const responseText = typeof response === 'string' ? response : response.text;
+            return JSON.parse(responseText);
         } catch (error) {
             console.error('Błąd analizy kroku:', error);
             return {

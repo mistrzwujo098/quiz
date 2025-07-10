@@ -629,7 +629,8 @@ class CKEParserSystem {
             }
             
             const response = await this.geminiAPI.generateContent(prompt);
-            const structured = JSON.parse(response);
+            const responseText = typeof response === 'string' ? response : response.text;
+            const structured = JSON.parse(responseText);
             
             // Dodatkowa analiza dla lepszego mapowania obrazków
             structured.tasks = await this.mapImagesToTasks(

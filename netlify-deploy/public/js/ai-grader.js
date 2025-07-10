@@ -295,7 +295,9 @@ class AIGrader {
         
         try {
             const response = await this.geminiAPI.generateContent(prompt);
-            return JSON.parse(response);
+            // APIClient zwraca obiekt z właściwością text
+            const responseText = typeof response === 'string' ? response : response.text;
+            return JSON.parse(responseText);
         } catch (error) {
             console.error('Błąd oceniania AI:', error);
             return {
@@ -436,7 +438,9 @@ class AIGrader {
         
         try {
             const response = await this.geminiAPI.generateContent(prompt);
-            return JSON.parse(response);
+            // APIClient zwraca obiekt z właściwością text
+            const responseText = typeof response === 'string' ? response : response.text;
+            return JSON.parse(responseText);
         } catch (error) {
             return {
                 similarity: 0,
@@ -666,6 +670,10 @@ class AIGrader {
     
     parseAIAnalysis(aiResponse) {
         try {
+            // Obsłuż przypadek gdy aiResponse to już obiekt
+            if (typeof aiResponse === 'object' && aiResponse !== null) {
+                return aiResponse.text ? JSON.parse(aiResponse.text) : aiResponse;
+            }
             return JSON.parse(aiResponse);
         } catch {
             return {};
@@ -866,7 +874,8 @@ class AIGrader {
         
         try {
             const response = await this.geminiAPI.generateContent(prompt);
-            const recommendations = response.split('\n')
+            const responseText = typeof response === 'string' ? response : response.text;
+            const recommendations = responseText.split('\n')
                 .filter(line => line.trim())
                 .map(line => ({
                     type: 'ai-suggestion',
