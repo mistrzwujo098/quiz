@@ -8,6 +8,13 @@ class StepGradingSystem {
         this.geminiAPI = null; // Będzie inicjalizowane później
         this.currentTask = null;
         this.gradingHistory = [];
+        
+        // Próba inicjalizacji API przy tworzeniu
+        if (window.GeminiAPI) {
+            this.geminiAPI = window.GeminiAPI;
+        } else if (window.APIClient) {
+            this.geminiAPI = window.APIClient;
+        }
     }
 
     /**
@@ -19,16 +26,14 @@ class StepGradingSystem {
         // Analiza zadania i rozbicie na kroki
         const gradingPlan = await this.createGradingPlan(task);
         
-        // Wstępna analiza odpowiedzi ucznia
+        // Analiza odpowiedzi ucznia
         const initialAnalysis = await this.analyzeStudentAnswer(studentAnswer, gradingPlan);
         
         return {
-            task: task,
-            gradingPlan: gradingPlan,
-            studentAnswer: studentAnswer,
-            initialAnalysis: initialAnalysis,
-            suggestedScore: initialAnalysis.totalPoints,
-            maxScore: task.punkty
+            task,
+            gradingPlan,
+            studentAnswer,
+            initialAnalysis
         };
     }
 
@@ -36,78 +41,64 @@ class StepGradingSystem {
      * Tworzenie planu oceniania na podstawie zadania
      */
     async createGradingPlan(task) {
-        // Jeśli zadanie ma już schemat oceniania z CKE
-        if (task.schematOceniania) {
-            return this.adaptCKEScheme(task.schematOceniania);
+        // Sprawdź czy mamy schemat CKE
+        if (task.schematOceniania || task.kryteriaOceniania) {
+            return this.adaptCKEScheme(task.schematOceniania || task.kryteriaOceniania);
         }
         
-        // Generowanie schematu przy pomocy AI
-        const prompt = `
-        Przeanalizuj zadanie egzaminacyjne i utwórz szczegółowy schemat oceniania.
-        
-        ZADANIE:
-        ${task.tresc}
-        
-        Typ zadania: ${task.typ}
-        Maksymalna liczba punktów: ${task.punkty}
-        Przedmiot: ${task.przedmiot}
-        ${task.kryteriaOceniania ? `Kryteria CKE: ${JSON.stringify(task.kryteriaOceniania)}` : ''}
-        
-        Utwórz schemat oceniania zawierający:
-        1. Listę kroków rozwiązania z punktacją
-        2. Alternatywne metody rozwiązania
-        3. Typowe błędy i ich konsekwencje punktowe
-        4. Wymagania dla pełnej punktacji
-        
-        Zwróć w formacie JSON:
-        {
-            "steps": [
-                {
-                    "id": "step1",
-                    "name": "Nazwa kroku",
-                    "description": "Szczegółowy opis",
-                    "points": 1,
-                    "required": true/false,
-                    "dependencies": ["id kroków wymaganych wcześniej"],
-                    "acceptableForms": ["lista akceptowalnych form odpowiedzi"],
-                    "commonErrors": [
-                        {
-                            "description": "opis błędu",
-                            "penalty": -0.5,
-                            "fatal": false
-                        }
-                    ]
-                }
-            ],
-            "alternativePaths": [
-                {
-                    "name": "Alternatywna metoda",
-                    "steps": ["step1_alt", "step2_alt"]
-                }
-            ],
-            "globalCriteria": {
-                "requiresUnits": true/false,
-                "requiresJustification": true/false,
-                "precisionRequired": "liczba miejsc po przecinku",
-                "formattingRules": ["lista zasad formatowania"]
+        // Jeśli nie ma schematu, użyj AI do analizy
+        if (this.geminiAPI) {
+            const prompt = `
+            Przeanalizuj to zadanie egzaminacyjne i stwórz schemat oceniania krokowego.
+            
+            Zadanie: ${task.tresc}
+            Typ: ${task.typ}
+            Punkty: ${task.punkty}
+            Przedmiot: ${task.przedmiot}
+            
+            Stwórz schemat oceniania w formacie JSON zawierający:
+            {
+                "steps": [
+                    {
+                        "id": "step_1",
+                        "name": "nazwa kroku",
+                        "description": "opis co powinno być wykonane",
+                        "points": liczba_punktów,
+                        "required": true/false,
+                        "dependencies": ["id_poprzedniego_kroku"],
+                        "acceptableForms": ["alternatywne formy zapisu"],
+                        "commonErrors": ["typowe błędy"]
+                    }
+                ],
+                "alternativePaths": [
+                    {
+                        "name": "nazwa alternatywnej metody",
+                        "steps": ["step_ids"]
+                    }
+                ],
+                "globalCriteria": {
+                    "requiresUnits": true/false,
+                    "requiresJustification": true/false,
+                    "precisionRequired": liczba_miejsc_po_przecinku
+                },
+                "maxPoints": ${task.punkty}
+            }
+            `;
+            
+            try {
+                const response = await this.geminiAPI.generateContent(prompt);
+                return JSON.parse(response);
+            } catch (error) {
+                console.error('Błąd generowania planu:', error);
+                return this.createFallbackPlan(task);
             }
         }
-        `;
         
-        try {
-            const response = await this.geminiAPI.generateContent(prompt);
-            const plan = JSON.parse(response);
-            
-            // Walidacja i uzupełnienie planu
-            return this.validateGradingPlan(plan, task);
-        } catch (error) {
-            console.error('Błąd generowania planu:', error);
-            return this.createFallbackPlan(task);
-        }
+        return this.createFallbackPlan(task);
     }
 
     /**
-     * Analiza odpowiedzi ucznia
+     * Analiza odpowiedzi ucznia według planu
      */
     async analyzeStudentAnswer(answer, gradingPlan) {
         const analysis = {
@@ -115,8 +106,8 @@ class StepGradingSystem {
             missingSteps: [],
             errors: [],
             totalPoints: 0,
-            feedback: [],
-            confidence: 0
+            confidence: 0,
+            feedback: []
         };
         
         // Analiza każdego kroku
@@ -125,8 +116,8 @@ class StepGradingSystem {
             
             if (stepAnalysis.found) {
                 analysis.identifiedSteps.push({
-                    ...stepAnalysis,
-                    step: step
+                    step: step,
+                    ...stepAnalysis
                 });
                 analysis.totalPoints += stepAnalysis.pointsAwarded;
             } else if (step.required) {
@@ -231,373 +222,57 @@ class StepGradingSystem {
     }
 
     /**
-     * Interfejs graficzny oceniania krokowego
+     * Obliczanie końcowej punktacji
      */
-    renderGradingInterface(gradingData) {
-        const { task, gradingPlan, studentAnswer, initialAnalysis } = gradingData;
+    calculateFinalScore(analysis, gradingPlan) {
+        let score = analysis.totalPoints;
         
-        return `
-            <div class="step-grading-container">
-                <div class="task-info">
-                    <h3>Zadanie ${task.numer || task.id}</h3>
-                    <div class="task-content">${task.tresc}</div>
-                    ${task.obrazki ? `<div class="task-images">${this.renderImages(task.obrazki)}</div>` : ''}
-                    <div class="max-points">Maksymalna liczba punktów: ${task.punkty}</div>
-                </div>
-                
-                <div class="student-answer-section">
-                    <h4>Odpowiedź ucznia:</h4>
-                    <div class="student-answer">${studentAnswer}</div>
-                </div>
-                
-                <div class="grading-section">
-                    <h4>Ocena krokowa:</h4>
-                    <div class="grading-steps">
-                        ${gradingPlan.steps.map((step, index) => this.renderGradingStep(
-                            step, 
-                            initialAnalysis.identifiedSteps.find(s => s.step.id === step.id),
-                            index
-                        )).join('')}
-                    </div>
-                    
-                    <div class="global-criteria">
-                        <h5>Kryteria ogólne:</h5>
-                        ${this.renderGlobalCriteria(gradingPlan.globalCriteria, initialAnalysis.errors)}
-                    </div>
-                    
-                    <div class="alternative-methods">
-                        ${gradingPlan.alternativePaths.length > 0 ? `
-                            <h5>Alternatywne metody rozwiązania:</h5>
-                            ${this.renderAlternativePaths(gradingPlan.alternativePaths)}
-                        ` : ''}
-                    </div>
-                </div>
-                
-                <div class="grading-summary">
-                    <div class="ai-analysis">
-                        <h4>Analiza AI:</h4>
-                        <div class="confidence">Pewność oceny: ${Math.round(initialAnalysis.confidence)}%</div>
-                        <div class="suggested-score">
-                            Sugerowana punktacja: 
-                            <span class="score">${initialAnalysis.totalPoints} / ${task.punkty}</span>
-                        </div>
-                        <div class="feedback">
-                            <h5>Feedback:</h5>
-                            <ul>
-                                ${initialAnalysis.feedback.map(f => `<li>${f}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="manual-override">
-                        <h4>Korekta ręczna:</h4>
-                        <div class="final-score-input">
-                            <label>Ostateczna punktacja:</label>
-                            <input type="number" 
-                                   id="final-score" 
-                                   min="0" 
-                                   max="${task.punkty}" 
-                                   step="0.5" 
-                                   value="${initialAnalysis.totalPoints}">
-                            <span>/ ${task.punkty} pkt</span>
-                        </div>
-                        <textarea id="teacher-comment" 
-                                  placeholder="Dodatkowy komentarz nauczyciela..."
-                                  rows="3"></textarea>
-                    </div>
-                    
-                    <div class="grading-actions">
-                        <button onclick="StepGradingSystem.saveGrading()" class="btn-primary">
-                            💾 Zapisz ocenę
-                        </button>
-                        <button onclick="StepGradingSystem.requestAIReview()" class="btn-secondary">
-                            🤖 Ponowna analiza AI
-                        </button>
-                        <button onclick="StepGradingSystem.compareWithModelAnswer()" class="btn-secondary">
-                            📊 Porównaj z wzorem
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Renderowanie pojedynczego kroku oceniania
-     */
-    renderGradingStep(step, analysis, index) {
-        const isIdentified = analysis && analysis.found;
-        const quality = analysis?.quality || 'not_found';
-        const points = analysis?.pointsAwarded || 0;
+        // Aplikuj kary za błędy globalne
+        analysis.errors.forEach(error => {
+            if (!error.fatal) {
+                score += error.penalty || 0;
+            }
+        });
         
-        return `
-            <div class="grading-step ${isIdentified ? 'identified' : 'missing'}" data-step-id="${step.id}">
-                <div class="step-header">
-                    <input type="checkbox" 
-                           id="step-${index}" 
-                           ${isIdentified ? 'checked' : ''}
-                           onchange="StepGradingSystem.toggleStep('${step.id}', this.checked)">
-                    <label for="step-${index}">
-                        <span class="step-name">${step.name}</span>
-                        <span class="step-points">(${step.points} pkt)</span>
-                    </label>
-                </div>
-                
-                <div class="step-details">
-                    <div class="step-description">${step.description}</div>
-                    
-                    ${isIdentified ? `
-                        <div class="step-analysis">
-                            <div class="quality-indicator quality-${quality}">
-                                Jakość: ${this.translateQuality(quality)}
-                            </div>
-                            <div class="step-location">📍 ${analysis.location}</div>
-                            <div class="step-content">
-                                <em>"${analysis.content}"</em>
-                            </div>
-                            ${analysis.errors.length > 0 ? `
-                                <div class="step-errors">
-                                    ⚠️ Błędy: ${analysis.errors.join(', ')}
-                                </div>
-                            ` : ''}
-                        </div>
-                    ` : `
-                        <div class="step-missing">
-                            ❌ Krok nie został zidentyfikowany w odpowiedzi
-                        </div>
-                    `}
-                    
-                    <div class="step-scoring">
-                        <label>Punkty:</label>
-                        <input type="number" 
-                               min="0" 
-                               max="${step.points}" 
-                               step="0.5" 
-                               value="${points}"
-                               onchange="StepGradingSystem.updateStepScore('${step.id}', this.value)">
-                        <span>/ ${step.points}</span>
-                    </div>
-                    
-                    ${step.acceptableForms.length > 0 ? `
-                        <div class="acceptable-forms">
-                            <details>
-                                <summary>Akceptowalne formy</summary>
-                                <ul>
-                                    ${step.acceptableForms.map(form => `<li>${form}</li>`).join('')}
-                                </ul>
-                            </details>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
+        // Upewnij się, że wynik jest w zakresie 0 do max
+        return Math.max(0, Math.min(gradingPlan.maxPoints, score));
     }
 
     /**
-     * Renderowanie kryteriów globalnych
-     */
-    renderGlobalCriteria(criteria, errors) {
-        return `
-            <div class="global-criteria-list">
-                ${criteria.requiresUnits ? `
-                    <div class="criterion ${errors.find(e => e.type === 'missing_units') ? 'error' : 'ok'}">
-                        <input type="checkbox" 
-                               id="units-check" 
-                               ${!errors.find(e => e.type === 'missing_units') ? 'checked' : ''}>
-                        <label for="units-check">Jednostki w odpowiedzi</label>
-                    </div>
-                ` : ''}
-                
-                ${criteria.requiresJustification ? `
-                    <div class="criterion ${errors.find(e => e.type === 'missing_justification') ? 'error' : 'ok'}">
-                        <input type="checkbox" 
-                               id="justification-check" 
-                               ${!errors.find(e => e.type === 'missing_justification') ? 'checked' : ''}>
-                        <label for="justification-check">Uzasadnienie rozwiązania</label>
-                    </div>
-                ` : ''}
-                
-                ${criteria.precisionRequired ? `
-                    <div class="criterion">
-                        <label>Dokładność obliczeń: ${criteria.precisionRequired} miejsc po przecinku</label>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    }
-
-    /**
-     * Generowanie feedbacku dla ucznia
+     * Generowanie feedbacku
      */
     async generateFeedback(analysis, gradingPlan) {
         const feedback = [];
         
-        // Feedback za wykonane kroki
-        for (const step of analysis.identifiedSteps) {
+        // Feedback za zidentyfikowane kroki
+        analysis.identifiedSteps.forEach(step => {
             if (step.quality === 'perfect') {
-                feedback.push(`✅ Doskonale wykonany ${step.step.name}`);
+                feedback.push(`✅ ${step.step.name} - wykonane doskonale (${step.pointsAwarded}/${step.step.points} pkt)`);
             } else if (step.quality === 'good') {
-                feedback.push(`👍 Dobrze wykonany ${step.step.name}`);
+                feedback.push(`✓ ${step.step.name} - wykonane dobrze (${step.pointsAwarded}/${step.step.points} pkt)`);
             } else if (step.quality === 'partial') {
-                feedback.push(`⚠️ Częściowo wykonany ${step.step.name}: ${step.errors.join(', ')}`);
+                feedback.push(`⚠️ ${step.step.name} - wykonane częściowo (${step.pointsAwarded}/${step.step.points} pkt)`);
             }
-        }
+        });
         
         // Feedback za brakujące kroki
-        for (const step of analysis.missingSteps) {
-            feedback.push(`❌ Brak: ${step.name} (-${step.points} pkt)`);
-        }
+        analysis.missingSteps.forEach(step => {
+            if (step.required) {
+                feedback.push(`❌ Brak: ${step.name} (0/${step.points} pkt)`);
+            }
+        });
         
         // Feedback za błędy globalne
-        for (const error of analysis.errors) {
+        analysis.errors.forEach(error => {
             feedback.push(`⚠️ ${error.description} (${error.penalty} pkt)`);
-        }
-        
-        // Dodatkowe wskazówki AI
-        if (this.geminiAPI && analysis.totalPoints < gradingPlan.maxPoints * 0.8) {
-            const tips = await this.generateImprovementTips(analysis, gradingPlan);
-            feedback.push(...tips);
-        }
+        });
         
         return feedback;
     }
 
     /**
-     * Generowanie wskazówek do poprawy
+     * Obliczanie pewności oceny
      */
-    async generateImprovementTips(analysis, gradingPlan) {
-        const prompt = `
-        Na podstawie analizy odpowiedzi ucznia, wygeneruj 2-3 konkretne wskazówki, 
-        jak poprawić rozwiązanie.
-        
-        Brakujące kroki: ${analysis.missingSteps.map(s => s.name).join(', ')}
-        Błędy: ${analysis.errors.map(e => e.description).join(', ')}
-        
-        Wskazówki powinny być konstruktywne i pomocne.
-        `;
-        
-        try {
-            const response = await this.geminiAPI.generateContent(prompt);
-            return response.split('\n').filter(tip => tip.trim().length > 0);
-        } catch (error) {
-            return ['💡 Przeanalizuj ponownie treść zadania', '💡 Sprawdź obliczenia'];
-        }
-    }
-
-    /**
-     * Porównanie z modelową odpowiedzią
-     */
-    async compareWithModelAnswer(studentAnswer, modelAnswer) {
-        const prompt = `
-        Porównaj odpowiedź ucznia z modelową odpowiedzią.
-        
-        ODPOWIEDŹ UCZNIA:
-        ${studentAnswer}
-        
-        ODPOWIEDŹ MODELOWA:
-        ${modelAnswer}
-        
-        Wskaż:
-        1. Główne różnice
-        2. Brakujące elementy
-        3. Elementy dodatkowe (jeśli poprawne)
-        4. Alternatywne podejścia ucznia
-        
-        Zwróć analizę w formacie JSON.
-        `;
-        
-        try {
-            const response = await this.geminiAPI.generateContent(prompt);
-            return JSON.parse(response);
-        } catch (error) {
-            console.error('Błąd porównania:', error);
-            return null;
-        }
-    }
-
-    /**
-     * Zapisywanie oceny
-     */
-    saveGrading(taskId, studentId, grading) {
-        const record = {
-            taskId,
-            studentId,
-            timestamp: new Date().toISOString(),
-            automaticScore: grading.initialAnalysis.totalPoints,
-            manualScore: parseFloat(document.getElementById('final-score')?.value || grading.initialAnalysis.totalPoints),
-            teacherComment: document.getElementById('teacher-comment')?.value || '',
-            gradingDetails: grading,
-            confidence: grading.initialAnalysis.confidence
-        };
-        
-        // Zapisz w localStorage
-        const history = JSON.parse(localStorage.getItem('gradingHistory') || '[]');
-        history.push(record);
-        localStorage.setItem('gradingHistory', JSON.stringify(history));
-        
-        // Event dla integracji z systemem
-        window.dispatchEvent(new CustomEvent('gradingSaved', { detail: record }));
-        
-        return record;
-    }
-
-    /**
-     * Statyczne metody dla interfejsu
-     */
-    static instance = null;
-    
-    static getInstance() {
-        if (!StepGradingSystem.instance) {
-            StepGradingSystem.instance = new StepGradingSystem();
-        }
-        return StepGradingSystem.instance;
-    }
-    
-    static async saveGrading() {
-        const instance = StepGradingSystem.getInstance();
-        const grading = instance.currentGrading;
-        if (grading) {
-            instance.saveGrading(grading.task.id, 'current-student', grading);
-            alert('Ocena została zapisana!');
-        }
-    }
-    
-    static async requestAIReview() {
-        const instance = StepGradingSystem.getInstance();
-        alert('Ponowna analiza AI w toku...');
-        // Implementacja ponownej analizy
-    }
-    
-    static async compareWithModelAnswer() {
-        const instance = StepGradingSystem.getInstance();
-        // Implementacja porównania
-        alert('Funkcja porównania z modelem w przygotowaniu');
-    }
-    
-    static toggleStep(stepId, checked) {
-        // Implementacja przełączania kroków
-        console.log(`Krok ${stepId}: ${checked ? 'zaznaczony' : 'odznaczony'}`);
-    }
-    
-    static updateStepScore(stepId, score) {
-        // Implementacja aktualizacji punktów
-        console.log(`Krok ${stepId}: ${score} punktów`);
-    }
-
-    /**
-     * Pomocnicze funkcje
-     */
-    translateQuality(quality) {
-        const translations = {
-            'perfect': 'Doskonała',
-            'good': 'Dobra',
-            'partial': 'Częściowa',
-            'poor': 'Słaba',
-            'not_found': 'Nie znaleziono'
-        };
-        return translations[quality] || quality;
-    }
-
     calculateConfidence(analysis) {
         let confidence = 100;
         
@@ -614,6 +289,56 @@ class StepGradingSystem {
     }
 
     /**
+     * Sprawdzanie obecności jednostek
+     */
+    async checkForUnits(answer) {
+        const unitPatterns = [
+            /\d+\s*(?:m|cm|mm|km|kg|g|mg|s|min|h|°C|K|J|W|N|Pa|V|A|Ω)(?:\b|²|³)/,
+            /\d+\s*(?:metr|centymetr|kilogram|gram|sekund|minut|godzin)/i
+        ];
+        
+        return unitPatterns.some(pattern => pattern.test(answer));
+    }
+
+    /**
+     * Sprawdzanie obecności uzasadnienia
+     */
+    async checkForJustification(answer) {
+        const justificationIndicators = [
+            'ponieważ', 'dlatego', 'gdyż', 'z powodu',
+            'wynika to z', 'świadczy o tym', 'dowodzi',
+            'zatem', 'więc', 'stąd'
+        ];
+        
+        return justificationIndicators.some(indicator => 
+            answer.toLowerCase().includes(indicator)
+        );
+    }
+
+    /**
+     * Sprawdzanie precyzji obliczeń
+     */
+    async checkPrecision(answer, requiredPrecision) {
+        const errors = [];
+        const numberPattern = /\d+\.?\d*/g;
+        const numbers = answer.match(numberPattern) || [];
+        
+        numbers.forEach(num => {
+            const decimalPlaces = (num.split('.')[1] || '').length;
+            if (decimalPlaces < requiredPrecision) {
+                errors.push({
+                    type: 'insufficient_precision',
+                    description: `Liczba ${num} powinna mieć ${requiredPrecision} miejsc po przecinku`,
+                    penalty: -0.5,
+                    fatal: false
+                });
+            }
+        });
+        
+        return errors;
+    }
+
+    /**
      * Adaptacja schematu CKE
      */
     adaptCKEScheme(ckeScheme) {
@@ -625,7 +350,7 @@ class StepGradingSystem {
                 requiresJustification: false,
                 precisionRequired: null
             },
-            maxPoints: ckeScheme.maxPoints
+            maxPoints: ckeScheme.maxPoints || this.currentTask.punkty
         };
         
         // Konwersja kroków
@@ -673,58 +398,222 @@ class StepGradingSystem {
     }
 
     /**
-     * Sprawdzanie jednostek
+     * Otwiera interfejs oceniania krokowego
      */
-    async checkForUnits(answer) {
-        const unitPatterns = [
-            /\d+\s*(m|cm|mm|km|kg|g|mg|s|min|h|°C|K|J|W|N|Pa|V|A|Ω)(\b|²|³)/,
-            /\d+\s*(metr|centymetr|kilogram|gram|sekund|minut|godzin)/i
-        ];
+    openStepGrading() {
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="glass-dark p-8 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">
+                        <i class="fas fa-tasks text-blue-400 mr-2"></i>
+                        Ocenianie krokowe
+                    </h2>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                
+                <div class="grid gap-6">
+                    <div class="card-modern">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-clipboard-check text-green-400 mr-2"></i>
+                            Wybierz zadanie do oceny
+                        </h3>
+                        <p class="text-gray-400 mb-4">
+                            System automatycznie rozłoży zadanie na kroki i przydzieli punktację częściową
+                        </p>
+                        <div id="task-selector" class="space-y-2">
+                            <p class="text-sm text-gray-500">Ładowanie zadań...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card-modern">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-history text-yellow-400 mr-2"></i>
+                            Historia oceniania
+                        </h3>
+                        <div id="grading-history" class="space-y-2">
+                            <p class="text-sm text-gray-500">Brak wcześniejszych ocen</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 p-4 bg-blue-600/20 rounded-lg">
+                    <p class="text-sm text-gray-300">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Ocenianie krokowe pozwala na przyznawanie punktów częściowych za każdy etap rozwiązania,
+                        zgodnie ze schematami oceniania CKE.
+                    </p>
+                </div>
+            </div>
+        `;
         
-        return unitPatterns.some(pattern => pattern.test(answer));
+        document.body.appendChild(modal);
+        
+        // Załaduj dostępne zadania
+        this.loadTasksForGrading();
+        
+        return true;
     }
 
     /**
-     * Sprawdzanie uzasadnienia
+     * Interfejs graficzny oceniania krokowego
      */
-    async checkForJustification(answer) {
-        const justificationIndicators = [
-            'ponieważ', 'dlatego', 'gdyż', 'bo', 'wynika to z',
-            'na podstawie', 'zgodnie z', 'według', 'zatem', 'więc'
-        ];
+    renderGradingInterface(gradingData) {
+        const { task, gradingPlan, studentAnswer, initialAnalysis } = gradingData;
         
-        const lowerAnswer = answer.toLowerCase();
-        return justificationIndicators.some(indicator => lowerAnswer.includes(indicator));
+        return `
+            <div class="step-grading-container">
+                <div class="task-info">
+                    <h3>Zadanie ${task.numer || task.id}</h3>
+                    <div class="task-content">${task.tresc}</div>
+                    ${task.obrazki ? `<div class="task-images">${this.renderImages(task.obrazki)}</div>` : ''}
+                    <div class="max-points">Maksymalna liczba punktów: ${task.punkty}</div>
+                </div>
+                
+                <div class="student-answer-section">
+                    <h4>Odpowiedź ucznia:</h4>
+                    <div class="student-answer">${studentAnswer}</div>
+                </div>
+                
+                <div class="grading-section">
+                    <h4>Ocena krokowa:</h4>
+                    <div class="grading-steps">
+                        ${gradingPlan.steps.map((step, index) => this.renderGradingStep(
+                            step, 
+                            initialAnalysis.identifiedSteps.find(s => s.step.id === step.id),
+                            index
+                        )).join('')}
+                    </div>
+                    
+                    <div class="global-criteria">
+                        <h5>Kryteria ogólne:</h5>
+                        ${this.renderGlobalCriteria(gradingPlan.globalCriteria, initialAnalysis.errors)}
+                    </div>
+                </div>
+                
+                <div class="grading-summary">
+                    <div class="ai-analysis">
+                        <h4>Analiza AI:</h4>
+                        <div class="confidence">Pewność oceny: ${Math.round(initialAnalysis.confidence)}%</div>
+                        <div class="suggested-score">
+                            Sugerowana punktacja: 
+                            <span class="score">${initialAnalysis.totalPoints} / ${task.punkty}</span>
+                        </div>
+                        <div class="feedback">
+                            <h5>Feedback:</h5>
+                            <ul>
+                                ${initialAnalysis.feedback.map(f => `<li>${f}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     /**
-     * Sprawdzanie dokładności
+     * Renderowanie pojedynczego kroku oceniania
      */
-    async checkPrecision(answer, requiredPrecision) {
-        const errors = [];
-        const numberPattern = /\d+([.,]\d+)?/g;
-        const matches = answer.match(numberPattern);
+    renderGradingStep(step, analysis, index) {
+        const isIdentified = analysis && analysis.found;
+        const quality = analysis?.quality || 'not_found';
+        const points = analysis?.pointsAwarded || 0;
         
-        if (matches) {
-            matches.forEach(match => {
-                const decimalPart = match.split(/[.,]/)[1];
-                if (decimalPart && decimalPart.length < requiredPrecision) {
-                    errors.push({
-                        type: 'insufficient_precision',
-                        description: `Liczba ${match} ma za małą dokładność (wymagane: ${requiredPrecision} miejsc)`,
-                        penalty: -0.5,
-                        fatal: false
-                    });
-                }
-            });
-        }
-        
-        return errors;
+        return `
+            <div class="grading-step ${isIdentified ? 'identified' : 'missing'}">
+                <div class="step-header">
+                    <input type="checkbox" 
+                           id="step_${step.id}" 
+                           ${isIdentified ? 'checked' : ''}
+                           onchange="StepGradingSystem.toggleStep('${step.id}', this.checked)">
+                    <label for="step_${step.id}">
+                        <span class="step-number">${index + 1}.</span>
+                        <span class="step-name">${step.name}</span>
+                        <span class="step-points">${points} / ${step.points} pkt</span>
+                    </label>
+                </div>
+                
+                <div class="step-details">
+                    <p class="step-description">${step.description}</p>
+                    
+                    ${isIdentified ? `
+                        <div class="step-analysis">
+                            <p><strong>Jakość wykonania:</strong> ${this.translateQuality(quality)}</p>
+                            <p><strong>Lokalizacja:</strong> ${analysis.location}</p>
+                            <p><strong>Treść:</strong> <em>${analysis.content}</em></p>
+                            ${analysis.errors.length > 0 ? `
+                                <p><strong>Błędy:</strong></p>
+                                <ul class="errors-list">
+                                    ${analysis.errors.map(e => `<li>${e}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                            <p><strong>Uzasadnienie punktacji:</strong> ${analysis.justification}</p>
+                        </div>
+                        
+                        <div class="manual-score-adjustment">
+                            <label>Korekta punktów:</label>
+                            <input type="number" 
+                                   min="0" 
+                                   max="${step.points}" 
+                                   step="0.5" 
+                                   value="${points}"
+                                   onchange="StepGradingSystem.updateStepScore('${step.id}', this.value)">
+                        </div>
+                    ` : `
+                        <p class="step-not-found">Krok nie został zidentyfikowany w odpowiedzi ucznia</p>
+                    `}
+                </div>
+            </div>
+        `;
     }
 
     /**
-     * Renderowanie obrazków
+     * Renderowanie kryteriów globalnych
      */
+    renderGlobalCriteria(criteria, errors) {
+        return `
+            <div class="global-criteria-list">
+                ${criteria.requiresUnits ? `
+                    <div class="criterion ${errors.some(e => e.type === 'missing_units') ? 'error' : 'ok'}">
+                        <i class="fas ${errors.some(e => e.type === 'missing_units') ? 'fa-times' : 'fa-check'}"></i>
+                        Jednostki w odpowiedzi
+                    </div>
+                ` : ''}
+                
+                ${criteria.requiresJustification ? `
+                    <div class="criterion ${errors.some(e => e.type === 'missing_justification') ? 'error' : 'ok'}">
+                        <i class="fas ${errors.some(e => e.type === 'missing_justification') ? 'fa-times' : 'fa-check'}"></i>
+                        Uzasadnienie rozwiązania
+                    </div>
+                ` : ''}
+                
+                ${criteria.precisionRequired ? `
+                    <div class="criterion ${errors.some(e => e.type === 'insufficient_precision') ? 'error' : 'ok'}">
+                        <i class="fas ${errors.some(e => e.type === 'insufficient_precision') ? 'fa-times' : 'fa-check'}"></i>
+                        Dokładność do ${criteria.precisionRequired} miejsc po przecinku
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    /**
+     * Pomocnicze funkcje UI
+     */
+    translateQuality(quality) {
+        const translations = {
+            'perfect': 'Doskonała',
+            'good': 'Dobra',
+            'partial': 'Częściowa',
+            'poor': 'Słaba',
+            'not_found': 'Nie znaleziono'
+        };
+        return translations[quality] || quality;
+    }
+
     renderImages(images) {
         return images.map((img, index) => `
             <div class="task-image">
@@ -735,93 +624,144 @@ class StepGradingSystem {
     }
 
     /**
-     * Renderowanie alternatywnych ścieżek
+     * Metody statyczne dla UI
      */
-    renderAlternativePaths(paths) {
-        return `
-            <div class="alternative-paths">
-                ${paths.map(path => `
-                    <div class="alt-path">
-                        <strong>${path.name}:</strong>
-                        ${path.steps.join(' → ')}
-                    </div>
-                `).join('')}
-            </div>
-        `;
+    static toggleStep(stepId, checked) {
+        console.log(`Krok ${stepId}: ${checked ? 'zaznaczony' : 'odznaczony'}`);
+    }
+    
+    static updateStepScore(stepId, score) {
+        console.log(`Krok ${stepId}: ${score} punktów`);
     }
 
     /**
-     * Otwiera interfejs oceny krokowej
+     * Ładowanie zadań do oceny
      */
-    openStepGrading() {
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black/80 flex items-center justify-center z-50';
-        modal.innerHTML = `
-            <div class="glass-dark p-8 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">
-                        <i class="fas fa-list-check text-green-400 mr-2"></i>
-                        Ocena Krokowa
-                    </h2>
-                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
-                        <i class="fas fa-times text-2xl"></i>
-                    </button>
+    async loadTasksForGrading() {
+        const taskSelector = document.getElementById('task-selector');
+        if (!taskSelector) return;
+        
+        // Pobierz zadania z bazy
+        const tasks = window.QuizMaster?.currentQuiz?.pytania || [];
+        const openTasks = tasks.filter(t => t.typ === 'otwarte');
+        
+        if (openTasks.length === 0) {
+            taskSelector.innerHTML = '<p class="text-sm text-gray-500">Brak zadań otwartych do oceny</p>';
+            return;
+        }
+        
+        taskSelector.innerHTML = openTasks.map(task => `
+            <div class="task-item p-3 bg-gray-800 rounded hover:bg-gray-700 cursor-pointer" 
+                 onclick="window.stepGrading.selectTaskForGrading(${task.id})">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h4 class="font-semibold">Zadanie ${task.numer || task.id}</h4>
+                        <p class="text-sm text-gray-400 mt-1">${task.tresc.substring(0, 100)}...</p>
+                    </div>
+                    <div class="text-right ml-4">
+                        <span class="text-lg font-bold">${task.punkty} pkt</span>
+                    </div>
                 </div>
-                
-                <div class="grid gap-6">
-                    <div class="card-modern">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas fa-clipboard-check text-blue-400 mr-2"></i>
-                            Oceń rozwiązanie krok po kroku
-                        </h3>
-                        <p class="text-gray-400 mb-4">
-                            Wprowadź rozwiązanie zadania do szczegółowej analizy krokowej
-                        </p>
-                        <button onclick="window.stepGrading.startStepGrading()" 
-                                class="btn-primary">
-                            <i class="fas fa-play mr-2"></i>
-                            Rozpocznij ocenianie
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Wybór zadania do oceny
+     */
+    async selectTaskForGrading(taskId) {
+        const task = window.QuizMaster?.currentQuiz?.pytania.find(p => p.id === taskId);
+        if (!task) return;
+        
+        // Pokaż formularz wprowadzania odpowiedzi
+        const modal = document.querySelector('.fixed');
+        if (modal) {
+            modal.innerHTML = `
+                <div class="glass-dark p-8 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">
+                            <i class="fas fa-tasks text-blue-400 mr-2"></i>
+                            Ocenianie: Zadanie ${task.numer || task.id}
+                        </h2>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-white">
+                            <i class="fas fa-times text-2xl"></i>
                         </button>
                     </div>
                     
-                    <div class="card-modern">
-                        <h3 class="text-xl font-semibold mb-4">
-                            <i class="fas fa-history text-yellow-400 mr-2"></i>
-                            Historia ocen
-                        </h3>
-                        <p class="text-gray-400 mb-4">
-                            Zobacz poprzednie analizy krokowe
-                        </p>
-                        <button onclick="window.stepGrading.showHistory()" 
-                                class="btn-primary">
-                            <i class="fas fa-folder-open mr-2"></i>
-                            Pokaż historię
+                    <div class="task-content mb-6">
+                        <h3 class="text-lg font-semibold mb-2">Treść zadania:</h3>
+                        <div class="p-4 bg-gray-800 rounded">${task.tresc}</div>
+                        <p class="mt-2 text-sm text-gray-400">Maksymalna liczba punktów: ${task.punkty}</p>
+                    </div>
+                    
+                    <div class="answer-input mb-6">
+                        <h3 class="text-lg font-semibold mb-2">Wprowadź odpowiedź ucznia:</h3>
+                        <textarea id="student-answer" 
+                                  class="w-full p-3 bg-gray-800 rounded text-white"
+                                  rows="6"
+                                  placeholder="Wpisz lub wklej odpowiedź ucznia..."></textarea>
+                    </div>
+                    
+                    <button onclick="window.stepGrading.startGrading(${taskId})" 
+                            class="btn-primary w-full">
+                        <i class="fas fa-brain mr-2"></i>
+                        Rozpocznij ocenianie krokowe
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Rozpoczęcie oceniania
+     */
+    async startGrading(taskId) {
+        const task = window.QuizMaster?.currentQuiz?.pytania.find(p => p.id === taskId);
+        const studentAnswer = document.getElementById('student-answer')?.value;
+        
+        if (!task || !studentAnswer) {
+            alert('Wprowadź odpowiedź ucznia');
+            return;
+        }
+        
+        // Pokaż loader
+        const modal = document.querySelector('.fixed .glass-dark');
+        if (modal) {
+            modal.innerHTML = `
+                <div class="text-center py-16">
+                    <div class="loader mb-4"></div>
+                    <p class="text-lg">Analizuję odpowiedź...</p>
+                    <p class="text-sm text-gray-400 mt-2">To może potrwać kilka sekund</p>
+                </div>
+            `;
+        }
+        
+        try {
+            // Wykonaj ocenianie
+            const gradingData = await this.initializeGrading(task, studentAnswer);
+            
+            // Pokaż wyniki
+            if (modal) {
+                modal.innerHTML = this.renderGradingInterface(gradingData);
+            }
+        } catch (error) {
+            console.error('Błąd oceniania:', error);
+            if (modal) {
+                modal.innerHTML = `
+                    <div class="text-center py-16">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-5xl mb-4"></i>
+                        <p class="text-lg text-red-400">Błąd podczas oceniania</p>
+                        <p class="text-sm text-gray-400 mt-2">${error.message}</p>
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="btn-secondary mt-4">
+                            Zamknij
                         </button>
                     </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        return true;
-    }
-
-    /**
-     * Rozpoczyna proces oceniania krokowego
-     */
-    startStepGrading() {
-        // Implementacja rozpoczęcia oceniania
-        alert('Funkcja oceniania krokowego będzie dostępna wkrótce');
-    }
-
-    /**
-     * Pokazuje historię ocen
-     */
-    showHistory() {
-        // Implementacja historii
-        alert('Historia ocen będzie dostępna wkrótce');
+                `;
+            }
+        }
     }
 }
 
-// Eksport jako globalna klasa
+// Eksport klasy
 window.StepGradingSystem = StepGradingSystem;
