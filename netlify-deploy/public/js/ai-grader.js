@@ -1014,5 +1014,13 @@ class AIGrader {
 // Eksport jako globalna klasa
 window.AIGrader = AIGrader;
 
-// Utwórz globalną instancję
-window.aiGrader = new AIGrader();
+// Tworz instancję leniwie przy pierwszym użyciu
+Object.defineProperty(window, 'aiGrader', {
+    get: function() {
+        if (!this._aiGrader) {
+            this._aiGrader = new AIGrader();
+        }
+        return this._aiGrader;
+    },
+    configurable: true
+});

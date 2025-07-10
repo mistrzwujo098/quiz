@@ -445,5 +445,13 @@ class RecommendationSystem {
 // Eksportuj klasę
 window.RecommendationSystem = RecommendationSystem;
 
-// Utwórz globalną instancję
-window.recommendationSystem = new RecommendationSystem();
+// Tworz instancję leniwie przy pierwszym użyciu
+Object.defineProperty(window, 'recommendationSystem', {
+    get: function() {
+        if (!this._recommendationSystem) {
+            this._recommendationSystem = new RecommendationSystem();
+        }
+        return this._recommendationSystem;
+    },
+    configurable: true
+});

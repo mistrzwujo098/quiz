@@ -269,9 +269,10 @@
                 // Załaduj potrzebne moduły - najpierw zależności
                 const scriptsToLoad = [
                     '/js/api-client.js',
-                    '/js/cke-parser-system.js',
+                    '/js/cke-parser-system.js', 
                     '/js/step-grading-system.js',
-                    '/js/ai-grader.js'
+                    '/js/ai-grader.js',
+                    '/js/recommendation-system.js'
                 ];
                 
                 for (const scriptSrc of scriptsToLoad) {
@@ -339,6 +340,30 @@
         async function testAllAIModules() {
             const resultDiv = document.getElementById('modules-result');
             resultDiv.innerHTML = '<div class="loader"></div> Sprawdzanie modułów...';
+            
+            // Najpierw załaduj wszystkie wymagane skrypty
+            const requiredScripts = [
+                '/js/api-client.js',
+                '/js/recommendation-system.js',
+                '/js/cke-parser-system.js',
+                '/js/step-grading-system.js',
+                '/js/ai-grader.js'
+            ];
+            
+            for (const scriptSrc of requiredScripts) {
+                if (!document.querySelector(`script[src="${scriptSrc}"]`)) {
+                    const script = document.createElement('script');
+                    script.src = scriptSrc;
+                    document.head.appendChild(script);
+                    await new Promise(resolve => {
+                        script.onload = resolve;
+                        script.onerror = () => resolve(); // Kontynuuj nawet jeśli błąd
+                    });
+                }
+            }
+            
+            // Poczekaj chwilę na inicjalizację
+            await new Promise(resolve => setTimeout(resolve, 100));
             
             const aiModules = [
                 { name: 'AIGrader', global: 'aiGrader', class: 'AIGrader' },

@@ -774,5 +774,13 @@ class StepGradingSystem {
 // Eksport klasy
 window.StepGradingSystem = StepGradingSystem;
 
-// Utwórz globalną instancję
-window.stepGrading = new StepGradingSystem();
+// Tworz instancję leniwie przy pierwszym użyciu
+Object.defineProperty(window, 'stepGrading', {
+    get: function() {
+        if (!this._stepGrading) {
+            this._stepGrading = new StepGradingSystem();
+        }
+        return this._stepGrading;
+    },
+    configurable: true
+});
