@@ -669,7 +669,7 @@ class CKEParserSystem {
                 type: isMultipleChoice ? 'zamkniete' : 'otwarte',
                 content: content.substring(0, 500), // Pierwsze 500 znaków
                 options: isMultipleChoice ? this.extractOptions(content) : null,
-                correctAnswer: 'Nieznana',
+                correctAnswer: isMultipleChoice ? this.guessCorrectAnswer(content) : 'Odpowiedź otwarta',
                 points: 1,
                 hasImage: /rysunek|wykres|diagram/i.test(content),
                 hasFormula: /[\d+\-*/=]|\\frac|\\sqrt/.test(content),
@@ -702,6 +702,34 @@ class CKEParserSystem {
         }
         
         return options.length > 0 ? options : null;
+    }
+
+    /**
+     * Próbuje wykryć poprawną odpowiedź na podstawie kontekstu
+     */
+    guessCorrectAnswer(text) {
+        // Szukamy wskazówek w tekście
+        const answerPatterns = [
+            /poprawna odpowiedź.*?([A-D])/i,
+            /odpowiedź.*?([A-D]).*?jest poprawna/i,
+            /właściwa odpowiedź.*?([A-D])/i,
+            /prawidłowa.*?([A-D])/i
+        ];
+        
+        for (const pattern of answerPatterns) {
+            const match = text.match(pattern);
+            if (match && match[1]) {
+                return match[1];
+            }
+        }
+        
+        // Jeśli nie znaleziono, zwróć pierwszą opcję jako domyślną
+        const options = this.extractOptions(text);
+        if (options && options.length > 0) {
+            return 'A';
+        }
+        
+        return 'Nieznana';
     }
 
     /**

@@ -158,7 +158,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             initStatus.warnings.push('UIImprovements nie jest załadowany');
         }
         
-        // 17. Dodaj globalną funkcję pomocniczą do sprawdzania modułów
+        // 17. Inicjalizacja Quick Review Mode
+        console.log('17. Inicjalizacja Quick Review Mode...');
+        if (typeof QuickReviewMode !== 'undefined') {
+            window.quickReview = new QuickReviewMode();
+            window.quickReview.init();
+            initStatus.modules.quickReview = 'OK';
+        } else {
+            initStatus.warnings.push('QuickReviewMode nie jest załadowany');
+        }
+        
+        // 18. Dodaj globalną funkcję pomocniczą do sprawdzania modułów
         window.QuizMaster = {
             modules: {
                 navigation: window.navigationIntegration,
@@ -173,7 +183,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 advancedMath: window.advancedMath,
                 databaseSync: window.databaseSync,
                 extendedGamification: window.extendedGamification,
-                uiImprovements: window.uiImprovements
+                uiImprovements: window.uiImprovements,
+                quickReview: window.quickReview
             },
             isModuleLoaded: function(moduleName) {
                 return this.modules[moduleName] !== undefined;
