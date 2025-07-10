@@ -206,113 +206,9 @@ class TestDataGenerator {
      * Generuje nauczycieli
      */
     generateTeachers() {
-        // Tylko Paulina jako główny nauczyciel
-        const teachers = [
-            {
-                id: 'teacher_paulina',
-                userId: 'teacher_paulina',
-                username: 'paulinaodmatematyki',
-                imie: 'Paulina',
-                nazwisko: 'Kowalska',
-                email: 'paulina.kowalska@szkola.edu.pl',
-                password: this.hashPassword('paulina#314159265'),
-                haslo: this.hashPassword('paulina#314159265'),
-                role: 'teacher',
-                rola: 'teacher',
-                przedmioty: ['matematyka', 'fizyka', 'chemia', 'informatyka'],
-                klasy: ['1a', '1b', '2a', '2b', '3a', '3b', '4a', '4b', '5a', '5b', '6a', '6b', '7a', '7b', '8a', '8b'], // wszystkie klasy
-                tytul: 'mgr',
-                telefon: '123-456-789',
-                gabinetNumer: '201',
-                godzinyKonsultacji: 'Wtorek 14:00-15:00, Czwartek 13:00-14:00',
-                aktywny: true,
-                uprawnienia: {
-                    tworzenieTesztow: true,
-                    ocenianie: true,
-                    zarzadzanieKlasami: true,
-                    raporty: true
-                }
-            },
-            {
-                id: 'teacher_2',
-                imie: 'Anna',
-                nazwisko: 'Nowak',
-                email: 'a.nowak@szkola.edu.pl',
-                haslo: this.hashPassword('Test123!'),
-                rola: 'teacher',
-                przedmioty: ['język polski', 'historia'],
-                klasy: ['6a', '6b', '7a', '7b'],
-                tytul: 'mgr',
-                wychowawcaKlasy: '7a',
-                aktywny: true,
-                uprawnienia: {
-                    tworzenieTesztow: true,
-                    ocenianie: true,
-                    zarzadzanieKlasami: true,
-                    raporty: true,
-                    wychowawstwo: true
-                }
-            },
-            {
-                id: 'teacher_3',
-                imie: 'Marek',
-                nazwisko: 'Wiśniewski',
-                email: 'm.wisniewski@szkola.edu.pl',
-                haslo: this.hashPassword('Test123!'),
-                rola: 'teacher',
-                przedmioty: ['chemia', 'biologia'],
-                klasy: ['7a', '7b', '8a', '8b'],
-                tytul: 'dr',
-                aktywny: true
-            },
-            {
-                id: 'teacher_demo',
-                userId: 'teacher_demo',
-                username: 'nauczyciel@demo.pl',
-                imie: 'Demo',
-                nazwisko: 'Nauczyciel',
-                email: 'nauczyciel@demo.pl',
-                password: this.hashPassword('demo123'),
-                haslo: this.hashPassword('demo123'),
-                role: 'teacher',
-                rola: 'teacher',
-                przedmioty: ['matematyka', 'informatyka'],
-                klasy: ['1a', '2a', '3a', '4a', '5a', '6a', '7a', '8a'],
-                tytul: 'mgr inż.',
-                wychowawcaKlasy: '8a',
-                aktywny: true,
-                uprawnienia: {
-                    wszystkie: true
-                }
-            }
-        ];
-        
-        // Dodaj więcej nauczycieli dla różnych przedmiotów
-        const dodatkowePrzedmioty = [
-            { przedmiot: 'język angielski', imie: 'Katarzyna', nazwisko: 'Zielińska' },
-            { przedmiot: 'geografia', imie: 'Tomasz', nazwisko: 'Kamiński' },
-            { przedmiot: 'wf', imie: 'Robert', nazwisko: 'Lewandowski' },
-            { przedmiot: 'muzyka', imie: 'Ewa', nazwisko: 'Szymańska' },
-            { przedmiot: 'plastyka', imie: 'Magdalena', nazwisko: 'Woźniak' },
-            { przedmiot: 'informatyka', imie: 'Paweł', nazwisko: 'Kowalczyk' }
-        ];
-        
-        dodatkowePrzedmioty.forEach((item, index) => {
-            teachers.push({
-                id: `teacher_${index + 4}`,
-                imie: item.imie,
-                nazwisko: item.nazwisko,
-                email: `${item.imie.toLowerCase()}.${item.nazwisko.toLowerCase()}@szkola.edu.pl`,
-                haslo: this.hashPassword('Test123!'),
-                rola: 'teacher',
-                przedmioty: [item.przedmiot],
-                klasy: this.generateRandomClasses(),
-                tytul: 'mgr',
-                aktywny: true
-            });
-        });
-        
-        return teachers;
+        // Nie generuj nauczycieli - tylko Paulina będzie dodana osobno
+        console.log('📚 Pominięto generowanie nauczycieli - tylko Paulina będzie utworzona osobno');
+        return [];
     }
 
     /**
@@ -327,10 +223,14 @@ class TestDataGenerator {
                 // Pierwszy rodzic (matka)
                 parents.push({
                     id: `parent_${index * 2 + 1}`,
+                    userId: `parent_${index * 2 + 1}`,
+                    username: `rodzic.${student.nazwisko.toLowerCase()}${index}`,
                     imie: this.generateParentName(student.imie, 'female'),
                     nazwisko: student.nazwisko,
                     email: `rodzic.${student.nazwisko.toLowerCase()}${index}@gmail.com`,
+                    password: this.hashPassword('Test123!'),
                     haslo: this.hashPassword('Test123!'),
+                    role: 'parent',
                     rola: 'parent',
                     dzieci: [student.id],
                     telefon: this.generatePhoneNumber(),
@@ -350,10 +250,14 @@ class TestDataGenerator {
                 if (Math.random() > 0.3) {
                     parents.push({
                         id: `parent_${index * 2 + 2}`,
+                        userId: `parent_${index * 2 + 2}`,
+                        username: `tata.${student.nazwisko.toLowerCase()}${index}`,
                         imie: this.generateParentName(student.imie, 'male'),
                         nazwisko: student.nazwisko,
                         email: `tata.${student.nazwisko.toLowerCase()}${index}@gmail.com`,
-                        haslo: 'Test123!',
+                        password: this.hashPassword('Test123!'),
+                        haslo: this.hashPassword('Test123!'),
+                        role: 'parent',
                         rola: 'parent',
                         dzieci: [student.id],
                         telefon: this.generatePhoneNumber(),
@@ -367,10 +271,14 @@ class TestDataGenerator {
         parents.push(
             {
                 id: 'parent_demo',
+                userId: 'parent_demo',
+                username: 'rodzic@demo.pl',
                 imie: 'Demo',
                 nazwisko: 'Rodzic',
                 email: 'rodzic@demo.pl',
+                password: this.hashPassword('demo123'),
                 haslo: this.hashPassword('demo123'),
+                role: 'parent',
                 rola: 'parent',
                 dzieci: ['student_demo', 'student_1001'], // Ma dwoje dzieci
                 telefon: '600-700-800',
@@ -488,7 +396,7 @@ class TestDataGenerator {
                     trudnosc: template.trudnosc,
                     czasTrwania: template.trudnosc === 'łatwa' ? 15 : template.trudnosc === 'średnia' ? 30 : 45,
                     punkty: template.trudnosc === 'łatwa' ? 20 : template.trudnosc === 'średnia' ? 30 : 40,
-                    nauczyciel: `teacher_${Math.floor(Math.random() * 3) + 1}`,
+                    nauczyciel: 'teacher_paulina',
                     dataUtworzenia: this.generatePastDate(30),
                     dataAktywacji: this.generatePastDate(20),
                     dataZakonczenia: this.generateFutureDate(10),
@@ -516,7 +424,7 @@ class TestDataGenerator {
             trudnosc: 'średnia',
             czasTrwania: 30,
             punkty: 50,
-            nauczyciel: 'teacher_demo',
+            nauczyciel: 'teacher_paulina',
             aktywny: true,
             pytania: [
                 {
@@ -590,7 +498,7 @@ class TestDataGenerator {
                     dataZadania: this.generateDateOffset(daysOffset - 7),
                     terminOddania: this.generateDateOffset(daysOffset),
                     punkty: taskType === 'Praca klasowa' ? 100 : taskType === 'Projekt' ? 50 : 20,
-                    nauczyciel: `teacher_${Math.floor(Math.random() * 3) + 1}`,
+                    nauczyciel: 'teacher_paulina',
                     klasa: `${Math.floor(Math.random() * 8) + 1}a`,
                     zalaczniki: Math.random() > 0.7 ? ['materialy.pdf'] : [],
                     wymagania: this.generateTaskRequirements(taskType)

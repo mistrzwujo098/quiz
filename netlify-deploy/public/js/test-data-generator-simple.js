@@ -28,7 +28,7 @@ class SimpleTestDataGenerator {
     /**
      * Generuje i zapisuje tylko konto Pauliny
      */
-    generatePaulinaOnly() {
+    async generatePaulinaOnly() {
         console.log('🎯 Tworzenie konta nauczyciela Pauliny...');
         
         // Pobierz istniejących użytkowników
@@ -36,6 +36,27 @@ class SimpleTestDataGenerator {
         
         // Usuń stare konto Pauliny jeśli istnieje
         users = users.filter(u => u.username !== 'paulinaodmatematyki');
+        
+        let passwordHash = this.hashPassword('paulina#314159265'); // domyślne
+        let password = 'paulina#314159265'; // domyślne
+        
+        // Spróbuj pobrać hasło z Netlify env
+        try {
+            const response = await fetch('/.netlify/functions/teacher-auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'getTeacherCredentials' })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                passwordHash = data.passwordHash;
+                console.log('✅ Pobrano hasło nauczyciela z Netlify env');
+                password = '[hasło z env]'; // nie pokazuj prawdziwego hasła
+            }
+        } catch (error) {
+            console.warn('⚠️ Nie można pobrać hasła z env, używam domyślnego');
+        }
         
         // Dodaj nowe konto Pauliny
         const paulina = {
@@ -45,8 +66,8 @@ class SimpleTestDataGenerator {
             imie: 'Paulina',
             nazwisko: 'Kowalska',
             email: 'paulina.kowalska@szkola.edu.pl',
-            password: this.hashPassword('paulina#314159265'),
-            haslo: this.hashPassword('paulina#314159265'),
+            password: passwordHash,
+            haslo: passwordHash,
             role: 'teacher',
             rola: 'teacher',
             przedmioty: ['matematyka', 'fizyka', 'chemia', 'informatyka'],
@@ -74,7 +95,7 @@ class SimpleTestDataGenerator {
         console.log('✅ Konto nauczyciela utworzone!');
         console.log('📝 Dane logowania:');
         console.log('   Login: paulinaodmatematyki');
-        console.log('   Hasło: paulina#314159265');
+        console.log(`   Hasło: ${password}`);
         
         return paulina;
     }
@@ -121,8 +142,8 @@ class SimpleTestDataGenerator {
     /**
      * Główna funkcja
      */
-    setupPaulina() {
-        this.generatePaulinaOnly();
+    async setupPaulina() {
+        await this.generatePaulinaOnly();
         this.updateUsersForPaulina();
         
         return {
@@ -135,10 +156,5 @@ class SimpleTestDataGenerator {
 // Eksportuj jako globalną
 window.SimpleTestDataGenerator = SimpleTestDataGenerator;
 
-// Automatycznie wykonaj przy ładowaniu
-if (typeof window !== 'undefined') {
-    window.addEventListener('load', () => {
-        const generator = new SimpleTestDataGenerator();
-        generator.setupPaulina();
-    });
-}
+// Eksportuj metodę do globalnego obiektu, ale nie wykonuj automatycznie
+// Automatyczne wykonanie mogłoby interferować z innymi danymi

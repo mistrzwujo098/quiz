@@ -42,7 +42,7 @@
                         <h3 class="font-semibold mb-2">👥 Użytkownicy:</h3>
                         <ul class="text-sm space-y-1">
                             <li>• 80+ uczniów (różne klasy)</li>
-                            <li>• 10+ nauczycieli</li>
+                            <li>• 1 nauczyciel (Paulina)</li>
                             <li>• 100+ rodziców</li>
                             <li>• Konta demo dla każdej roli</li>
                         </ul>
@@ -116,8 +116,8 @@
                     </div>
                     <div>
                         <strong>Nauczyciel:</strong><br>
-                        Login: nauczyciel@demo.pl<br>
-                        Hasło: demo123
+                        Login: paulinaodmatematyki<br>
+                        Hasło: paulina#314159265
                     </div>
                     <div>
                         <strong>Rodzic:</strong><br>
@@ -215,7 +215,7 @@
             }
         }
 
-        function setupPaulinaOnly() {
+        async function setupPaulinaOnly() {
             const statusDiv = document.getElementById('status');
             const resultsDiv = document.getElementById('results');
             const progress = document.getElementById('progress');
@@ -228,15 +228,15 @@
                 updateProgress('Tworzenie konta nauczyciela Pauliny...');
                 
                 const generator = new SimpleTestDataGenerator();
-                const result = generator.setupPaulina();
+                const result = await generator.setupPaulina();
                 
                 if (result.success) {
                     updateProgress('Konto utworzone pomyślnie!', 'success');
                     updateProgress('Login: paulinaodmatematyki', 'success');
-                    updateProgress('Hasło: paulina#314159265', 'success');
+                    updateProgress('Hasło: [hasło z env Netlify lub domyślne]', 'success');
                     
                     setTimeout(() => {
-                        alert('✅ Konto nauczyciela Pauliny zostało utworzone!\n\nLogin: paulinaodmatematyki\nHasło: paulina#314159265');
+                        alert('✅ Konto nauczyciela Pauliny zostało utworzone!\n\nLogin: paulinaodmatematyki');
                         location.reload();
                     }, 2000);
                 }

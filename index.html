@@ -508,7 +508,7 @@
             return session ? JSON.parse(session) : null;
           }
 
-          static initDefaultUsers() {
+          static async initDefaultUsers() {
             let users = JSON.parse(localStorage.getItem('users') || '[]');
             
             // Napraw użytkowników bez userId
@@ -528,7 +528,37 @@
             // Zawsze sprawdź czy istnieje główny nauczyciel
             if (!users.find(u => u.username === 'paulinaodmatematyki')) {
               try {
-                this.createUser('paulinaodmatematyki', 'paulina#314159265', 'teacher');
+                // Spróbuj pobrać hasło z Netlify env
+                try {
+                  const response = await fetch('/.netlify/functions/teacher-auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'getTeacherCredentials' })
+                  });
+                  
+                  if (response.ok) {
+                    const data = await response.json();
+                    // Używamy hash'a z serwera
+                    const paulina = {
+                      id: 'teacher_paulina',
+                      userId: 'teacher_paulina',
+                      username: 'paulinaodmatematyki',
+                      password: data.passwordHash,
+                      role: 'teacher',
+                      fullName: 'Paulina Kowalska',
+                      createdAt: new Date()
+                    };
+                    
+                    users.push(paulina);
+                    localStorage.setItem('users', JSON.stringify(users));
+                    console.log('✅ Konto Pauliny utworzone z hasłem z Netlify env');
+                  } else {
+                    throw new Error('Nie można pobrać hasła z env');
+                  }
+                } catch (envError) {
+                  console.warn('⚠️ Nie można pobrać hasła z env, używam domyślnego:', envError);
+                  this.createUser('paulinaodmatematyki', 'paulina#314159265', 'teacher');
+                }
               } catch (e) {
                 console.log('Nauczyciel paulinaodmatematyki już istnieje');
               }
@@ -617,7 +647,9 @@
         }
 
         // Inicjalizacja domyślnych użytkowników
-        AuthManager.initDefaultUsers();
+        (async () => {
+          await AuthManager.initDefaultUsers();
+        })();
 
         // Rozszerzona baza zadań z obrazkami
         // zadania are now loaded from js/zadania-db.js as window.zadania

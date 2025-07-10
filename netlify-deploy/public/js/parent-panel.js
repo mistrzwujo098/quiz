@@ -14,7 +14,8 @@ class ParentPanel {
    */
   init() {
     this.loadParentData();
-    this.setupNotifications();
+    // Powiadomienia będą dodane później
+    // this.setupNotifications();
     this.checkPendingReports();
   }
 

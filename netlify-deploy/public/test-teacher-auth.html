@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Teacher Auth - QuizMaster</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">🔐 Test autoryzacji nauczyciela</h1>
+        
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">1. Test Netlify Function</h2>
+            <button onclick="testNetlifyFunction()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
+                Test funkcji getTeacherCredentials
+            </button>
+            <div id="netlify-result" class="mt-4 text-sm font-mono"></div>
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">2. Test lokalnego hash'owania</h2>
+            <input type="text" id="password-input" placeholder="Wpisz hasło" 
+                   value="paulina#314159265"
+                   class="bg-gray-700 text-white px-4 py-2 rounded w-full mb-4">
+            <button onclick="testLocalHash()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">
+                Wygeneruj hash lokalnie
+            </button>
+            <div id="local-hash-result" class="mt-4 text-sm font-mono break-all"></div>
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">3. Test logowania</h2>
+            <input type="text" id="username" placeholder="Username" value="paulinaodmatematyki" 
+                   class="bg-gray-700 text-white px-4 py-2 rounded w-full mb-2">
+            <input type="password" id="password" placeholder="Password" value="paulina#314159265"
+                   class="bg-gray-700 text-white px-4 py-2 rounded w-full mb-4">
+            <button onclick="testLogin()" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded">
+                Test logowania
+            </button>
+            <div id="login-result" class="mt-4 text-sm"></div>
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">4. Obecni użytkownicy</h2>
+            <button onclick="showUsers()" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded mb-4">
+                Pokaż użytkowników
+            </button>
+            <div id="users-list" class="text-sm font-mono overflow-auto max-h-96"></div>
+        </div>
+    </div>
+    
+    <script>
+        async function testNetlifyFunction() {
+            const resultDiv = document.getElementById('netlify-result');
+            resultDiv.innerHTML = '<div class="text-yellow-400">Testowanie...</div>';
+            
+            try {
+                const response = await fetch('/.netlify/functions/teacher-auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'getTeacherCredentials' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="text-green-400">✅ Sukces!</div>
+                        <div class="mt-2">Username: ${data.username}</div>
+                        <div>Password Hash: ${data.passwordHash}</div>
+                        <div class="text-xs text-gray-400 mt-2">Hash length: ${data.passwordHash.length} chars</div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="text-red-400">❌ Błąd: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="text-red-400">❌ Błąd połączenia: ${error.message}</div>`;
+            }
+        }
+        
+        function testLocalHash() {
+            const password = document.getElementById('password-input').value;
+            const resultDiv = document.getElementById('local-hash-result');
+            
+            if (!password) {
+                resultDiv.innerHTML = '<div class="text-red-400">Wpisz hasło!</div>';
+                return;
+            }
+            
+            const hash = CryptoJS.SHA256(password).toString();
+            resultDiv.innerHTML = `
+                <div class="text-green-400">✅ Hash wygenerowany</div>
+                <div class="mt-2">Hasło: ${password}</div>
+                <div>Hash: ${hash}</div>
+                <div class="text-xs text-gray-400 mt-2">Hash length: ${hash.length} chars</div>
+            `;
+        }
+        
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('login-result');
+            
+            if (!username || !password) {
+                resultDiv.innerHTML = '<div class="text-red-400">Wypełnij wszystkie pola!</div>';
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const hashedPassword = CryptoJS.SHA256(password).toString();
+            
+            const user = users.find(u => u.username === username);
+            
+            if (!user) {
+                resultDiv.innerHTML = '<div class="text-red-400">❌ Użytkownik nie istnieje</div>';
+                return;
+            }
+            
+            if (user.password === hashedPassword) {
+                resultDiv.innerHTML = `
+                    <div class="text-green-400">✅ Logowanie udane!</div>
+                    <div class="mt-2">User ID: ${user.id || user.userId}</div>
+                    <div>Role: ${user.role || user.rola}</div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="text-red-400">❌ Nieprawidłowe hasło</div>
+                    <div class="text-xs mt-2">Expected hash: ${user.password}</div>
+                    <div class="text-xs">Got hash: ${hashedPassword}</div>
+                    <div class="text-xs">Match: ${user.password === hashedPassword}</div>
+                `;
+            }
+        }
+        
+        function showUsers() {
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const resultDiv = document.getElementById('users-list');
+            
+            if (users.length === 0) {
+                resultDiv.innerHTML = '<div class="text-yellow-400">Brak użytkowników</div>';
+                return;
+            }
+            
+            const teacherUsers = users.filter(u => u.role === 'teacher' || u.rola === 'teacher');
+            const studentUsers = users.filter(u => u.role === 'student' || u.rola === 'student');
+            const parentUsers = users.filter(u => u.role === 'parent' || u.rola === 'parent');
+            
+            resultDiv.innerHTML = `
+                <div class="mb-4">
+                    <h3 class="font-bold text-yellow-400 mb-2">Nauczyciele (${teacherUsers.length}):</h3>
+                    ${teacherUsers.map(u => `
+                        <div class="mb-2 p-2 bg-gray-700 rounded">
+                            <div>Username: ${u.username}</div>
+                            <div class="text-xs">ID: ${u.id || u.userId}</div>
+                            <div class="text-xs">Password hash: ${u.password?.substring(0, 20)}...</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="font-bold text-blue-400 mb-2">Uczniowie (${studentUsers.length}):</h3>
+                    <div class="text-xs text-gray-400">${studentUsers.length} uczniów w systemie</div>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold text-green-400 mb-2">Rodzice (${parentUsers.length}):</h3>
+                    <div class="text-xs text-gray-400">${parentUsers.length} rodziców w systemie</div>
+                </div>
+            `;
+        }
+        
+        // Pokaż użytkowników przy ładowaniu
+        window.addEventListener('load', () => {
+            showUsers();
+        });
+    </script>
+</body>
+</html>
