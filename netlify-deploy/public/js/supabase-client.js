@@ -3,18 +3,32 @@
  * Zarządza połączeniem z bazą danych i autoryzacją
  */
 
-// Konfiguracja Supabase - te wartości powinny być w zmiennych środowiskowych
-const SUPABASE_URL = window.SUPABASE_URL || 'https://your-project.supabase.co';
-const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'your-anon-key';
+// Zmienne globalne dla Supabase
+let supabase = null;
 
-// Inicjalizacja klienta Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
+// Funkcja inicjalizująca klienta Supabase
+function initializeSupabaseClient() {
+    if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY || 
+        window.SUPABASE_URL === 'https://your-project.supabase.co') {
+        console.warn('⚠️ Supabase nie jest skonfigurowany');
+        return false;
     }
-});
+
+    try {
+        supabase = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true
+            }
+        });
+        console.log('✅ Klient Supabase zainicjalizowany');
+        return true;
+    } catch (error) {
+        console.error('❌ Błąd inicjalizacji Supabase:', error);
+        return false;
+    }
+}
 
 /**
  * Manager autoryzacji Supabase
@@ -30,6 +44,8 @@ class SupabaseAuthManager {
      * Inicjalizacja autoryzacji
      */
     async initializeAuth() {
+        if (!supabase) return;
+        
         // Sprawdź aktualną sesję
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
@@ -416,10 +432,21 @@ class SupabaseDataManager {
     }
 }
 
-// Eksportuj globalne instancje
-window.supabaseClient = supabase;
-window.authManager = new SupabaseAuthManager();
-window.dataManager = new SupabaseDataManager();
+// Eksportuj globalne instancje (będą zainicjalizowane później)
+window.supabaseClient = null;
+window.authManager = null;
+window.dataManager = null;
+
+// Funkcja do pełnej inicjalizacji
+window.initializeSupabase = function() {
+    if (initializeSupabaseClient()) {
+        window.supabaseClient = supabase;
+        window.authManager = new SupabaseAuthManager();
+        window.dataManager = new SupabaseDataManager();
+        return true;
+    }
+    return false;
+};
 
 // Helper do migracji z localStorage
 window.migrateFromLocalStorage = async function() {

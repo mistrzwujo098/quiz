@@ -180,8 +180,12 @@
             const statusDiv = document.getElementById('connectionStatus');
             
             try {
+                // Poczekaj na załadowanie konfiguracji
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
                 // Sprawdź konfigurację
-                if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+                if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY || 
+                    window.SUPABASE_URL === 'https://your-project.supabase.co') {
                     statusDiv.innerHTML = `
                         <div class="p-4 bg-red-900/50 rounded-lg">
                             <div class="font-semibold text-red-400">❌ Brak konfiguracji</div>
@@ -189,6 +193,11 @@
                         </div>
                     `;
                     return false;
+                }
+                
+                // Inicjalizuj Supabase jeśli nie zainicjalizowany
+                if (!window.supabaseClient && window.initializeSupabase) {
+                    window.initializeSupabase();
                 }
                 
                 // Test połączenia

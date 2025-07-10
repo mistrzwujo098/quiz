@@ -13,24 +13,38 @@ class DataAdapter {
      * Inicjalizacja adaptera
      */
     async initialize() {
-        // Sprawdź czy Supabase jest dostępny
-        if (window.supabaseClient && window.SUPABASE_URL) {
-            try {
-                // Test połączenia
-                const { data, error } = await window.supabaseClient
-                    .from('profiles')
-                    .select('count')
-                    .limit(1);
-                
-                if (!error) {
-                    this.mode = 'supabase';
-                    console.log('✅ Używam Supabase jako źródła danych');
-                } else {
-                    console.warn('⚠️ Supabase niedostępny, używam localStorage');
-                }
-            } catch (e) {
-                console.warn('⚠️ Błąd połączenia z Supabase, używam localStorage');
+        // Najpierw spróbuj zainicjalizować Supabase
+        if (window.SUPABASE_URL && window.SUPABASE_ANON_KEY && 
+            window.SUPABASE_URL !== 'https://your-project.supabase.co') {
+            
+            // Inicjalizuj Supabase jeśli jeszcze nie zainicjalizowany
+            if (!window.supabaseClient && window.initializeSupabase) {
+                window.initializeSupabase();
             }
+            
+            // Sprawdź czy Supabase działa
+            if (window.supabaseClient) {
+                try {
+                    // Test połączenia
+                    const { data, error } = await window.supabaseClient
+                        .from('profiles')
+                        .select('count')
+                        .limit(1);
+                    
+                    if (!error || error.code === 'PGRST116') { // PGRST116 = tabela pusta
+                        this.mode = 'supabase';
+                        console.log('✅ Używam Supabase jako źródła danych');
+                    } else {
+                        console.warn('⚠️ Supabase niedostępny:', error.message);
+                        console.log('📦 Używam localStorage');
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Błąd połączenia z Supabase:', e.message);
+                    console.log('📦 Używam localStorage');
+                }
+            }
+        } else {
+            console.log('📦 Supabase nie skonfigurowany - używam localStorage');
         }
         
         this.initialized = true;

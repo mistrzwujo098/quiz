@@ -13,12 +13,18 @@ async function loadSupabaseConfig() {
         const response = await fetch('/.netlify/functions/supabase-config');
         if (response.ok) {
             const config = await response.json();
-            window.SUPABASE_URL = config.url;
-            window.SUPABASE_ANON_KEY = config.anonKey;
-            return true;
+            if (config.url && config.anonKey) {
+                window.SUPABASE_URL = config.url;
+                window.SUPABASE_ANON_KEY = config.anonKey;
+                return true;
+            }
+        } else if (response.status === 404) {
+            // Brak konfiguracji - to normalne, aplikacja będzie działać w trybie offline
+            console.log('📦 Supabase nie skonfigurowany - aplikacja działa w trybie offline');
+            return false;
         }
     } catch (error) {
-        console.warn('Nie można pobrać konfiguracji Supabase z serwera');
+        console.warn('⚠️ Nie można sprawdzić konfiguracji Supabase:', error.message);
     }
     
     // Fallback - użyj wartości z meta tagów (jeśli są)
@@ -31,7 +37,8 @@ async function loadSupabaseConfig() {
         return true;
     }
     
-    console.error('❌ Brak konfiguracji Supabase! Ustaw zmienne środowiskowe.');
+    // Brak konfiguracji - aplikacja będzie działać offline
+    console.log('📦 Aplikacja działa w trybie offline (localStorage)');
     return false;
 }
 
@@ -39,16 +46,8 @@ async function loadSupabaseConfig() {
 window.addEventListener('DOMContentLoaded', async () => {
     const configLoaded = await loadSupabaseConfig();
     
+    // Nie pokazuj błędu - aplikacja może działać offline
     if (!configLoaded) {
-        // Pokaż komunikat o błędzie
-        document.body.innerHTML = `
-            <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                        text-align: center; background: #ff4444; color: white; padding: 20px; 
-                        border-radius: 10px; font-family: Arial, sans-serif;">
-                <h2>⚠️ Błąd konfiguracji</h2>
-                <p>Brak konfiguracji Supabase!</p>
-                <p>Skontaktuj się z administratorem.</p>
-            </div>
-        `;
+        console.log('🔄 Aplikacja uruchomiona w trybie offline');
     }
 });
